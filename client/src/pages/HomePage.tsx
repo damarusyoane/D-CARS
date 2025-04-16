@@ -1,4 +1,4 @@
-import { useState } from 'react';
+
 import Layout from '../components/layout/Layout';
 import Sidebar from '../components/filters/Sidebar';
 import CarListingsGrid from '../components/CarListingsGrid';

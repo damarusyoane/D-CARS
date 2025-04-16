@@ -3,7 +3,6 @@ import { useState } from 'react';
 const Sidebar = () => {
   const [priceRange, setPriceRange] = useState<{ min: number; max: number }>({ min: 5000, max: 100000 });
   const [mileage, setMileage] = useState<{ min: number; max: number }>({ min: 0, max: 150000 });
-  const [yearRange, setYearRange] = useState<{ min: number; max: number }>({ min: 2020, max: 2023 });
 
   return (
     <div className="w-64 h-full bg-card border-r border-border overflow-y-auto">
