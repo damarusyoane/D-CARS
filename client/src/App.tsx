@@ -1,4 +1,3 @@
-import React from "react";
 import Index from "./pages/Index";
 import MessagingPage from "./pages/MessagingPage";
 import SavedCars from "./pages/SavedCars";
