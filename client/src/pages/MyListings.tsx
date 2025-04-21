@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { HeartIcon, EyeIcon, PencilIcon, TrashIcon, PlusIcon, CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
+import { HeartIcon, EyeIcon, PencilIcon, TrashIcon, PlusIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
@@ -23,7 +23,7 @@ interface Listing {
 }
 
 const MyListings: React.FC = () => {
-  const { user } = useAuth();
+  useAuth();
   const navigate = useNavigate();
   const [listings, setListings] = useState<Listing[]>([]);
   const [isLoading, setIsLoading] = useState(true);

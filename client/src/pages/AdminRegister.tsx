@@ -8,7 +8,7 @@ import LoadingSpinner from '../components/common/LoadingSpinner';
 
 export default function AdminRegister() {
   const navigate = useNavigate();
-  const { signUp } = useAuth();
+  useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

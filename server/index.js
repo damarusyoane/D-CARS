@@ -10,6 +10,11 @@ import { createClient } from '@supabase/supabase-js';
 import authRoutes from './routes/api/auth.js';
 import vehicleRoutes from './routes/api/vehicles.js';
 import messageRoutes from './routes/api/messages.js';
+import adminRoutes from './routes/api/admin.js';
+import transactionRoutes from './routes/api/transactions.js';
+import favoriteRoutes from './routes/api/favorites.js';
+import subscriptionRoutes from './routes/api/subscriptions.js';
+import paymentWebhooks from './routes/webhooks/payment.js';
 
 // Initialize Supabase client
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
@@ -55,6 +60,11 @@ const authenticateToken = async (req, res, next) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/vehicles', authenticateToken, vehicleRoutes);
 app.use('/api/messages', authenticateToken, messageRoutes);
+app.use('/api/admin', authenticateToken, adminRoutes);
+app.use('/api/transactions', authenticateToken, transactionRoutes);
+app.use('/api/favorites', authenticateToken, favoriteRoutes);
+app.use('/api/subscriptions', authenticateToken, subscriptionRoutes);
+app.use('/webhooks', paymentWebhooks);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
