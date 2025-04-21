@@ -1,0 +1,57 @@
+{
+  "common": {
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "profile": "Profile",
+    "settings": "Settings",
+    "messages": "Messages",
+    "notifications": "Notifications",
+    "dashboard": "Dashboard",
+    "myListings": "My Listings",
+    "savedCars": "Saved Cars",
+    "transactions": "Transactions"
+  },
+  "home": {
+    "title": "Find Your Perfect Car",
+    "subtitle": "Browse through our extensive collection of quality vehicles",
+    "featuredListings": "Featured Listings",
+    "recentlyAdded": "Recently Added",
+    "viewAll": "View All"
+  },
+  "vehicle": {
+    "make": "Make",
+    "model": "Model",
+    "year": "Year",
+    "price": "Price",
+    "mileage": "Mileage",
+    "condition": "Condition",
+    "location": "Location",
+    "seller": "Seller",
+    "description": "Description",
+    "features": "Features",
+    "contactSeller": "Contact Seller",
+    "save": "Save",
+    "share": "Share"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "forgotPassword": "Forgot Password?",
+    "orContinueWith": "Or continue with",
+    "alreadyHaveAccount": "Already have an account?",
+    "dontHaveAccount": "Don't have an account?"
+  },
+  "errors": {
+    "required": "This field is required",
+    "invalidEmail": "Invalid email address",
+    "passwordMismatch": "Passwords do not match",
+    "somethingWentWrong": "Something went wrong"
+  }
+} 

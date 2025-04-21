@@ -1,149 +1,355 @@
-import React from 'react';
-import Sidebar from '../components/Sidebar';
-import CommonFooter from '../components/CommonFooter';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { HeartIcon, EyeIcon, PencilIcon, TrashIcon, PlusIcon, CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
+import toast from 'react-hot-toast';
+import LoadingSpinner from '../components/common/LoadingSpinner';
+
+interface Listing {
+  id: string;
+  title: string;
+  price: number;
+  description: string;
+  make: string;
+  model: string;
+  year: number;
+  status: 'active' | 'pending' | 'sold' | 'rejected';
+  images: string[];
+  views: number;
+  likes: number;
+  created_at: string;
+  updated_at: string;
+}
 
 const MyListings: React.FC = () => {
-  const myListings = [
-    {
-      id: 1,
-      name: 'Tesla Model 3',
-      year: '2021',
-      price: '$42,900',
-      image: 'https://images.unsplash.com/photo-1617704548623-340376564e68?q=80&w=1920&auto=format&fit=crop',
-      location: 'San Francisco, CA',
-      mileage: '10,056 mi',
-      rating: 4.8,
-      active: true,
-    },
-    {
-      id: 2,
-      name: 'BMW M4',
-      year: '2022',
-      price: '$54,000',
-      image: 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?q=80&w=1920&auto=format&fit=crop',
-      location: 'Los Angeles, CA',
-      mileage: '5,400 mi',
-      rating: 4.9,
-      active: true,
-    },
-    {
-      id: 3,
-      name: 'Mercedes-Benz S',
-      year: '2019',
-      price: '$75,000',
-      image: 'https://images.unsplash.com/photo-1626668893632-6f3a4466d109?q=80&w=1920&auto=format&fit=crop',
-      location: 'New York, NY',
-      mileage: '22,345 mi',
-      rating: 4.7,
-      active: false,
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<'all' | 'active' | 'pending' | 'sold' | 'rejected'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [listingToDelete, setListingToDelete] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchListings();
+  }, [filter]);
+
+  const fetchListings = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) {
+        navigate('/auth/login');
+        return;
+      }
+
+      let query = supabase
+        .from('vehicles')
+        .select('*')
+        .eq('seller_id', currentUser.id)
+        .order('created_at', { ascending: false });
+      
+      if (filter !== 'all') {
+        query = query.eq('status', filter);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      setListings(data || []);
+    } catch (error) {
+      console.error('Error fetching listings:', error);
+      setError('Failed to load your listings. Please try again later.');
+    } finally {
+      setIsLoading(false);
     }
-  ];
+  };
+
+  const handleDeleteListing = async (id: string) => {
+    try {
+      setIsDeleting(true);
+      setListingToDelete(id);
+
+      const { error } = await supabase
+        .from('vehicles')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      setListings(listings.filter(listing => listing.id !== id));
+      toast.success('Listing deleted successfully');
+    } catch (error) {
+      console.error('Error deleting listing:', error);
+      toast.error('Failed to delete listing. Please try again.');
+    } finally {
+      setIsDeleting(false);
+      setListingToDelete(null);
+    }
+  };
+
+  const confirmDelete = (id: string) => {
+    if (window.confirm('Are you sure you want to delete this listing? This action cannot be undone.')) {
+      handleDeleteListing(id);
+    }
+  };
+
+  const getStatusBadgeClass = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'bg-green-500/10 text-green-500 border border-green-500/20';
+      case 'pending':
+        return 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20';
+      case 'sold':
+        return 'bg-blue-500/10 text-blue-500 border border-blue-500/20';
+      case 'rejected':
+        return 'bg-red-500/10 text-red-500 border border-red-500/20';
+      default:
+        return 'bg-gray-500/10 text-gray-500 border border-gray-500/20';
+    }
+  };
+
+  const filteredListings = listings.filter(listing => {
+    if (searchQuery) {
+      return listing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+             listing.make.toLowerCase().includes(searchQuery.toLowerCase()) ||
+             listing.model.toLowerCase().includes(searchQuery.toLowerCase());
+    }
+    return true;
+  });
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-gray-900 text-white p-4">
+        <ExclamationCircleIcon className="w-16 h-16 text-red-500 mb-4" />
+        <h2 className="text-2xl font-bold mb-2">Error Loading Listings</h2>
+        <p className="text-gray-400 mb-4 text-center">{error}</p>
+        <button 
+          onClick={() => fetchListings()}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex min-h-screen bg-gray-900 text-white">
-      {/* Sidebar */}
-      <Sidebar activePage="my-listings" />
+    <div className="min-h-screen bg-gray-900 text-white">
+      {/* Header */}
+      <header className="bg-gray-800 p-6 shadow-lg">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-3xl font-bold mb-2">My Vehicle Listings</h1>
+          <p className="text-gray-400">Manage all your vehicle listings in one place</p>
+        </div>
+      </header>
       
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <header className="flex justify-between items-center p-6 border-b border-gray-800">
-          <h1 className="text-2xl font-bold">My Listings</h1>
-          <div className="flex items-center gap-4">
-            <div className="relative">
+      <main className="max-w-7xl mx-auto p-6">
+        {/* Action Bar */}
+        <div className="flex flex-col md:flex-row justify-between items-center mb-8 space-y-4 md:space-y-0">
+          {/* Filters */}
+          <div className="flex items-center space-x-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0">
+            <button
+              onClick={() => setFilter('all')}
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap ${filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+            >
+              All Listings
+            </button>
+            <button
+              onClick={() => setFilter('active')}
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap ${filter === 'active' ? 'bg-green-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+            >
+              Active
+            </button>
+            <button
+              onClick={() => setFilter('pending')}
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap ${filter === 'pending' ? 'bg-yellow-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+            >
+              Pending Approval
+            </button>
+            <button
+              onClick={() => setFilter('sold')}
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap ${filter === 'sold' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+            >
+              Sold
+            </button>
+            <button
+              onClick={() => setFilter('rejected')}
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap ${filter === 'rejected' ? 'bg-red-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+            >
+              Rejected
+            </button>
+          </div>
+          
+          <div className="flex items-center space-x-4 w-full md:w-auto">
+            {/* Search */}
+            <div className="relative flex-grow md:max-w-xs">
               <input 
                 type="text" 
-                placeholder="Search" 
-                className="px-4 py-2 bg-gray-800 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Search listings..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-2 bg-gray-800 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <svg className="w-5 h-5 absolute right-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium">
-              + Add New Listing
-            </button>
+            
+            {/* Create New */}
+            <Link
+              to="/dashboard/create-listing"
+              className="flex items-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors whitespace-nowrap"
+            >
+              <PlusIcon className="w-5 h-5 mr-1" />
+              <span>Add Listing</span>
+            </Link>
           </div>
-        </header>
-        
-        {/* Car Listings */}
-        <div className="flex-1 p-6 overflow-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {myListings.map((listing) => (
-              <div key={listing.id} className={`bg-gray-800 rounded-lg overflow-hidden border ${listing.active ? 'border-gray-700' : 'border-gray-700 opacity-75'}`}>
-                <div className="relative h-48">
-                  <img 
-                    src={listing.image} 
-                    alt={listing.name} 
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute top-3 right-3 flex gap-2">
-                    <button className="bg-gray-900/50 p-1.5 rounded-full hover:bg-gray-900">
-                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                      </svg>
-                    </button>
-                    <button className="bg-gray-900/50 p-1.5 rounded-full hover:bg-gray-900">
-                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
+        </div>
+
+        {/* Listings */}
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <LoadingSpinner size="lg" />
+          </div>
+        ) : filteredListings.length === 0 ? (
+          <div className="bg-gray-800 rounded-lg p-10 text-center">
+            <div className="flex justify-center mb-4">
+              <svg className="w-16 h-16 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold mb-2">No listings found</h3>
+            <p className="text-gray-400 mb-6">
+              {filter !== 'all' 
+                ? `You don't have any ${filter} listings at the moment.` 
+                : searchQuery 
+                  ? `No results found for "${searchQuery}".`
+                  : "You haven't created any vehicle listings yet."}
+            </p>
+            <Link
+              to="/dashboard/create-listing"
+              className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md font-medium transition-colors"
+            >
+              <PlusIcon className="w-5 h-5 mr-2" />
+              Create Your First Listing
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredListings.map((listing) => (
+              <div
+                key={listing.id}
+                className="bg-gray-800 rounded-lg overflow-hidden border border-gray-700 hover:border-gray-600 transition-all hover:shadow-lg hover:translate-y-[-2px]"
+              >
+                <Link to={`/cars/${listing.id}`} className="block relative">
+                  <div className="relative w-full h-48 bg-gray-900 overflow-hidden">
+                    {listing.images && listing.images.length > 0 ? (
+                      <img
+                        src={listing.images[0]}
+                        alt={listing.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-gray-500">
+                        <span>No image available</span>
+                      </div>
+                    )}
+                    <div className="absolute top-3 right-3">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(listing.status)}`}>
+                        {listing.status === 'active' && 'Active'}
+                        {listing.status === 'pending' && 'Pending Approval'}
+                        {listing.status === 'sold' && 'Sold'}
+                        {listing.status === 'rejected' && 'Rejected'}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+
+                <div className="p-5">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <Link to={`/cars/${listing.id}`} className="block">
+                        <h3 className="text-lg font-semibold hover:text-blue-400 transition-colors line-clamp-2">
+                          {listing.title}
+                        </h3>
+                      </Link>
+                      <div className="text-sm text-gray-400 mt-1">
+                        {listing.year} {listing.make} {listing.model}
+                      </div>
+                    </div>
+                    <div className="text-xl font-bold text-green-400">
+                      ${listing.price.toLocaleString()}
+                    </div>
+                  </div>
+
+                  <div className="text-sm text-gray-400 line-clamp-2 mb-4">
+                    {listing.description}
+                  </div>
+
+                  <div className="flex items-center justify-between text-sm text-gray-400 mb-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="flex items-center">
+                        <EyeIcon className="h-4 w-4 mr-1" />
+                        <span>{listing.views || 0}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <HeartIcon className="h-4 w-4 mr-1" />
+                        <span>{listing.likes || 0}</span>
+                      </div>
+                    </div>
+                    <div className="text-xs">
+                      Posted: {new Date(listing.created_at).toLocaleDateString()}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <Link
+                      to={`/dashboard/edit-listing/${listing.id}`}
+                      className="flex items-center px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm rounded transition-colors"
+                    >
+                      <PencilIcon className="w-4 h-4 mr-1" />
+                      Edit
+                    </Link>
+                    <button 
+                      onClick={() => confirmDelete(listing.id)}
+                      disabled={isDeleting && listingToDelete === listing.id}
+                      className="flex items-center px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 text-sm rounded transition-colors disabled:opacity-50"
+                    >
+                      {isDeleting && listingToDelete === listing.id ? (
+                        <LoadingSpinner size="sm" />
+                      ) : (
+                        <>
+                          <TrashIcon className="w-4 h-4 mr-1" />
+                          Remove
+                        </>
+                      )}
                     </button>
                   </div>
-                  <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs px-2 py-1 rounded-md font-medium">
-                    {listing.year}
-                  </div>
-                  {!listing.active && (
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                      <span className="bg-gray-800 text-white px-3 py-1 rounded-md font-medium">Sold</span>
+
+                  {listing.status === 'rejected' && (
+                    <div className="mt-3 p-2 bg-red-500/10 rounded text-xs text-red-400 italic">
+                      Your listing was rejected by admin. Please edit and resubmit.
                     </div>
                   )}
-                </div>
-                
-                <div className="p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-semibold text-lg">{listing.name}</h3>
-                    <div className="flex items-center text-yellow-400">
-                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <span className="text-sm">{listing.rating}</span>
+
+                  {listing.status === 'pending' && (
+                    <div className="mt-3 p-2 bg-yellow-500/10 rounded text-xs text-yellow-400 italic">
+                      Waiting for admin approval before being visible to buyers.
                     </div>
-                  </div>
-                  
-                  <p className="text-2xl font-bold text-white mb-3">{listing.price}</p>
-                  
-                  <div className="flex items-center text-gray-400 text-sm mb-3">
-                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    <span>{listing.location}</span>
-                  </div>
-                  
-                  <div className="flex items-center text-gray-400 text-sm mb-5">
-                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                    </svg>
-                    <span>{listing.mileage}</span>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-2">
-                    <button className="text-sm bg-transparent hover:bg-gray-700 text-white font-medium py-2 px-4 border border-gray-600 rounded">
-                      View Details
-                    </button>
-                    <button className="text-sm bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded">
-                      Contact Buyers
-                    </button>
-                  </div>
+                  )}
                 </div>
               </div>
             ))}
           </div>
-        </div>
-      </div>
-      
-      {/* Footer */}
-      <CommonFooter />
+        )}
+      </main>
     </div>
   );
 };

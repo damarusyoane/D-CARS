@@ -1,16 +1,21 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-
 
 @layer base {
   html {
     scroll-behavior: smooth;
   }
   
+  /* Apply transitions to all elements for theme changes */
+  *, *::before, *::after {
+    @apply transition-colors duration-200 ease-in-out;
+  }
+  
   body {
-    @apply font-sans text-gray-800 antialiased;
+    @apply font-sans text-gray-800 dark:text-gray-200 antialiased;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -31,6 +36,5 @@
     @apply bg-transparent hover:bg-blue-600 text-blue-600 hover:text-white border border-blue-600;
   }
 }
+
 @plugin "daisyui";
-
-
