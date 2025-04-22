@@ -12,12 +12,17 @@ import {
   XCircleIcon,
   ArrowPathIcon,
   ChartBarIcon,
-  UserCircleIcon,
   TruckIcon,
   ClockIcon,
-  BellIcon
+  BellIcon,
+  Cog6ToothIcon,
+  DocumentChartBarIcon,
+  HomeIcon
 } from '@heroicons/react/24/outline';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import TrafficAnalytics from '../components/admin/TrafficAnalytics';
+import CarApprovalWorkflow from '../components/admin/CarApprovalWorkflow';
+import UserStatistics from '../components/admin/UserStatistics';
 
 interface Vehicle {
   id: string;
@@ -31,6 +36,16 @@ interface Vehicle {
   seller_id: string;
   images: string[];
   created_at: string;
+  seller?: {
+    full_name: string;
+    email: string;
+  };
+  description?: string;
+  mileage?: number;
+  fuel_type?: string;
+  transmission?: string;
+  body_type?: string;
+  color?: string;
 }
 
 interface User {
@@ -49,11 +64,24 @@ interface StatsData {
   totalRevenue: number;
   pendingApprovals: number;
   activeListings: number;
+  dailyVisitors: number;
+  weeklyVisitors: number;
+  monthlyVisitors: number;
+  conversionRate: number;
+  buyerCount: number;
+  sellerCount: number;
+  averageListingViews: number;
 }
 
 export default function AdminDashboard() {
-  const { user } = useAuth();
+  const { profile } = useAuth();
   const navigate = useNavigate();
+  // Role-based access control
+  if (profile && profile.role !== 'admin') {
+    toast.error("You don't have permission to access the admin dashboard");
+    navigate('/');
+    return null;
+  }
   const [pendingVehicles, setPendingVehicles] = useState<Vehicle[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [stats, setStats] = useState<StatsData>({
@@ -62,17 +90,26 @@ export default function AdminDashboard() {
     totalSales: 0,
     totalRevenue: 0,
     pendingApprovals: 0,
-    activeListings: 0
+    activeListings: 0,
+    dailyVisitors: 0,
+    weeklyVisitors: 0,
+    monthlyVisitors: 0,
+    conversionRate: 0,
+    buyerCount: 0,
+    sellerCount: 0,
+    averageListingViews: 0
   });
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [newUsersThisWeek, setNewUsersThisWeek] = useState(0);
+  const [previousPeriodChange] = useState(5.2); // Mock data
 
   useEffect(() => {
     // Verify admin role
     const checkAdminRole = async () => {
       try {
-        if (!user) {
+        if (!profile) {
           navigate('/auth/login');
           return;
         }
@@ -80,7 +117,7 @@ export default function AdminDashboard() {
         const { data, error } = await supabase
           .from('profiles')
           .select('role')
-          .eq('id', user.id)
+          .eq('id', profile.id)
           .single();
 
         if (error) throw error;
@@ -100,7 +137,7 @@ export default function AdminDashboard() {
     };
 
     checkAdminRole();
-  }, [user, navigate]);
+  }, [profile, navigate]);
 
   const fetchData = async () => {
     try {
@@ -137,17 +174,56 @@ export default function AdminDashboard() {
           totalRevenue = revenue.data[0].sum;
         }
       }
+
+      // Count users by role
+      const { data: buyerData } = await supabase
+        .from('profiles')
+        .select('count')
+        .eq('role', 'buyer');
+      
+      const { data: sellerData } = await supabase
+        .from('profiles')
+        .select('count')
+        .eq('role', 'seller');
+
+      // Count new users in the last week
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+      
+      const { data: newUsersData } = await supabase
+        .from('profiles')
+        .select('count')
+        .gte('created_at', oneWeekAgo.toISOString());
+      
+      const newUsers = newUsersData?.[0]?.count || 0;
+      setNewUsersThisWeek(newUsers);
+
+      // Mock data for analytics (in a real app, this would come from analytics service)
+      const mockAnalytics = {
+        dailyVisitors: Math.floor(Math.random() * 500) + 100,
+        weeklyVisitors: Math.floor(Math.random() * 3000) + 1000,
+        monthlyVisitors: Math.floor(Math.random() * 10000) + 5000,
+        conversionRate: Math.floor(Math.random() * 10) + 1,
+        averageListingViews: Math.floor(Math.random() * 50) + 10
+      };
       
       setStats({
-        totalUsers: usersCount.count || 0,
-        totalVehicles: vehiclesCount.count || 0,
-        totalSales: salesCount.count || 0,
+        totalUsers: usersCount.data?.[0]?.count || 0,
+        totalVehicles: vehiclesCount.data?.[0]?.count || 0,
+        totalSales: salesCount.data?.[0]?.count || 0,
         totalRevenue: totalRevenue,
-        pendingApprovals: pendingCount.count || 0,
-        activeListings: activeCount.count || 0
+        pendingApprovals: pendingCount.data?.[0]?.count || 0,
+        activeListings: activeCount.data?.[0]?.count || 0,
+        dailyVisitors: mockAnalytics.dailyVisitors,
+        weeklyVisitors: mockAnalytics.weeklyVisitors,
+        monthlyVisitors: mockAnalytics.monthlyVisitors,
+        conversionRate: mockAnalytics.conversionRate,
+        buyerCount: buyerData?.[0]?.count || 0,
+        sellerCount: sellerData?.[0]?.count || 0,
+        averageListingViews: mockAnalytics.averageListingViews
       });
 
-      // Fetch pending vehicles
+      // Fetch pending vehicles with seller information
       const { data: vehicles, error: vehiclesError } = await supabase
         .from('vehicles')
         .select('*, seller:profiles(full_name, email)')
@@ -174,13 +250,13 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleVehicleApproval = async (vehicleId: string, approve: boolean) => {
+  const handleVehicleApproval = async (vehicleId: string) => {
     try {
       setProcessingId(vehicleId);
       
       const { error } = await supabase
         .from('vehicles')
-        .update({ status: approve ? 'active' : 'rejected' })
+        .update({ status: 'active' })
         .eq('id', vehicleId);
 
       if (error) throw error;
@@ -193,31 +269,70 @@ export default function AdminDashboard() {
           .from('notifications')
           .insert({
             user_id: vehicle.seller_id,
-            title: approve ? 'Vehicle Listing Approved' : 'Vehicle Listing Rejected',
-            message: approve 
-              ? `Your listing for ${vehicle.make} ${vehicle.model} has been approved and is now live.`
-              : `Your listing for ${vehicle.make} ${vehicle.model} has been rejected. Please contact support for more information.`,
-            type: approve ? 'success' : 'error',
+            title: 'Vehicle Listing Approved',
+            message: `Your listing for ${vehicle.make} ${vehicle.model} has been approved and is now live.`,
+            type: 'success',
             is_read: false
           });
 
         if (notificationError) throw notificationError;
       }
 
-      toast.success(approve ? 'Vehicle approved successfully' : 'Vehicle rejected');
+      toast.success('Vehicle approved successfully');
       
       // Update local state
       setPendingVehicles(pendingVehicles.filter(v => v.id !== vehicleId));
       fetchData(); // Refresh all data
     } catch (error) {
-      console.error('Error updating vehicle status:', error);
-      toast.error('Failed to process vehicle');
+      console.error('Error approving vehicle:', error);
+      toast.error('Failed to approve vehicle');
     } finally {
       setProcessingId(null);
     }
   };
 
-  const handleUserRoleUpdate = async (userId: string, newRole: 'user' | 'admin') => {
+  const handleVehicleRejection = async (vehicleId: string, reason: string) => {
+    try {
+      setProcessingId(vehicleId);
+      
+      const { error } = await supabase
+        .from('vehicles')
+        .update({ status: 'rejected' })
+        .eq('id', vehicleId);
+
+      if (error) throw error;
+
+      // Find the vehicle and its seller to send notification
+      const vehicle = pendingVehicles.find(v => v.id === vehicleId);
+      if (vehicle) {
+        // Send notification to the seller
+        const { error: notificationError } = await supabase
+          .from('notifications')
+          .insert({
+            user_id: vehicle.seller_id,
+            title: 'Vehicle Listing Rejected',
+            message: `Your listing for ${vehicle.make} ${vehicle.model} has been rejected. Reason: ${reason}`,
+            type: 'error',
+            is_read: false
+          });
+
+        if (notificationError) throw notificationError;
+      }
+
+      toast.success('Vehicle rejected');
+      
+      // Update local state
+      setPendingVehicles(pendingVehicles.filter(v => v.id !== vehicleId));
+      fetchData(); // Refresh all data
+    } catch (error) {
+      console.error('Error rejecting vehicle:', error);
+      toast.error('Failed to reject vehicle');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleUserRoleUpdate = async (userId: string, newRole: 'user' | 'admin' | 'seller' | 'buyer') => {
     try {
       const { error } = await supabase
         .from('profiles')
@@ -232,6 +347,7 @@ export default function AdminDashboard() {
       setUsers(users.map(u => 
         u.id === userId ? { ...u, role: newRole } : u
       ));
+      fetchData(); // Refresh stats
     } catch (error) {
       console.error('Error updating user role:', error);
       toast.error('Failed to update user role');
@@ -262,333 +378,342 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      {/* Header */}
-      <header className="bg-gray-800 p-6 shadow-lg">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
-          <p className="text-gray-400">Manage vehicles, users, and view platform statistics</p>
-        </div>
-      </header>
-      
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto p-6">
-        {/* Navigation Tabs */}
-        <div className="flex border-b border-gray-700 mb-8 overflow-x-auto">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`px-6 py-3 font-medium text-sm whitespace-nowrap ${activeTab === 'overview' 
-              ? 'text-blue-500 border-b-2 border-blue-500' 
-              : 'text-gray-400 hover:text-white'}`}
-          >
-            <ChartBarIcon className="w-5 h-5 inline mr-2" />
-            Overview
-          </button>
-          <button
-            onClick={() => setActiveTab('pending')}
-            className={`px-6 py-3 font-medium text-sm whitespace-nowrap ${activeTab === 'pending' 
-              ? 'text-blue-500 border-b-2 border-blue-500' 
-              : 'text-gray-400 hover:text-white'}`}
-          >
-            <ClockIcon className="w-5 h-5 inline mr-2" />
-            Pending Approvals
-            {stats.pendingApprovals > 0 && (
-              <span className="ml-2 bg-blue-500 text-xs rounded-full px-2 py-1">
-                {stats.pendingApprovals}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab('users')}
-            className={`px-6 py-3 font-medium text-sm whitespace-nowrap ${activeTab === 'users' 
-              ? 'text-blue-500 border-b-2 border-blue-500' 
-              : 'text-gray-400 hover:text-white'}`}
-          >
-            <UserCircleIcon className="w-5 h-5 inline mr-2" />
-            Users
-          </button>
-          <button
-            onClick={() => fetchData()}
-            className="ml-auto px-4 py-2 text-gray-400 hover:text-white"
-          >
-            <ArrowPathIcon className="w-5 h-5" />
-          </button>
-        </div>
-        
-        {activeTab === 'overview' && (
-          <div className="space-y-8">
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <StatCard 
-                icon={UsersIcon} 
-                title="Total Users" 
-                value={stats.totalUsers} 
-                color="border-blue-600" 
-              />
-              <StatCard 
-                icon={TruckIcon} 
-                title="Total Listings" 
-                value={stats.totalVehicles} 
-                color="border-green-600" 
-              />
-              <StatCard 
-                icon={TagIcon} 
-                title="Active Listings" 
-                value={stats.activeListings} 
-                color="border-purple-600" 
-              />
-              <StatCard 
-                icon={ShoppingCartIcon} 
-                title="Completed Sales" 
-                value={stats.totalSales} 
-                color="border-amber-600" 
-              />
-              <StatCard 
-                icon={CurrencyDollarIcon} 
-                title="Total Revenue" 
-                value={`$${stats.totalRevenue.toLocaleString()}`} 
-                color="border-emerald-600" 
-              />
-              <StatCard 
-                icon={BellIcon} 
-                title="Pending Approvals" 
-                value={stats.pendingApprovals} 
-                color="border-red-600" 
-              />
-            </div>
-            
-            {/* Quick Actions */}
-            <div className="bg-gray-800 rounded-lg p-6">
-              <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Admin Dashboard Layout */}
+      <div className="flex">
+        {/* Sidebar */}
+        <div className="w-64 bg-gray-800 min-h-screen fixed left-0 top-0 z-10 hidden lg:block">
+          <div className="p-6 border-b border-gray-700">
+            <h1 className="text-2xl font-bold">D-CARS Admin</h1>
+            <p className="text-sm text-gray-400">Management Dashboard</p>
+          </div>
+          
+          <nav className="p-4">
+            <ul className="space-y-2">
+              <li>
+                <button 
+                  onClick={() => setActiveTab('overview')}
+                  className={`w-full flex items-center px-4 py-3 rounded-lg ${
+                    activeTab === 'overview' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'
+                  }`}
+                >
+                  <HomeIcon className="w-5 h-5 mr-3" />
+                  Dashboard Overview
+                </button>
+              </li>
+              <li>
                 <button 
                   onClick={() => setActiveTab('pending')}
-                  className="p-4 bg-gray-700 hover:bg-gray-600 rounded-lg text-left flex items-center space-x-3 transition-colors"
+                  className={`w-full flex items-center px-4 py-3 rounded-lg ${
+                    activeTab === 'pending' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'
+                  }`}
                 >
-                  <div className="p-3 bg-blue-500/20 rounded-full">
-                    <ClockIcon className="w-5 h-5 text-blue-500" />
-                  </div>
-                  <div>
-                    <span className="block font-medium">Pending Approvals</span>
-                    <span className="text-sm text-gray-400">Review new vehicle listings</span>
-                  </div>
+                  <ClockIcon className="w-5 h-5 mr-3" />
+                  Pending Approvals
+                  {stats.pendingApprovals > 0 && (
+                    <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1">
+                      {stats.pendingApprovals}
+                    </span>
+                  )}
                 </button>
-                
+              </li>
+              <li>
                 <button 
                   onClick={() => setActiveTab('users')}
-                  className="p-4 bg-gray-700 hover:bg-gray-600 rounded-lg text-left flex items-center space-x-3 transition-colors"
+                  className={`w-full flex items-center px-4 py-3 rounded-lg ${
+                    activeTab === 'users' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'
+                  }`}
                 >
-                  <div className="p-3 bg-purple-500/20 rounded-full">
-                    <UsersIcon className="w-5 h-5 text-purple-500" />
-                  </div>
-                  <div>
-                    <span className="block font-medium">Manage Users</span>
-                    <span className="text-sm text-gray-400">Update roles and permissions</span>
-                  </div>
+                  <UsersIcon className="w-5 h-5 mr-3" />
+                  User Management
                 </button>
-                
+              </li>
+              <li>
                 <button 
-                  onClick={() => navigate('/admin/analytics')}
-                  className="p-4 bg-gray-700 hover:bg-gray-600 rounded-lg text-left flex items-center space-x-3 transition-colors"
+                  onClick={() => setActiveTab('analytics')}
+                  className={`w-full flex items-center px-4 py-3 rounded-lg ${
+                    activeTab === 'analytics' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'
+                  }`}
                 >
-                  <div className="p-3 bg-green-500/20 rounded-full">
-                    <ChartBarIcon className="w-5 h-5 text-green-500" />
-                  </div>
-                  <div>
-                    <span className="block font-medium">Sales Analytics</span>
-                    <span className="text-sm text-gray-400">Detailed metrics and reports</span>
-                  </div>
+                  <ChartBarIcon className="w-5 h-5 mr-3" />
+                  Traffic Analytics
                 </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => navigate('/admin/settings')}
+                  className="w-full flex items-center px-4 py-3 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white"
+                >
+                  <Cog6ToothIcon className="w-5 h-5 mr-3" />
+                  Settings
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => navigate('/')}
+                  className="w-full flex items-center px-4 py-3 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white"
+                >
+                  <ArrowPathIcon className="w-5 h-5 mr-3" />
+                  Back to Site
+                </button>
+              </li>
+            </ul>
+          </nav>
+        </div>
+        
+        {/* Main Content */}
+        <div className="lg:ml-64 w-full">
+          {/* Header */}
+          <header className="bg-gray-800 p-6 shadow-lg sticky top-0 z-10">
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+                <p className="text-gray-400">Welcome back, {profile?.email}</p>
               </div>
-            </div>
-
-            {/* Recent Activity */}
-            <div className="bg-gray-800 rounded-lg p-6">
-              <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
-              <div className="space-y-4">
-                {pendingVehicles.slice(0, 3).map(vehicle => (
-                  <div key={vehicle.id} className="p-4 border border-gray-700 rounded-lg flex justify-between items-center">
-                    <div>
-                      <h3 className="font-medium">{vehicle.make} {vehicle.model} ({vehicle.year})</h3>
-                      <p className="text-sm text-gray-400">New listing pending approval</p>
-                    </div>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleVehicleApproval(vehicle.id, true)}
-                        className="p-1 text-green-500 hover:bg-green-500/10 rounded-full"
-                        disabled={processingId === vehicle.id}
-                      >
-                        <CheckCircleIcon className="w-6 h-6" />
-                      </button>
-                      <button
-                        onClick={() => handleVehicleApproval(vehicle.id, false)}
-                        className="p-1 text-red-500 hover:bg-red-500/10 rounded-full"
-                        disabled={processingId === vehicle.id}
-                      >
-                        <XCircleIcon className="w-6 h-6" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-                {pendingVehicles.length === 0 && (
-                  <p className="text-gray-400 text-center py-4">No pending approvals</p>
-                )}
-                {pendingVehicles.length > 3 && (
-                  <button 
-                    onClick={() => setActiveTab('pending')}
-                    className="w-full text-center py-2 text-blue-400 hover:text-blue-300"
-                  >
-                    View all pending approvals
+              <div className="flex items-center space-x-4">
+                <button 
+                  onClick={fetchData}
+                  className="p-2 text-gray-400 hover:text-white"
+                  title="Refresh Data"
+                >
+                  <ArrowPathIcon className="w-5 h-5" />
+                </button>
+                <div className="relative">
+                  <button className="p-2 text-gray-400 hover:text-white relative">
+                    <BellIcon className="w-5 h-5" />
+                    <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
                   </button>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {activeTab === 'pending' && (
-          <div className="bg-gray-800 rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-6">Pending Vehicle Approvals</h2>
-            {pendingVehicles.length === 0 ? (
-              <div className="text-center py-8 text-gray-400">
-                <div className="mx-auto w-16 h-16 mb-4 flex items-center justify-center rounded-full bg-gray-700">
-                  <CheckCircleIcon className="w-8 h-8" />
                 </div>
-                <p className="text-lg font-medium mb-2">All caught up!</p>
-                <p>There are no vehicles waiting for approval</p>
+                <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center">
+                  <span className="text-sm font-medium">{profile?.email?.charAt(0).toUpperCase()}</span>
+                </div>
               </div>
-            ) : (
-              <div className="space-y-6">
-                {pendingVehicles.map(vehicle => (
-                  <div key={vehicle.id} className="border border-gray-700 rounded-lg overflow-hidden">
-                    <div className="flex flex-col md:flex-row">
-                      <div className="w-full md:w-1/4 h-48 bg-gray-700 relative">
-                        {vehicle.images && vehicle.images.length > 0 ? (
-                          <img 
-                            src={vehicle.images[0]} 
-                            alt={`${vehicle.make} ${vehicle.model}`} 
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="flex items-center justify-center h-full text-gray-500">
-                            <span>No image available</span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 p-4">
-                        <div className="flex justify-between">
-                          <h3 className="text-lg font-semibold">{vehicle.title}</h3>
-                          <p className="text-xl font-bold text-green-400">${vehicle.price.toLocaleString()}</p>
-                        </div>
-                        <p className="text-gray-400 mb-2">{vehicle.year} {vehicle.make} {vehicle.model}</p>
-                        <p className="text-gray-400 mb-4">{vehicle.location}</p>
-                        
-                        <div className="flex items-center space-x-4 text-sm text-gray-400 mb-4">
-                          <div>
-                            <span className="font-semibold">Seller:</span> {(vehicle as any).seller?.full_name}
-                          </div>
-                          <div>
-                            <span className="font-semibold">Listed:</span> {new Date(vehicle.created_at).toLocaleDateString()}
-                          </div>
-                        </div>
-                        
-                        <div className="flex space-x-2 mt-4">
-                          <button
-                            onClick={() => handleVehicleApproval(vehicle.id, true)}
-                            disabled={processingId === vehicle.id}
-                            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md flex items-center space-x-2 disabled:opacity-50"
-                          >
-                            {processingId === vehicle.id ? <LoadingSpinner size="sm" /> : <CheckCircleIcon className="w-5 h-5" />}
-                            <span>Approve Listing</span>
-                          </button>
-                          <button
-                            onClick={() => handleVehicleApproval(vehicle.id, false)}
-                            disabled={processingId === vehicle.id}
-                            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center space-x-2 disabled:opacity-50"
-                          >
-                            {processingId === vehicle.id ? <LoadingSpinner size="sm" /> : <XCircleIcon className="w-5 h-5" />}
-                            <span>Reject Listing</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-        
-        {activeTab === 'users' && (
-          <div className="bg-gray-800 rounded-lg p-6 overflow-hidden">
-            <h2 className="text-xl font-semibold mb-6">User Management</h2>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-700">
-                <thead>
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">User</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Email</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Role</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Joined Date</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-700">
-                  {users.map(user => (
-                    <tr key={user.id} className="hover:bg-gray-700/20">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="h-10 w-10 rounded-full bg-gray-700 flex-shrink-0 mr-3 overflow-hidden">
-                            {user.avatar_url ? (
-                              <img src={user.avatar_url} alt={user.full_name} className="h-full w-full object-cover" />
-                            ) : (
-                              <div className="flex items-center justify-center h-full text-gray-500">
-                                <UserCircleIcon className="w-6 h-6" />
-                              </div>
-                            )}
-                          </div>
-                          <div>
-                            <div className="font-medium">{user.full_name}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {user.email}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          user.role === 'admin' ? 'bg-purple-500/20 text-purple-400' : 'bg-blue-500/20 text-blue-400'
-                        }`}>
-                          {user.role || 'user'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                        {new Date(user.created_at).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        {user.role === 'admin' ? (
-                          <button
-                            onClick={() => handleUserRoleUpdate(user.id, 'user')}
-                            className="text-blue-400 hover:text-blue-300"
-                          >
-                            Make User
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleUserRoleUpdate(user.id, 'admin')}
-                            className="text-blue-400 hover:text-blue-300"
-                          >
-                            Make Admin
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
-          </div>
-        )}
-      </main>
+          </header>
+          
+          {/* Dashboard Content */}
+          <main className="p-6">
+            {/* Mobile Navigation */}
+            <div className="flex lg:hidden overflow-x-auto mb-6 bg-gray-800 rounded-lg">
+              <button
+                onClick={() => setActiveTab('overview')}
+                className={`px-4 py-3 whitespace-nowrap ${
+                  activeTab === 'overview' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-400'
+                }`}
+              >
+                Overview
+              </button>
+              <button
+                onClick={() => setActiveTab('pending')}
+                className={`px-4 py-3 whitespace-nowrap ${
+                  activeTab === 'pending' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-400'
+                }`}
+              >
+                Approvals
+                {stats.pendingApprovals > 0 && (
+                  <span className="ml-1 bg-red-500 text-white text-xs rounded-full px-1.5">
+                    {stats.pendingApprovals}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab('users')}
+                className={`px-4 py-3 whitespace-nowrap ${
+                  activeTab === 'users' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-400'
+                }`}
+              >
+                Users
+              </button>
+              <button
+                onClick={() => setActiveTab('analytics')}
+                className={`px-4 py-3 whitespace-nowrap ${
+                  activeTab === 'analytics' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-400'
+                }`}
+              >
+                Analytics
+              </button>
+            </div>
+            
+            {/* Tab Content */}
+            <div className="space-y-6">
+              {/* Overview Tab */}
+              {activeTab === 'overview' && (
+                <>
+                  {/* Stats Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <StatCard 
+                      icon={UsersIcon} 
+                      title="Total Users" 
+                      value={stats.totalUsers} 
+                      color="border-blue-600" 
+                    />
+                    <StatCard 
+                      icon={TruckIcon} 
+                      title="Total Listings" 
+                      value={stats.totalVehicles} 
+                      color="border-green-600" 
+                    />
+                    <StatCard 
+                      icon={TagIcon} 
+                      title="Active Listings" 
+                      value={stats.activeListings} 
+                      color="border-purple-600" 
+                    />
+                    <StatCard 
+                      icon={ShoppingCartIcon} 
+                      title="Completed Sales" 
+                      value={stats.totalSales} 
+                      color="border-amber-600" 
+                    />
+                    <StatCard 
+                      icon={CurrencyDollarIcon} 
+                      title="Total Revenue" 
+                      value={`$${stats.totalRevenue.toLocaleString()}`} 
+                      color="border-emerald-600" 
+                    />
+                    <StatCard 
+                      icon={BellIcon} 
+                      title="Pending Approvals" 
+                      value={stats.pendingApprovals} 
+                      color="border-red-600" 
+                    />
+                    <StatCard 
+                      icon={ChartBarIcon} 
+                      title="Daily Visitors" 
+                      value={stats.dailyVisitors} 
+                      color="border-blue-600" 
+                    />
+                    <StatCard 
+                      icon={DocumentChartBarIcon} 
+                      title="Conversion Rate" 
+                      value={`${stats.conversionRate}%`} 
+                      color="border-amber-600" 
+                    />
+                  </div>
+                  
+                  {/* Traffic Analytics Preview */}
+                  <TrafficAnalytics 
+                    dailyVisitors={stats.dailyVisitors}
+                    weeklyVisitors={stats.weeklyVisitors}
+                    monthlyVisitors={stats.monthlyVisitors}
+                    conversionRate={stats.conversionRate}
+                    previousPeriodChange={previousPeriodChange}
+                  />
+                  
+                  {/* Pending Approvals Preview */}
+                  <div className="bg-gray-800 rounded-lg p-6">
+                    <div className="flex justify-between items-center mb-6">
+                      <h2 className="text-xl font-semibold">Pending Approvals</h2>
+                      {pendingVehicles.length > 0 && (
+                        <button 
+                          onClick={() => setActiveTab('pending')}
+                          className="text-blue-400 hover:text-blue-300 text-sm"
+                        >
+                          View All
+                        </button>
+                      )}
+                    </div>
+                    
+                    {pendingVehicles.length === 0 ? (
+                      <div className="text-center py-8 text-gray-400">
+                        <CheckCircleIcon className="w-12 h-12 mx-auto mb-4 text-green-500" />
+                        <p className="text-lg font-medium">All caught up!</p>
+                        <p>There are no vehicles waiting for approval</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {pendingVehicles.slice(0, 3).map(vehicle => (
+                          <div key={vehicle.id} className="bg-gray-700 rounded-lg p-4 flex justify-between items-center">
+                            <div className="flex items-center">
+                              <div className="h-12 w-16 bg-gray-600 rounded mr-4 overflow-hidden">
+                                {vehicle.images && vehicle.images.length > 0 ? (
+                                  <img 
+                                    src={vehicle.images[0]} 
+                                    alt={vehicle.title} 
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="flex items-center justify-center h-full text-gray-500">No image</div>
+                                )}
+                              </div>
+                              <div>
+                                <h3 className="font-medium text-white">{vehicle.title}</h3>
+                                <p className="text-sm text-gray-400">{vehicle.seller?.full_name}</p>
+                              </div>
+                            </div>
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => handleVehicleApproval(vehicle.id)}
+                                disabled={processingId === vehicle.id}
+                                className="p-1 text-green-500 hover:bg-green-500/10 rounded-full"
+                              >
+                                <CheckCircleIcon className="w-6 h-6" />
+                              </button>
+                              <button
+                                onClick={() => handleVehicleRejection(vehicle.id, "Does not meet listing requirements")}
+                                disabled={processingId === vehicle.id}
+                                className="p-1 text-red-500 hover:bg-red-500/10 rounded-full"
+                              >
+                                <XCircleIcon className="w-6 h-6" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+              
+              {/* Pending Approvals Tab */}
+              {activeTab === 'pending' && (
+                <CarApprovalWorkflow 
+                  pendingVehicles={pendingVehicles}
+                  onApprove={handleVehicleApproval}
+                  onReject={handleVehicleRejection}
+                  processingId={processingId}
+                />
+              )}
+              
+              {/* User Management Tab */}
+              {activeTab === 'users' && (
+                <UserStatistics 
+                  totalUsers={stats.totalUsers}
+                  buyerCount={stats.buyerCount}
+                  sellerCount={stats.sellerCount}
+                  newUsersThisWeek={newUsersThisWeek}
+                  users={users}
+                  onRoleChange={handleUserRoleUpdate}
+                />
+              )}
+              
+              {/* Analytics Tab */}
+              {activeTab === 'analytics' && (
+                <TrafficAnalytics 
+                  dailyVisitors={stats.dailyVisitors}
+                  weeklyVisitors={stats.weeklyVisitors}
+                  monthlyVisitors={stats.monthlyVisitors}
+                  conversionRate={stats.conversionRate}
+                  previousPeriodChange={previousPeriodChange}
+                />
+              )}
+            </div>
+          </main>
+          
+          {/* Footer */}
+          <footer className="bg-gray-800 p-6 border-t border-gray-700">
+            <div className="flex flex-col md:flex-row justify-between items-center">
+              <div className="text-gray-400 text-sm mb-4 md:mb-0">
+                &copy; {new Date().getFullYear()} D-CARS Admin Dashboard. All rights reserved.
+              </div>
+              <div className="flex space-x-4">
+                <a href="#" className="text-gray-400 hover:text-white text-sm">Privacy Policy</a>
+                <a href="#" className="text-gray-400 hover:text-white text-sm">Terms of Service</a>
+                <a href="#" className="text-gray-400 hover:text-white text-sm">Help Center</a>
+              </div>
+            </div>
+          </footer>
+        </div>
+      </div>
     </div>
   );
 }

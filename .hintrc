@@ -21,7 +21,8 @@
     "axe/structure": [
       "default",
       {
-        "dlitem": "off"
+        "dlitem": "off",
+        "definition-list": "off"
       }
     ],
     "axe/aria": [

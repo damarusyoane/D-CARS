@@ -1,309 +1,581 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
-import Footer from '../components/layout/Footer';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 import {
   ChartBarIcon,
   CurrencyDollarIcon,
   UserGroupIcon,
   ChatBubbleLeftRightIcon,
-  ArrowUpIcon,
-  ArrowDownIcon,
+  EyeIcon,
+  ArrowPathIcon,
+  PlusCircleIcon,
+  HeartIcon
 } from '@heroicons/react/24/outline';
 
-interface StatCard {
+interface DashboardStat {
   title: string;
   value: string | number;
-  change: number;
+  change?: number;
   icon: React.ForwardRefExoticComponent<any>;
+  color: string;
+}
+
+interface VehicleOverview {
+  id: string;
+  title: string;
+  price: number;
+  imageUrl: string;
+  views: number;
+  inquiries: number;
+  daysListed: number;
 }
 
 const Dashboard: React.FC = () => {
-  // Example data for the charts
-  const monthlyRevenue = [
-    { month: 'Jan', amount: 2100 },
-    { month: 'Feb', amount: 2400 },
-    { month: 'Mar', amount: 1800 },
-    { month: 'Apr', amount: 2200 },
-    { month: 'May', amount: 2600 },
-    { month: 'Jun', amount: 3000 },
-    { month: 'Jul', amount: 3400 },
-    { month: 'Aug', amount: 3200 },
-    { month: 'Sep', amount: 3600 },
-    { month: 'Oct', amount: 3800 },
-    { month: 'Nov', amount: 4200 },
-    { month: 'Dec', amount: 4500 },
-  ];
+  const { user } = useAuth();
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [recentListings, setRecentListings] = useState<VehicleOverview[]>([]);
+  const [recentMessages, setRecentMessages] = useState<any[]>([]);
 
-  const recentActivities = [
-    {
-      id: 1,
-      type: 'new_listing',
-      user: 'Alex Johnson',
-      details: 'Listed 2021 Tesla Model 3',
-      timestamp: '2 hours ago',
-    },
-    {
-      id: 2,
-      type: 'sale',
-      user: 'Sarah Wilson',
-      details: 'Purchased 2020 BMW M4',
-      timestamp: '4 hours ago',
-    },
-    {
-      id: 3,
-      type: 'message',
-      user: 'Mike Brown',
-      details: 'Sent message about 2022 Audi Q5',
-      timestamp: '5 hours ago',
-    },
-  ];
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+          
+        if (error) throw error;
+        setUserRole(data.role);
+      } catch (error) {
+        console.error('Error fetching user role:', error);
+      }
+    };
+    
+    const fetchDashboardData = async () => {
+      if (!user) return;
+      
+      try {
+        // Fetch recent listings if seller
+        const { data: listings, error: listingsError } = await supabase
+          .from('vehicles')
+          .select('*')
+          .eq('seller_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(5);
+          
+        if (listingsError) throw listingsError;
+        
+        // Transform listings data
+        const formattedListings = listings?.map(listing => ({
+          id: listing.id,
+          title: `${listing.year} ${listing.make} ${listing.model}`,
+          price: listing.price,
+          imageUrl: listing.images?.[0] || '/assets/car-placeholder.jpg',
+          views: Math.floor(Math.random() * 500), // Replace with actual analytics data
+          inquiries: Math.floor(Math.random() * 20), // Replace with actual analytics data
+          daysListed: Math.floor((Date.now() - new Date(listing.created_at).getTime()) / (1000 * 60 * 60 * 24))
+        })) || [];
+        
+        setRecentListings(formattedListings);
+        
+        // Fetch recent messages
+        const { data: messages, error: messagesError } = await supabase
+          .from('messages')
+          .select(`
+            id, 
+            content, 
+            created_at,
+            vehicles!inner(id, make, model, year),
+            profiles!sender_id(id, full_name, avatar_url)
+          `)
+          .or(`receiver_id.eq.${user.id}`)
+          .order('created_at', { ascending: false })
+          .limit(5);
+          
+        if (messagesError) throw messagesError;
+        setRecentMessages(messages || []);
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchUserRole();
+    fetchDashboardData();
+  }, [user]);
 
-  const pendingApprovals = [
-    {
-      id: 1,
-      type: 'listing',
-      user: 'John Doe',
-      item: '2023 Mercedes-Benz C-Class',
-      status: 'pending',
-    },
-    {
-      id: 2,
-      type: 'verification',
-      user: 'Emma Smith',
-      item: 'Dealer verification request',
-      status: 'pending',
-    },
-  ];
-
-  // Stats for the dashboard
-  const stats: StatCard[] = [
-    {
-      title: 'Total Users',
-      value: '8,249',
-      change: 12.5,
-      icon: UserGroupIcon,
-    },
+  // Example stats for the dashboard
+  const sellerStats: DashboardStat[] = [
     {
       title: 'Active Listings',
-      value: '1,836',
-      change: -2.4,
+      value: recentListings.length,
       icon: ChartBarIcon,
+      color: 'bg-blue-500'
     },
     {
-      title: 'Total Revenue',
-      value: '$502,419',
-      change: 18.2,
-      icon: CurrencyDollarIcon,
+      title: 'Total Views',
+      value: recentListings.reduce((sum, listing) => sum + listing.views, 0),
+      change: 24.5,
+      icon: EyeIcon,
+      color: 'bg-green-500'
     },
     {
       title: 'Messages',
-      value: '245',
-      change: 5.7,
+      value: recentMessages.length,
       icon: ChatBubbleLeftRightIcon,
+      color: 'bg-purple-500'
     },
+    {
+      title: 'Total Inquiries',
+      value: recentListings.reduce((sum, listing) => sum + listing.inquiries, 0),
+      change: 8.2,
+      icon: UserGroupIcon,
+      color: 'bg-yellow-500'
+    }
   ];
 
+  const buyerStats: DashboardStat[] = [
+    {
+      title: 'Saved Cars',
+      value: '12',
+      icon: HeartIcon,
+      color: 'bg-red-500'
+    },
+    {
+      title: 'Recent Searches',
+      value: '24',
+      icon: ChartBarIcon,
+      color: 'bg-blue-500'
+    },
+    {
+      title: 'Messages',
+      value: recentMessages.length,
+      icon: ChatBubbleLeftRightIcon,
+      color: 'bg-purple-500'
+    },
+    {
+      title: 'New Listings Today',
+      value: '38',
+      icon: PlusCircleIcon,
+      color: 'bg-green-500'
+    }
+  ];
+
+  const stats = userRole === 'seller' ? sellerStats : buyerStats;
+
   return (
-    <div className="flex min-h-screen bg-gray-900 text-white">
+    <div className="flex min-h-screen bg-gray-50">
       {/* Sidebar */}
       <Sidebar activePage="dashboard" />
       
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="flex justify-between items-center p-6 border-b border-gray-800">
-          <div>
-            <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-            <p className="text-gray-400 text-sm">Analytics & Statistics</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <input 
-                type="text" 
-                placeholder="Search" 
-                className="px-4 py-2 bg-gray-800 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <svg className="w-5 h-5 absolute right-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+        <header className="bg-white shadow-sm z-10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center py-6">
+              <h1 className="text-2xl font-bold text-gray-900">
+                {userRole === 'seller' ? 'Seller Dashboard' : 'Buyer Dashboard'}
+              </h1>
+              <div className="flex items-center space-x-4">
+                <button className="flex items-center text-sm text-gray-500 hover:text-gray-700">
+                  <ArrowPathIcon className="h-4 w-4 mr-1" />
+                  Refresh
+                </button>
+                {userRole === 'seller' && (
+                  <Link
+                    to="/dashboard/create-listing"
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    <PlusCircleIcon className="h-5 w-5 mr-2" />
+                    New Listing
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
         </header>
         
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-6">
-          {stats.map((stat) => (
-            <div
-              key={stat.title}
-              className="bg-gray-800 rounded-lg p-6 flex flex-col"
-            >
-              <div className="flex items-center justify-between">
-                <stat.icon className="h-8 w-8 text-gray-400" />
-                <div className={`flex items-center ${
-                  stat.change >= 0 ? 'text-green-500' : 'text-red-500'
-                }`}>
-                  {stat.change >= 0 ? (
-                    <ArrowUpIcon className="h-4 w-4 mr-1" />
-                  ) : (
-                    <ArrowDownIcon className="h-4 w-4 mr-1" />
-                  )}
-                  <span>{Math.abs(stat.change)}%</span>
-                </div>
-              </div>
-              <div className="mt-4">
-                <h3 className="text-2xl font-bold">{stat.value}</h3>
-                <p className="text-gray-400">{stat.title}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-        
-        {/* Main Dashboard Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
-          {/* Monthly Revenue Chart */}
-          <div className="bg-gray-800 rounded-lg p-6 lg:col-span-3">
-            <h3 className="text-lg font-semibold mb-4">Monthly Revenue</h3>
-            <div className="h-64 flex items-end justify-between">
-              {monthlyRevenue.map((data, index) => (
-                <div key={index} className="flex flex-col items-center">
-                  <div 
-                    className="w-10 bg-blue-500 rounded-t-md" 
-                    style={{ height: `${(data.amount / 5000) * 200}px` }}
-                  ></div>
-                  <span className="text-xs text-gray-400 mt-2">{data.month}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          {/* Vehicle by Type Pie Chart */}
-          <div className="bg-gray-800 rounded-lg p-6">
-            <h3 className="text-lg font-semibold mb-4">Vehicles by Type</h3>
-            <div className="h-56 flex items-center justify-center">
-              {/* This is a simplified pie chart using a circular div with a cutout */}
-              <div className="relative w-40 h-40">
-                <div className="absolute inset-0 rounded-full border-8 border-blue-500"></div>
-                <div className="absolute inset-0 rounded-full border-8 border-transparent border-t-green-500 border-r-green-500 border-b-green-500 transform rotate-[60deg]"></div>
-                <div className="absolute inset-0 rounded-full border-8 border-transparent border-t-yellow-500 transform rotate-[200deg]"></div>
-                
-                {/* Center white circle to create donut effect */}
-                <div className="absolute inset-[20%] bg-gray-800 rounded-full flex items-center justify-center">
-                  <div className="text-center">
-                    <p className="text-sm text-gray-400">Total</p>
-                    <p className="text-xl font-bold">8,549</p>
+        {/* Dashboard Content */}
+        <main className="flex-1 overflow-y-auto bg-gray-50 p-4 sm:p-6 lg:p-8">
+          <div className="max-w-7xl mx-auto">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              {stats.map((stat) => (
+                <div
+                  key={stat.title}
+                  className="bg-white rounded-lg shadow overflow-hidden"
+                >
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className={`flex-shrink-0 rounded-md p-3 ${stat.color} bg-opacity-10`}>
+                        <stat.icon className={`h-6 w-6 ${stat.color.replace('bg', 'text')}`} />
+                      </div>
+                      {stat.change !== undefined && (
+                        <div className={`ml-auto text-sm flex items-center ${
+                          stat.change >= 0 ? 'text-green-500' : 'text-red-500'
+                        }`}>
+                          {stat.change >= 0 ? '+' : ''}{stat.change}%
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-4">
+                      <h3 className="text-2xl font-semibold text-gray-900">{stat.value}</h3>
+                      <p className="text-sm text-gray-500">{stat.title}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ))}
             </div>
             
-            <div className="flex justify-between mt-4">
-              <div className="flex items-center">
-                <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
-                <span className="text-sm text-gray-400">Sedan (42%)</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-                <span className="text-sm text-gray-400">SUV (38%)</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
-                <span className="text-sm text-gray-400">Other (20%)</span>
-              </div>
-            </div>
-          </div>
-          
-          {/* Revenue Trends Line Chart */}
-          <div className="bg-gray-800 rounded-lg p-6 col-span-2">
-            <h3 className="text-lg font-semibold mb-4">Revenue Trends</h3>
-            <div className="h-56 flex items-center">
-              {/* Simplified line chart */}
-              <svg className="w-full h-40" viewBox="0 0 300 100">
-                <path
-                  d="M0,80 C20,70 40,90 60,75 C80,60 100,80 120,70 C140,60 160,50 180,40 C200,30 220,20 240,15 C260,10 280,5 300,0"
-                  fill="none"
-                  stroke="#3b82f6"
-                  strokeWidth="2"
-                />
-                <circle cx="60" cy="75" r="3" fill="#3b82f6" />
-                <circle cx="120" cy="70" r="3" fill="#3b82f6" />
-                <circle cx="180" cy="40" r="3" fill="#3b82f6" />
-                <circle cx="240" cy="15" r="3" fill="#3b82f6" />
-                <circle cx="300" cy="0" r="3" fill="#3b82f6" />
-              </svg>
-            </div>
-          </div>
-          
-          {/* Recent Activities */}
-          <div className="bg-gray-800 rounded-lg p-6 lg:col-span-2">
-            <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
-            <div className="space-y-4">
-              {recentActivities.map((activity) => (
-                <div
-                  key={activity.id}
-                  className="flex items-start space-x-3 p-3 hover:bg-gray-700 rounded-lg transition-colors"
-                >
-                  <div className="flex-shrink-0">
-                    <div className="w-8 h-8 rounded-full bg-gray-700/10 flex items-center justify-center">
-                      {activity.type === 'new_listing' && (
-                        <ChartBarIcon className="h-4 w-4 text-gray-400" />
-                      )}
-                      {activity.type === 'sale' && (
-                        <CurrencyDollarIcon className="h-4 w-4 text-gray-400" />
-                      )}
-                      {activity.type === 'message' && (
-                        <ChatBubbleLeftRightIcon className="h-4 w-4 text-gray-400" />
+            {/* Main Content Sections */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Left Column */}
+              <div className="lg:col-span-2 space-y-8">
+                {/* Seller-specific content */}
+                {userRole === 'seller' && (
+                  <div className="bg-white rounded-lg shadow overflow-hidden">
+                    <div className="px-6 py-5 border-b border-gray-200">
+                      <h3 className="text-lg font-medium text-gray-900">Your Listings</h3>
+                    </div>
+                    
+                    <div className="divide-y divide-gray-200">
+                      {recentListings.length > 0 ? (
+                        recentListings.map(listing => (
+                          <div key={listing.id} className="p-6">
+                            <div className="flex items-start">
+                              <div className="flex-shrink-0 h-20 w-32 bg-gray-200 rounded-md overflow-hidden">
+                                <img 
+                                  src={listing.imageUrl} 
+                                  alt={listing.title}
+                                  className="h-full w-full object-cover" 
+                                />
+                              </div>
+                              <div className="ml-4 flex-1">
+                                <div className="flex items-start justify-between">
+                                  <div>
+                                    <h4 className="text-base font-medium text-gray-900">
+                                      <Link to={`/dashboard/edit-listing/${listing.id}`}>
+                                        {listing.title}
+                                      </Link>
+                                    </h4>
+                                    <p className="mt-1 text-sm text-gray-500">{listing.daysListed} days listed</p>
+                                  </div>
+                                  <p className="text-lg font-medium text-gray-900">${listing.price.toLocaleString()}</p>
+                                </div>
+                                <div className="mt-2 flex items-center text-sm text-gray-500 space-x-4">
+                                  <div className="flex items-center">
+                                    <EyeIcon className="h-4 w-4 mr-1 text-gray-400" />
+                                    {listing.views} views
+                                  </div>
+                                  <div className="flex items-center">
+                                    <ChatBubbleLeftRightIcon className="h-4 w-4 mr-1 text-gray-400" />
+                                    {listing.inquiries} inquiries
+                                  </div>
+                                </div>
+                                <div className="mt-3 flex space-x-2">
+                                  <Link 
+                                    to={`/dashboard/edit-listing/${listing.id}`}
+                                    className="text-sm font-medium text-blue-600 hover:text-blue-500"
+                                  >
+                                    Edit
+                                  </Link>
+                                  <Link 
+                                    to={`/cars/${listing.id}`}
+                                    className="text-sm font-medium text-gray-500 hover:text-gray-700"
+                                  >
+                                    View Details
+                                  </Link>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-6 text-center">
+                          <p className="text-gray-500">You don't have any listings yet.</p>
+                          <Link
+                            to="/dashboard/create-listing"
+                            className="mt-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                          >
+                            <PlusCircleIcon className="h-5 w-5 mr-2" />
+                            Create Your First Listing
+                          </Link>
+                        </div>
                       )}
                     </div>
+                    
+                    {recentListings.length > 0 && (
+                      <div className="bg-gray-50 px-6 py-3 flex justify-center">
+                        <Link 
+                          to="/dashboard/my-listings"
+                          className="text-sm font-medium text-blue-600 hover:text-blue-500"
+                        >
+                          View All Listings
+                        </Link>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm">
-                      <span className="font-medium">{activity.user}</span>{' '}
-                      {activity.details}
-                    </p>
-                    <span className="text-xs text-gray-400">
-                      {activity.timestamp}
-                    </span>
+                )}
+                
+                {/* Buyer-specific content */}
+                {userRole === 'buyer' && (
+                  <div className="bg-white rounded-lg shadow overflow-hidden">
+                    <div className="px-6 py-5 border-b border-gray-200">
+                      <h3 className="text-lg font-medium text-gray-900">Recently Viewed Cars</h3>
+                    </div>
+                    
+                    <div className="p-6 text-center">
+                      <p className="text-gray-500">You haven't viewed any cars yet.</p>
+                      <Link
+                        to="/search"
+                        className="mt-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                      >
+                        <ChartBarIcon className="h-5 w-5 mr-2" />
+                        Browse Cars
+                      </Link>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Messages section - for both seller and buyer */}
+                <div className="bg-white rounded-lg shadow overflow-hidden">
+                  <div className="px-6 py-5 border-b border-gray-200">
+                    <h3 className="text-lg font-medium text-gray-900">Recent Messages</h3>
+                  </div>
+                  
+                  <div className="divide-y divide-gray-200">
+                    {recentMessages.length > 0 ? (
+                      recentMessages.map(message => (
+                        <div key={message.id} className="p-6">
+                          <div className="flex items-start">
+                            <div className="flex-shrink-0">
+                              <img 
+                                className="h-10 w-10 rounded-full"
+                                src={message.profiles?.avatar_url || '/assets/default-avatar.png'}
+                                alt={message.profiles?.full_name} 
+                              />
+                            </div>
+                            <div className="ml-3 flex-1">
+                              <div className="text-sm font-medium text-gray-900">
+                                {message.profiles?.full_name}
+                              </div>
+                              <div className="mt-1 text-sm text-gray-700">
+                                {message.content}
+                              </div>
+                              <div className="mt-2 text-xs text-gray-500">
+                                {new Date(message.created_at).toLocaleDateString()} • 
+                                Re: {message.vehicles?.year} {message.vehicles?.make} {message.vehicles?.model}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-6 text-center">
+                        <p className="text-gray-500">You don't have any messages yet.</p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {recentMessages.length > 0 && (
+                    <div className="bg-gray-50 px-6 py-3 flex justify-center">
+                      <Link 
+                        to="/dashboard/messages"
+                        className="text-sm font-medium text-blue-600 hover:text-blue-500"
+                      >
+                        View All Messages
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Right Column */}
+              <div className="space-y-8">
+                {/* Quick Actions */}
+                <div className="bg-white rounded-lg shadow overflow-hidden">
+                  <div className="px-6 py-5 border-b border-gray-200">
+                    <h3 className="text-lg font-medium text-gray-900">Quick Actions</h3>
+                  </div>
+                  
+                  <div className="p-6 space-y-4">
+                    {userRole === 'seller' ? (
+                      <>
+                        <Link
+                          to="/dashboard/create-listing"
+                          className="w-full flex items-center p-3 rounded-lg border border-gray-200 hover:bg-gray-50"
+                        >
+                          <div className="flex-shrink-0 bg-blue-500 bg-opacity-10 p-2 rounded-md">
+                            <PlusCircleIcon className="h-5 w-5 text-blue-500" />
+                          </div>
+                          <div className="ml-3">
+                            <h4 className="text-sm font-medium text-gray-900">List a New Vehicle</h4>
+                            <p className="text-xs text-gray-500">Create a new car listing</p>
+                          </div>
+                        </Link>
+                        
+                        <Link
+                          to="/dashboard/messages"
+                          className="w-full flex items-center p-3 rounded-lg border border-gray-200 hover:bg-gray-50"
+                        >
+                          <div className="flex-shrink-0 bg-purple-500 bg-opacity-10 p-2 rounded-md">
+                            <ChatBubbleLeftRightIcon className="h-5 w-5 text-purple-500" />
+                          </div>
+                          <div className="ml-3">
+                            <h4 className="text-sm font-medium text-gray-900">Check Messages</h4>
+                            <p className="text-xs text-gray-500">View and respond to buyer inquiries</p>
+                          </div>
+                        </Link>
+                        
+                        <Link
+                          to="/dashboard/transaction-history"
+                          className="w-full flex items-center p-3 rounded-lg border border-gray-200 hover:bg-gray-50"
+                        >
+                          <div className="flex-shrink-0 bg-green-500 bg-opacity-10 p-2 rounded-md">
+                            <CurrencyDollarIcon className="h-5 w-5 text-green-500" />
+                          </div>
+                          <div className="ml-3">
+                            <h4 className="text-sm font-medium text-gray-900">View Sales</h4>
+                            <p className="text-xs text-gray-500">Check your transaction history</p>
+                          </div>
+                        </Link>
+                      </>
+                    ) : (
+                      <>
+                        <Link
+                          to="/search"
+                          className="w-full flex items-center p-3 rounded-lg border border-gray-200 hover:bg-gray-50"
+                        >
+                          <div className="flex-shrink-0 bg-blue-500 bg-opacity-10 p-2 rounded-md">
+                            <ChartBarIcon className="h-5 w-5 text-blue-500" />
+                          </div>
+                          <div className="ml-3">
+                            <h4 className="text-sm font-medium text-gray-900">Search Cars</h4>
+                            <p className="text-xs text-gray-500">Find your next vehicle</p>
+                          </div>
+                        </Link>
+                        
+                        <Link
+                          to="/dashboard/saved"
+                          className="w-full flex items-center p-3 rounded-lg border border-gray-200 hover:bg-gray-50"
+                        >
+                          <div className="flex-shrink-0 bg-red-500 bg-opacity-10 p-2 rounded-md">
+                            <HeartIcon className="h-5 w-5 text-red-500" />
+                          </div>
+                          <div className="ml-3">
+                            <h4 className="text-sm font-medium text-gray-900">Saved Vehicles</h4>
+                            <p className="text-xs text-gray-500">View your favorite listings</p>
+                          </div>
+                        </Link>
+                        
+                        <Link
+                          to="/dashboard/messages"
+                          className="w-full flex items-center p-3 rounded-lg border border-gray-200 hover:bg-gray-50"
+                        >
+                          <div className="flex-shrink-0 bg-purple-500 bg-opacity-10 p-2 rounded-md">
+                            <ChatBubbleLeftRightIcon className="h-5 w-5 text-purple-500" />
+                          </div>
+                          <div className="ml-3">
+                            <h4 className="text-sm font-medium text-gray-900">My Messages</h4>
+                            <p className="text-xs text-gray-500">Contact sellers about listings</p>
+                          </div>
+                        </Link>
+                      </>
+                    )}
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-          
-          {/* Pending Approvals */}
-          <div className="bg-gray-800 rounded-lg p-6">
-            <h3 className="text-lg font-semibold mb-4">Pending Approvals</h3>
-            <div className="space-y-4">
-              {pendingApprovals.map((approval) => (
-                <div
-                  key={approval.id}
-                  className="flex items-center justify-between p-3 hover:bg-gray-700 rounded-lg transition-colors"
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 rounded-full bg-yellow-500/10 flex items-center justify-center">
-                      <ChartBarIcon className="h-4 w-4 text-yellow-500" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">{approval.item}</p>
-                      <p className="text-xs text-gray-400">by {approval.user}</p>
-                    </div>
+                
+                {/* Tips & Insights */}
+                <div className="bg-white rounded-lg shadow overflow-hidden">
+                  <div className="px-6 py-5 border-b border-gray-200">
+                    <h3 className="text-lg font-medium text-gray-900">Tips & Insights</h3>
                   </div>
-                  <div className="flex space-x-2">
-                    <button className="px-3 py-1 bg-gray-700 text-white text-sm rounded-lg hover:bg-gray-600">
-                      Approve
-                    </button>
-                    <button className="px-3 py-1 bg-red-500/10 text-red-500 text-sm rounded-lg hover:bg-red-500/20">
-                      Reject
-                    </button>
+                  
+                  <div className="p-6">
+                    {userRole === 'seller' ? (
+                      <div className="space-y-4">
+                        <div className="rounded-md bg-blue-50 p-4">
+                          <div className="flex">
+                            <div className="flex-shrink-0">
+                              <svg className="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                            <div className="ml-3">
+                              <h4 className="text-sm font-medium text-blue-800">Better Photos, Better Results</h4>
+                              <p className="mt-1 text-xs text-blue-700">
+                                Listings with 5+ photos get 2x more views. Add multiple angles of your vehicle!
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="rounded-md bg-green-50 p-4">
+                          <div className="flex">
+                            <div className="flex-shrink-0">
+                              <svg className="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                            <div className="ml-3">
+                              <h4 className="text-sm font-medium text-green-800">Respond Quickly</h4>
+                              <p className="mt-1 text-xs text-green-700">
+                                Sellers who respond to messages within 1 hour are 80% more likely to make a sale.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="rounded-md bg-blue-50 p-4">
+                          <div className="flex">
+                            <div className="flex-shrink-0">
+                              <svg className="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                            <div className="ml-3">
+                              <h4 className="text-sm font-medium text-blue-800">Save Your Searches</h4>
+                              <p className="mt-1 text-xs text-blue-700">
+                                Save your search criteria to get notified when new matches are listed.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="rounded-md bg-green-50 p-4">
+                          <div className="flex">
+                            <div className="flex-shrink-0">
+                              <svg className="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                            <div className="ml-3">
+                              <h4 className="text-sm font-medium text-green-800">Check Vehicle History</h4>
+                              <p className="mt-1 text-xs text-green-700">
+                                Always review the full vehicle history report before making a purchase.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
-              ))}
+              </div>
             </div>
           </div>
-        </div>
+        </main>
       </div>
-      
-      {/* Footer */}
-      <Footer />
     </div>
   );
 };

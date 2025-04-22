@@ -10,7 +10,7 @@ import LoadingSpinner from './components/common/LoadingSpinner';
 import { Outlet } from 'react-router-dom';
 
 // Public Pages
-const Index = lazy(() => import('./pages/index'));
+const HomePage = lazy(() => import('./pages/Index'));
 const Search = lazy(() => import('./pages/Search'));
 const VehicleDetails = lazy(() => import('./pages/VehicleDetails'));
 const AboutUs = lazy(() => import('./pages/AboutUs'));
@@ -48,7 +48,7 @@ function AppRoutes() {
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<MainLayout><Outlet /></MainLayout>}>
-          <Route index element={<Index />} />
+          <Route index element={<HomePage />} />
           <Route path="cars" element={<Search />} />
           <Route path="cars/:id" element={<VehicleDetails />} />
           <Route path="search" element={<Search />} />
@@ -59,7 +59,7 @@ function AppRoutes() {
         </Route>
 
         {/* Auth Routes */}
-        <Route path="/auth" element={<AuthLayout />}>
+        <Route path="/auth" element={<AuthLayout><Outlet /></AuthLayout>}>
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
         </Route>
@@ -70,7 +70,7 @@ function AppRoutes() {
           <Route path="register" element={<AdminRegister />} />
           
           {/* Protected Admin Routes */}
-          <Route element={<AdminRoute><AdminLayout /></AdminRoute>}>
+          <Route element={<AdminRoute><AdminLayout><Outlet /></AdminLayout></AdminRoute>}>
             <Route index element={<AdminDashboard />} />
           </Route>
         </Route>

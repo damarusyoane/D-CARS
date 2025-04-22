@@ -15,8 +15,28 @@ const CarDetails: React.FC = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
 
-  // Mock data - replace with API call
-  const car = {
+  import { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
+  const [car, setCar] = useState<any>(null);
+const [loading, setLoading] = useState(true);
+
+useEffect(() => {
+  async function fetchCar() {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('vehicles')
+      .select('*')
+      .eq('id', id)
+      .single();
+    if (!error) setCar(data);
+    setLoading(false);
+  }
+  if (id) fetchCar();
+}, [id]);
+
+if (loading) return <div>Loading...</div>;
+if (!car) return <div>Vehicle not found</div>;
+
     id,
     title: '2021 Tesla Model 3 Long Range AWD',
     description: 'The Tesla Model 3 Long Range AWD is in excellent condition with low mileage. Features include Autopilot, Premium Interior Package, and 19" Sport Wheels. Clean title and service history available.',

@@ -17,56 +17,42 @@ export default function Login() {
     const handleEmailLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-
         try {
-            // Sign in using Supabase directly to get the session
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email,
-                password,
-            });
-
-            if (error) {
-                console.error('Login error:', error);
-                if (error.message.includes('Invalid login credentials')) {
-                    toast.error(t('login.invalidCredentials'));
-                } else {
-                    toast.error(error.message);
-                }
-                return;
-            }
-
-            if (!data.session) {
-                throw new Error('No session returned after sign in');
-            }
-
-            // Update the auth context
+            // Use AuthContext's signIn to handle login and state
             await signIn(email, password);
 
-            // Get user profile to check role
+            // Fetch profile to check role
             const { data: profile, error: profileError } = await supabase
                 .from('profiles')
                 .select('role')
-                .eq('id', data.session.user.id)
+                .eq('email', email)
                 .single();
 
             if (profileError) {
                 console.error('Profile fetch error:', profileError);
                 toast.error('Failed to fetch user profile');
+                setIsLoading(false);
                 return;
             }
 
-            console.log('Login successful, redirecting...');
-            
             // Redirect based on role
-            if (profile?.role === 'seller') {
-                navigate('/dashboard/profile', { replace: true });
+            if (profile?.role === 'admin') {
+                navigate('/admin', { replace: true });
+            } else if (profile?.role === 'seller') {
+                navigate('/dashboard/my-listings', { replace: true });
             } else {
                 navigate('/dashboard/search', { replace: true });
             }
         } catch (error) {
             console.error('Login error:', error);
             if (error instanceof Error) {
-                toast.error(error.message);
+                if (error.message.toLowerCase().includes('invalid login credentials')) {
+                    toast.error(t('login.invalidCredentials') || 'Invalid email or password.');
+                } else if (error.message.toLowerCase().includes('email not confirmed')) {
+                    toast.error(t('login.emailNotConfirmed') || 'Please confirm your email before logging in.');
+                } else {
+                    toast.error(error.message);
+                }
             } else {
                 toast.error(t('login.error'));
             }
@@ -81,7 +67,7 @@ export default function Login() {
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: `${window.location.origin}/auth/callback`,
+                    redirectTo: `${window.location.origin}/dashboard/profile`,
                 },
             });
 
@@ -112,10 +98,10 @@ export default function Login() {
                             alt="D-CARS"
                         />
                         <h2 className="mt-4 text-3xl font-extrabold text-gray-900 dark:text-white">
-                            {t('login.title')}
+                            {t('Title')}
                         </h2>
                         <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                            {t('login.subtitle')}
+                            {t('Subtitle')}
                         </p>
                     </div>
 
@@ -135,7 +121,7 @@ export default function Login() {
                                             <path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z" />
                                         </g>
                                     </svg>
-                                    {t('login.continueWithGoogle')}
+                                    {t('Continue With Google')}
                                 </button>
                             </div>
 
@@ -145,7 +131,7 @@ export default function Login() {
                                 </div>
                                 <div className="relative flex justify-center text-sm">
                                     <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                                        {t('login.or')}
+                                        {t('Or')}
                                     </span>
                                 </div>
                             </div>
@@ -155,7 +141,7 @@ export default function Login() {
                             <form className="space-y-6" onSubmit={handleEmailLogin}>
                                 <div>
                                     <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        {t('login.email')}
+                                        {t('Email')}
                                     </label>
                                     <div className="mt-1">
                                         <input
@@ -165,7 +151,7 @@ export default function Login() {
                                             autoComplete="email"
                                             required
                                             className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white sm:text-sm"
-                                            placeholder="john.doe@example.com"
+                                            placeholder="tagne@example.com"
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
                                         />
@@ -174,7 +160,7 @@ export default function Login() {
 
                                 <div>
                                     <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        {t('login.password')}
+                                        {t('Password')}
                                     </label>
                                     <div className="mt-1">
                                         <input
@@ -200,15 +186,15 @@ export default function Login() {
                                             className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600 rounded"
                                         />
                                         <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                                            {t('login.rememberMe')}
+                                            {t('Remember Me')}
                                         </label>
                                     </div>
 
-                                    <div className="text-sm">
+                                    {/* <div className="text-sm">
                                         <a href="#" className="font-medium text-primary-600 dark:text-primary-500 hover:text-primary-500 dark:hover:text-primary-400">
                                             {t('login.forgotPassword')}
                                         </a>
-                                    </div>
+                                    </div> */}
                                 </div>
 
                                 <div>
@@ -217,7 +203,7 @@ export default function Login() {
                                         disabled={isLoading}
                                         className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                                     >
-                                        {isLoading ? t('login.loading') : t('login.signIn')}
+                                        {isLoading ? t('Loading') : t('SignIn')}
                                     </button>
                                 </div>
                             </form>
@@ -226,9 +212,9 @@ export default function Login() {
                 </div>
                 <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600 sm:px-10">
                     <p className="text-sm text-center text-gray-600 dark:text-gray-400">
-                        {t('login.noAccount')}{' '}
-                        <Link to="/register" className="font-medium text-primary-600 dark:text-primary-500 hover:text-primary-500 dark:hover:text-primary-400">
-                            {t('login.signUpNow')}
+                        {t('No Account')}{' '}
+                        <Link to="/auth/register" className="font-medium text-primary-600 dark:text-primary-500 hover:text-primary-500 dark:hover:text-primary-400">
+                            {t('SignUp Now')}
                         </Link>
                     </p>
                 </div>

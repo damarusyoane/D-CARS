@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { PhotoIcon } from '@heroicons/react/24/outline';
 import { Database } from '../types/database';
+import { useAuth } from '../contexts/AuthContext';
 
 type Vehicle = Database['public']['Tables']['vehicles']['Row'];
 
@@ -27,8 +28,17 @@ interface FormData {
   features: string[];
 }
 
+
+
 const CreateListing: React.FC = () => {
+  const { profile } = useAuth();
   const navigate = useNavigate();
+  if (profile && profile.role !== 'seller' && profile.role !== 'admin') {
+    alert('You do not have permission to create listings.');
+    navigate('/');
+    return null;
+  }
+
   const [formData, setFormData] = useState<FormData>({
     make: '',
     model: '',
@@ -53,7 +63,7 @@ const CreateListing: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+    const { name, value, type } = e.target;
     if (name.includes('.')) {
       const [section, field] = name.split('.');
       setFormData(prev => ({
@@ -66,9 +76,9 @@ const CreateListing: React.FC = () => {
     } else {
       setFormData(prev => ({
         ...prev,
-        [name]: name === 'price' || name === 'year' || name === 'mileage' || name === 'doors' || name === 'seats' 
+        [name]: type === 'number' ?  name === 'price' || name === 'year' || name === 'mileage' || name === 'doors' || name === 'seats' 
           ? parseFloat(value) 
-          : value
+          : (value === '' ? 0 : globalThis.Number(value)) : value
       }));
     }
   };
@@ -107,8 +117,7 @@ const CreateListing: React.FC = () => {
           const fileName = `${user.id}/${Date.now()}-${file.name}`;
           const { error: uploadError } = await supabase.storage
             .from('vehicle-images')
-            .upload(fileName, file);
-
+            .upload(fileName, file, fileExt ? { contentType: `image/${fileExt}` } : undefined);
           if (uploadError) throw uploadError;
 
           const { data: { publicUrl } } = supabase.storage

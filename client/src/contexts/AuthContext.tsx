@@ -1,10 +1,11 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import  { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
 import { User, Provider, AuthResponse } from '@supabase/supabase-js';
 import toast from 'react-hot-toast';
 
 interface AuthContextType {
     user: User | null;
+    profile: Profile | null;
     isAuthenticated: boolean;
     isLoading: boolean;
     isEmailVerified: boolean;
@@ -23,17 +24,46 @@ interface AuthContextType {
 
 interface Profile {
     id: string;
+    email: string;
+    full_name: string;
+    phone_number: string;
+    avatar_url?: string | null;
+    role: 'admin' | 'seller' | 'buyer';
+    notification_preferences?: any;
+    privacy_settings?: any;
     two_factor_enabled: boolean;
-    two_factor_secret?: string;
+    two_factor_secret?: string | null;
+    created_at?: string;
+    updated_at?: string;
 }
+
+
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
+    const [profile, setProfile] = useState<Profile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isEmailVerified, setIsEmailVerified] = useState(false);
     const [isTwoFactorEnabled, setIsTwoFactorEnabled] = useState(false);
+
+    // Fetch profile when user changes
+    useEffect(() => {
+        if (user) {
+            supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', user.id)
+                .single()
+                .then(({ data, error }) => {
+                    if (!error && data) setProfile(data);
+                    else setProfile(null);
+                });
+        } else {
+            setProfile(null);
+        }
+    }, [user]);
 
     useEffect(() => {
         // Check active sessions and sets the user
@@ -97,12 +127,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
 
             if (authResponse.error) throw authResponse.error;
-            
-            if (authResponse.data.user?.email_confirmed_at) {
-                toast.success('Successfully signed in!');
-            } else {
-                toast('Please verify your email address.', { icon: '⚠️' });
-            }
+
+        // No email confirmation check needed; allow all authenticated users to proceed
+        toast.success('Successfully signed in!');
         } catch (error) {
             toast.error(error instanceof Error ? error.message : 'Failed to sign in');
             throw error;
@@ -262,6 +289,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return (
         <AuthContext.Provider value={{
             user,
+            profile,
             isAuthenticated: !!user,
             isLoading,
             isEmailVerified,

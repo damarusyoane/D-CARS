@@ -7,7 +7,11 @@ import { Vehicle } from '../types/database';
 import { toast } from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 
+import { useAuth } from '../contexts/AuthContext';
+
 const EditListing: React.FC = () => {
+  const { profile } = useAuth();
+
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { vehicles, isLoading: isLoadingVehicles, updateVehicle } = useVehicles();
@@ -40,6 +44,13 @@ const EditListing: React.FC = () => {
   const [previewImages, setPreviewImages] = useState<string[]>([]);
 
   useEffect(() => {
+    // Role-based access control
+    if (profile && profile.role !== 'seller' && profile.role !== 'admin') {
+      toast.error('You do not have permission to edit listings.');
+      navigate('/');
+      return;
+    }
+
     if (id && vehicles) {
       const vehicle = vehicles.find(v => v.id === id);
       if (vehicle) {
@@ -105,6 +116,12 @@ const EditListing: React.FC = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    // Only allow owner or admin
+    if (profile && profile.role !== 'admin' && formData.profile_id !== profile.id) {
+      toast.error('You do not have permission to edit this listing.');
+      return;
+    }
+
     e.preventDefault();
     setIsSubmitting(true);
 

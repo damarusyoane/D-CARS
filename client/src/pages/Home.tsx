@@ -156,13 +156,39 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="bg-base-200 rounded-2xl p-12">
+      {/* Advanced Marketplace Features */}
+      <section className="bg-base-200 rounded-2xl p-12 mb-12">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">
-            Why Choose D-CARS?
-          </h2>
+          <h2 className="text-3xl font-bold text-center mb-10">Marketplace Innovations</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-white rounded-xl shadow p-6 flex flex-col items-center text-center">
+              <img src="/assets/offer-icon.svg" alt="Offers" className="h-12 w-12 mb-3" />
+              <h3 className="text-xl font-semibold mb-2">Make & Manage Offers</h3>
+              <p className="text-base-content/70 mb-4">Negotiate prices directly with sellers or manage offers on your vehicles.</p>
+              <Link to="/dashboard/offers" className="btn btn-primary btn-sm">Go to Offers</Link>
+            </div>
+            <div className="bg-white rounded-xl shadow p-6 flex flex-col items-center text-center">
+              <img src="/assets/report-icon.svg" alt="Reports" className="h-12 w-12 mb-3" />
+              <h3 className="text-xl font-semibold mb-2">Vehicle Reports</h3>
+              <p className="text-base-content/70 mb-4">Access and verify vehicle history reports for peace of mind and transparency.</p>
+              <Link to="/dashboard/reports" className="btn btn-primary btn-sm">View Reports</Link>
+            </div>
+            <div className="bg-white rounded-xl shadow p-6 flex flex-col items-center text-center">
+              <img src="/assets/feature-icon.svg" alt="Enhanced Features" className="h-12 w-12 mb-3" />
+              <h3 className="text-xl font-semibold mb-2">Enhanced Listing Features</h3>
+              <p className="text-base-content/70 mb-4">Boost your listings with premium features and gain more visibility.</p>
+              <Link to="/dashboard/features" className="btn btn-primary btn-sm">Manage Features</Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose D-CARS? */}
+      <section className="mb-12">
+        <h2 className="text-3xl font-bold text-center mb-12">
+          Why Choose D-CARS?
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg

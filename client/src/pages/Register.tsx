@@ -54,13 +54,21 @@ export default function Register() {
 
             if (authError) {
                 console.error('Auth error:', authError);
-                toast.error(authError.message);
+                if (authError.message.includes('already registered')) {
+                    toast.error(t('register.emailInUse') || 'Email is already in use.');
+                } else if (authError.message.toLowerCase().includes('password')) {
+                    toast.error(t('register.weakPassword') || 'Password is too weak.');
+                } else {
+                    toast.error(authError.message);
+                }
+                setIsLoading(false);
                 return;
             }
 
             if (!data?.user) {
                 console.error('No user data returned from signup');
                 toast.error('Failed to create user account');
+                setIsLoading(false);
                 return;
             }
 
@@ -71,21 +79,45 @@ export default function Register() {
             } catch (error) {
                 console.error('Sign in error:', error);
                 toast.error('Failed to sign in after registration');
+                setIsLoading(false);
                 return;
             }
 
-            console.log('Registration completed successfully');
+            // Fetch user profile to determine role
+            let userProfile = null;
+            try {
+                const { data: profile, error: profileError } = await supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('email', formData.email)
+                    .single();
+                if (profileError) {
+                    console.error('Profile fetch error:', profileError);
+                } else {
+                    userProfile = profile;
+                }
+            } catch (err) {
+                console.error('Error fetching profile after registration:', err);
+            }
+
             toast.success(t('register.success'));
-            
-            // Redirect to the appropriate dashboard based on role
-            if (formData.role === 'seller') {
-                navigate('/dashboard/profile');
+            // Redirect based on role
+            if (userProfile?.role === 'admin') {
+                navigate('/admin', { replace: true });
+            } else if (userProfile?.role === 'seller') {
+                navigate('/dashboard/my-listings', { replace: true });
             } else {
-                navigate('/dashboard/search');
+                navigate('/dashboard/search', { replace: true });
             }
         } catch (error) {
             console.error('Registration error:', error);
-            toast.error(t('register.error'));
+            if (error instanceof Error && error.message.includes('already registered')) {
+                toast.error(t('register.emailInUse') || 'Email is already in use.');
+            } else if (error instanceof Error && error.message.toLowerCase().includes('password')) {
+                toast.error(t('register.weakPassword') || 'Password is too weak.');
+            } else {
+                toast.error(t('register.error'));
+            }
         } finally {
             setIsLoading(false);
         }
@@ -97,7 +129,7 @@ export default function Register() {
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: `${window.location.origin}/auth/callback`,
+                    redirectTo: `${window.location.origin}/dashboard/profile`,
                 },
             });
 
@@ -124,10 +156,10 @@ export default function Register() {
                             alt="D-CARS"
                         />
                         <h2 className="mt-4 text-3xl font-extrabold text-gray-900 dark:text-white">
-                            {t('register.title')}
+                            {t('Title')}
                         </h2>
                         <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                            {t('register.subtitle')}
+                            {t('Subtitle')}
                         </p>
                     </div>
 
@@ -147,7 +179,7 @@ export default function Register() {
                                             <path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z" />
                                         </g>
                                     </svg>
-                                    {t('register.continueWithGoogle')}
+                                    {t('Continue With Google')}
                                 </button>
                             </div>
 
@@ -157,7 +189,7 @@ export default function Register() {
                                 </div>
                                 <div className="relative flex justify-center text-sm">
                                     <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                                        {t('register.or')}
+                                        {t('Or')}
                                     </span>
                                 </div>
                             </div>
@@ -167,7 +199,7 @@ export default function Register() {
                             <form className="space-y-6" onSubmit={handleSubmit}>
                                 <div>
                                     <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        {t('register.email')}
+                                        {t('Email')}
                                     </label>
                                     <div className="mt-1">
                                         <input
@@ -177,7 +209,7 @@ export default function Register() {
                                             autoComplete="email"
                                             required
                                             className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white sm:text-sm"
-                                            placeholder="john.doe@example.com"
+                                            placeholder="tagne@example.com"
                                             value={formData.email}
                                             onChange={handleChange}
                                         />
@@ -186,7 +218,7 @@ export default function Register() {
 
                                 <div>
                                     <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        {t('register.fullName')}
+                                        {t('FullName')}
                                     </label>
                                     <div className="mt-1">
                                         <input
@@ -205,7 +237,7 @@ export default function Register() {
 
                                 <div>
                                     <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        {t('register.phoneNumber')}
+                                        {t('PhoneNumber')}
                                     </label>
                                     <div className="mt-1">
                                         <input
@@ -224,7 +256,7 @@ export default function Register() {
 
                                 <div>
                                     <label htmlFor="role" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        {t('register.role')}
+                                        {t('Role')}
                                     </label>
                                     <div className="mt-1">
                                         <select
@@ -234,15 +266,15 @@ export default function Register() {
                                             value={formData.role}
                                             onChange={handleChange}
                                         >
-                                            <option value="buyer">{t('register.roleBuyer')}</option>
-                                            <option value="seller">{t('register.roleSeller')}</option>
+                                            <option value="buyer">{t('Buyer')}</option>
+                                            <option value="seller">{t('Seller')}</option>
                                         </select>
                                     </div>
                                 </div>
 
                                 <div>
                                     <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        {t('register.password')}
+                                        {t('Password')}
                                     </label>
                                     <div className="mt-1">
                                         <input
@@ -262,7 +294,7 @@ export default function Register() {
 
                                 <div>
                                     <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        {t('register.confirmPassword')}
+                                        {t('ConfirmPassword')}
                                     </label>
                                     <div className="mt-1">
                                         <input
@@ -291,7 +323,7 @@ export default function Register() {
                                     <label htmlFor="terms" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
                                         {t('register.agreeToTerms')}{' '}
                                         <a href="#" className="font-medium text-primary-600 dark:text-primary-500 hover:text-primary-500 dark:hover:text-primary-400">
-                                            {t('register.termsOfService')}
+                                            {t('Terms Of Service')}
                                         </a>
                                     </label>
                                 </div>
@@ -302,7 +334,7 @@ export default function Register() {
                                         disabled={isLoading}
                                         className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                                     >
-                                        {isLoading ? t('register.loading') : t('register.createAccount')}
+                                        {isLoading ? t('Loading') : t('Create Account')}
                                     </button>
                                 </div>
                             </form>
@@ -311,9 +343,9 @@ export default function Register() {
                 </div>
                 <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600 sm:px-10">
                     <p className="text-sm text-center text-gray-600 dark:text-gray-400">
-                        {t('register.alreadyHaveAccount')}{' '}
-                        <Link to="/login" className="font-medium text-primary-600 dark:text-primary-500 hover:text-primary-500 dark:hover:text-primary-400">
-                            {t('register.signInInstead')}
+                        {t('Already Have Account')}{' '}
+                        <Link to="/auth/login" className="font-medium text-primary-600 dark:text-primary-500 hover:text-primary-500 dark:hover:text-primary-400">
+                            {t('Sign In Instead')}
                         </Link>
                     </p>
                 </div>

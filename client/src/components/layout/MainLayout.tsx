@@ -27,6 +27,7 @@ const MainLayout: React.FC = () => {
     { name: 'About Us', href: '/about', icon: InformationCircleIcon },
     { name: 'Contact Us', href: '/contact', icon: PhoneIcon },
     { name: 'Subscription', href: '/subscription', icon: ShoppingCartIcon },
+    { name: 'Cart', href: '/cart', icon: ShoppingCartIcon },
     { name: 'Community', href: '/community', icon: UserGroupIcon },
   ];
 
@@ -254,6 +255,14 @@ const MainLayout: React.FC = () => {
                     </Link>
                   </li>
                 ))}
+                {/* Ensure Cart is present even if not in mainNavigation */}
+                {!mainNavigation.some(item => item.name === 'Cart') && (
+                  <li>
+                    <Link to="/cart" className="text-base text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-500">
+                      Cart
+                    </Link>
+                  </li>
+                )}
               </ul>
             </div>
             

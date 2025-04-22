@@ -41,13 +41,14 @@ export default function VehicleDetails() {
   });
 
   const { data: seller, isLoading: isLoadingSeller } = useQuery<Profile>({
-    queryKey: ['seller', vehicle?.seller_id],
-    enabled: !!vehicle?.seller_id,
+    queryKey: ['seller', vehicle?.profile_id],
+    enabled: !!vehicle?.profile_id,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', vehicle!.seller_id)
+        .eq('profile_id', vehicle?.profile_id)
+        .eq('id', vehicle!.profile_id)
         .single();
 
       if (error) throw error;

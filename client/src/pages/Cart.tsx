@@ -60,7 +60,7 @@ interface Service {
 
 export default function Cart() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { profile } = useAuth();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -78,7 +78,7 @@ export default function Cart() {
   const [services, setServices] = useState<Record<string, Service>>({});
   
   useEffect(() => {
-    if (user) {
+    if (profile) {
       // Load reference data first, then fetch cart items
       Promise.all([
         fetchSubscriptionPlans(),
@@ -90,7 +90,7 @@ export default function Cart() {
     } else {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [profile]);
   
   const fetchSubscriptionPlans = async () => {
     try {
@@ -157,7 +157,7 @@ export default function Cart() {
       setIsLoading(true);
       setError(null);
       
-      if (!user) {
+      if (!profile) {
         throw new Error('User not authenticated');
       }
       
@@ -165,7 +165,7 @@ export default function Cart() {
       const { data, error } = await supabase
         .from('cart_items')
         .select('*')
-        .eq('user_id', user.id);
+        .eq('user_id', profile.id);
         
       if (error) throw error;
       
@@ -222,13 +222,13 @@ export default function Cart() {
   
   const handleRemoveItem = async (itemId: string) => {
     try {
-      if (!user) return;
+      if (!profile) return;
       
       const { error } = await supabase
         .from('cart_items')
         .delete()
         .eq('id', itemId)
-        .eq('user_id', user.id);
+        .eq('user_id', profile.id);
         
       if (error) throw error;
       
@@ -269,7 +269,7 @@ export default function Cart() {
       const { error: transactionError } = await supabase
         .from('transactions')
         .insert({
-          user_id: user?.id,
+          user_id: profile?.id,
           amount: totalAmount,
           status: 'completed',
           payment_method: 'credit_card',
@@ -295,7 +295,7 @@ export default function Cart() {
           const { error } = await supabase
             .from('subscriptions')
             .upsert({
-              user_id: user?.id,
+              user_id: profile?.id,
               plan_type: item.plan_slug,
               status: 'active',
               start_date: new Date().toISOString(),
@@ -320,7 +320,7 @@ export default function Cart() {
       const { error: clearCartError } = await supabase
         .from('cart_items')
         .delete()
-        .eq('user_id', user?.id);
+        .eq('user_id', profile?.id);
         
       if (clearCartError) throw clearCartError;
       
@@ -349,7 +349,7 @@ export default function Cart() {
     );
   }
   
-  if (!user) {
+  if (!profile) {
     return (
       <div className="min-h-screen flex flex-col justify-center items-center bg-gray-900 text-white p-4">
         <ExclamationCircleIcon className="h-16 w-16 text-yellow-500 mb-4" />

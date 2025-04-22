@@ -23,8 +23,14 @@ interface Listing {
 }
 
 const MyListings: React.FC = () => {
-  useAuth();
+  const { profile } = useAuth();
   const navigate = useNavigate();
+  // Role-based access control
+  if (profile && profile.role !== 'seller' && profile.role !== 'admin') {
+    toast.error('You do not have permission to access this page.');
+    navigate('/');
+    return null;
+  }
   const [listings, setListings] = useState<Listing[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +57,7 @@ const MyListings: React.FC = () => {
       let query = supabase
         .from('vehicles')
         .select('*')
-        .eq('seller_id', currentUser.id)
+        .eq('profile_id', currentUser.id)
         .order('created_at', { ascending: false });
       
       if (filter !== 'all') {

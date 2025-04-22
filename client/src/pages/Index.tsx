@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import Navbar from '../components/navigation/Navbar';
 import Footer from '../components/navigation/Footer';
+import TestimonialsSection from '../components/TestimonialsSection';
 
 // Import component sections
 import HeroSection from '../components/home/HeroSection';
@@ -19,8 +19,6 @@ function Index() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Navbar />
-      
       {/* Hero Section */}
       <HeroSection />
       
@@ -85,7 +83,20 @@ function Index() {
               <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Browse Cars</h3>
               <p className="text-gray-600 dark:text-gray-300">Explore our wide selection of vehicles</p>
             </Link>
-            
+            <Link 
+              to="/cart" 
+              className="p-6 bg-white dark:bg-gray-700 rounded-lg hover:shadow-md transition-shadow text-center"
+            >
+              <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Cart</h3>
+              <p className="text-gray-600 dark:text-gray-300">View and manage your cart</p>
+            </Link>
+            <Link 
+              to="/subscription" 
+              className="p-6 bg-white dark:bg-gray-700 rounded-lg hover:shadow-md transition-shadow text-center"
+            >
+              <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Subscription Plans</h3>
+              <p className="text-gray-600 dark:text-gray-300">Choose or manage your plan</p>
+            </Link>
             {user ? (
               <>
                 <Link 
@@ -158,6 +169,8 @@ function Index() {
         </div>
       </section>
       
+      {/* Testimonials Section */}
+      <TestimonialsSection />
       {/* Community Section */}
       <section className="py-16 bg-white dark:bg-gray-800">
         <div className="container mx-auto px-4">

@@ -1,20 +1,37 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { toast } from 'react-hot-toast';
 
 interface SidebarProps {
   activePage: string;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activePage }) => {
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+
   const navigation = [
-    { name: 'My Listings', path: '/my-listings', icon: 'car' },
-    { name: 'Saved Cars', path: '/saved-cars', icon: 'heart' },
     { name: 'Dashboard', path: '/dashboard', icon: 'chart-bar' },
-    { name: 'Messages', path: '/messages', icon: 'chat' },
-    { name: 'Transaction History', path: '/transactions', icon: 'receipt' },
-    { name: 'Account Settings', path: '/settings', icon: 'cog' },
-    { name: 'Sign Out', path: '/logout', icon: 'logout' }
+    { name: 'My Listings', path: '/dashboard/my-listings', icon: 'car' },
+    { name: 'Create Listing', path: '/dashboard/create-listing', icon: 'plus' },
+    { name: 'Saved Cars', path: '/dashboard/saved', icon: 'heart' },
+    { name: 'Messages', path: '/dashboard/messages', icon: 'chat' },
+    { name: 'Transaction History', path: '/dashboard/transaction-history', icon: 'receipt' },
+    { name: 'Profile', path: '/dashboard/profile', icon: 'user' },
+    { name: 'Settings', path: '/dashboard/settings', icon: 'cog' }
   ];
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast.success('Successfully signed out');
+      navigate('/auth/login');
+    } catch (error) {
+      console.error('Sign out error:', error);
+      toast.error('Failed to sign out');
+    }
+  };
 
   const renderIcon = (iconName: string) => {
     switch (iconName) {
@@ -55,11 +72,16 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage }) => {
             <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
           </svg>
         );
-      case 'logout':
+      case 'plus':
         return (
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V4a1 1 0 00-1-1H3zm8.293 4.293a1 1 0 011.414 0L15 8.586l.707-.707A1 1 0 0117 9.172V15a1 1 0 01-1 1H4a1 1 0 01-1-1V9.172a1 1 0 011.707-.707L5 8.586l2.293-2.293a1 1 0 011.414 0L10 7.586l1.293-1.293z" clipRule="evenodd" />
-            <path d="M11 12a1 1 0 10-2 0v4a1 1 0 102 0v-4z" />
+            <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+          </svg>
+        );
+      case 'user':
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
           </svg>
         );
       default:
@@ -68,56 +90,87 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage }) => {
   };
 
   return (
-    <div className="h-screen w-60 bg-gray-900 text-white flex flex-col">
+    <div className="h-screen w-64 bg-white border-r border-gray-200 shadow-sm flex flex-col">
       {/* Logo */}
-      <div className="p-4 flex items-center">
-        <div className="text-lg font-bold text-blue-500">AutoMarket</div>
+      <div className="p-4 flex items-center border-b border-gray-200">
+        <img src="/assets/logo.png" alt="D-CARS" className="h-8 w-auto" />
+        <div className="ml-2 text-lg font-bold text-blue-600">D-CARS</div>
       </div>
 
       {/* User Profile Summary */}
-      <div className="px-4 py-6 flex flex-col items-center border-b border-gray-800">
-        <div className="w-20 h-20 rounded-full overflow-hidden mb-3">
-          <img
-            src="https://randomuser.me/api/portraits/men/32.jpg"
-            alt="User"
-            className="w-full h-full object-cover"
-          />
+      <div className="px-4 py-6 flex flex-col items-center border-b border-gray-200">
+        <div className="w-20 h-20 rounded-full overflow-hidden mb-3 bg-gray-100 flex items-center justify-center">
+          {user?.user_metadata?.avatar_url ? (
+            <img
+              src={user.user_metadata.avatar_url}
+              alt="User"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+            </svg>
+          )}
         </div>
-        <h3 className="font-semibold text-lg">Alex Johnson</h3>
-        <p className="text-gray-400 text-sm">San Francisco, CA</p>
-        
-        <div className="flex items-center mt-2 text-sm text-gray-400">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-          </svg>
-          <span>4.8 (156 reviews)</span>
-        </div>
+        <h3 className="font-semibold text-gray-800">
+          {user?.user_metadata?.full_name || 'User'}
+        </h3>
+        <p className="text-gray-500 text-sm">{user?.email || 'user@example.com'}</p>
         
         <div className="mt-4 flex space-x-2">
-          <button className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1 rounded">Profile</button>
-          <button className="bg-gray-700 hover:bg-gray-600 text-white text-sm px-3 py-1 rounded">Edit Profile</button>
+          <Link 
+            to="/dashboard/profile" 
+            className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1 rounded transition-colors"
+          >
+            Profile
+          </Link>
+          <Link 
+            to="/dashboard/settings" 
+            className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm px-3 py-1 rounded transition-colors"
+          >
+            Settings
+          </Link>
         </div>
       </div>
 
       {/* Navigation Links */}
-      <div className="py-4 flex-1">
-        <ul>
-          {navigation.map((item) => (
-            <li key={item.name}>
-              <Link
-                to={item.path}
-                className={`flex items-center py-2 px-4 ${
-                  activePage === item.name.toLowerCase().replace(' ', '-')
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-                }`}
-              >
-                <span className="mr-3">{renderIcon(item.icon)}</span>
-                <span>{item.name}</span>
-              </Link>
-            </li>
-          ))}
+      <div className="py-4 flex-1 overflow-y-auto">
+        <ul className="space-y-1 px-2">
+          {navigation.map((item) => {
+            const isActive = activePage === item.name.toLowerCase().replace(' ', '-');
+            return (
+              <li key={item.name}>
+                <Link
+                  to={item.path}
+                  className={`flex items-center py-2 px-4 rounded-md ${
+                    isActive
+                      ? 'bg-blue-50 text-blue-600 font-medium'
+                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                  }`}
+                >
+                  <span className={`mr-3 ${isActive ? 'text-blue-600' : 'text-gray-500'}`}>
+                    {renderIcon(item.icon)}
+                  </span>
+                  <span>{item.name}</span>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
+      </div>
+      
+      {/* Sign Out Button */}
+      <div className="p-4 border-t border-gray-200">
+        <button
+          onClick={handleSignOut}
+          className="flex items-center w-full py-2 px-4 text-gray-700 hover:bg-gray-100 rounded-md"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V4a1 1 0 00-1-1H3zm7 4a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" />
+            <path d="M9 10a1 1 0 012 0v4a1 1 0 11-2 0v-4z" />
+          </svg>
+          <span>Sign Out</span>
+        </button>
       </div>
     </div>
   );
