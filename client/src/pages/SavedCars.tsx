@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
-import { Database } from '../lib/supabase';
+import type { Database } from '../types/database';
 import { useAuth } from '../contexts/AuthContext';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { toast } from 'react-hot-toast';
@@ -16,8 +16,25 @@ type Vehicle = Database['public']['Tables']['vehicles']['Row'];
 
 export default function SavedCars() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const queryClient = useQueryClient();
+
+  if (isAuthLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-gray-500 dark:text-gray-400">{t('auth.pleaseLogin', 'Please log in to view this page.')}</p>
+      </div>
+    );
+  }
+
   const [filters] = useState({
     priceRange: [0, 1000000],
     yearRange: [1990, new Date().getFullYear()],
@@ -144,10 +161,11 @@ export default function SavedCars() {
                 <div className="relative">
                   <img
                     src={vehicle.images?.[0]}
-                    alt={vehicle.title}
+                    alt={`${vehicle.make} ${vehicle.model} ${vehicle.year}`}
                     className="w-full h-48 object-cover"
                   />
                   <button
+                    title="Remove from saved"
                     onClick={() => removeFromSaved.mutate(vehicle.id)}
                     className="absolute top-2 right-2 p-2 bg-white dark:bg-gray-800 rounded-full shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
@@ -156,7 +174,7 @@ export default function SavedCars() {
                 </div>
                 <div className="p-4">
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                    {vehicle.title}
+                    {vehicle.make} {vehicle.model} {vehicle.year}
                   </h3>
                   <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                     {vehicle.year} • {vehicle.mileage.toLocaleString()} km

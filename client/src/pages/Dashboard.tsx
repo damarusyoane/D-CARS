@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -43,6 +43,7 @@ const Dashboard: React.FC = () => {
   const [recentMessages, setRecentMessages] = useState<any[]>([]);
   const [userName, setUserName] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -50,12 +51,16 @@ const Dashboard: React.FC = () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('role, full_name')
+          .select('role, full_name, is_admin')
           .eq('id', user.id)
           .single();
         if (error) throw error;
         setUserRole(data.role);
         setUserName(data.full_name || '');
+        if (data.is_admin && window.location.pathname !== '/admin') {
+          navigate('/admin', { replace: true });
+          return;
+        }
       } catch (error) {
         setError('Error fetching user role.');
         console.error('Error fetching user role:', error);

@@ -43,8 +43,18 @@ interface Conversation {
 }
 
 export default function Messages() {
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const [searchParams] = useSearchParams();
+
+  if (isAuthLoading && !user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+  // If user is loaded (authenticated or not), show the page contents. If user is null, you can show a login prompt inside the page body if desired.
+
   const [selectedConversation, setSelectedConversation] = useState<string | null>(
     searchParams.get('vehicle')
   );
@@ -226,6 +236,7 @@ export default function Messages() {
         <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-2">Something went wrong</h3>
         <p className="text-gray-600 dark:text-gray-400 mb-4 text-center">{error}</p>
         <button 
+          title="Reload page"
           onClick={() => window.location.reload()}
           className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors">
           Try Again
@@ -320,12 +331,13 @@ export default function Messages() {
         <div className="flex-1 flex flex-col h-full">
           {/* Conversation Header */}
           <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center">
-            <button
-              onClick={() => setSelectedConversation(null)}
-              className="lg:hidden mr-3 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              <ChevronLeftIcon className="w-5 h-5" />
-            </button>
+          <button
+  title="Back to conversations"
+  onClick={() => setSelectedConversation(null)}
+  className="lg:hidden mr-3 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+>
+  <ChevronLeftIcon className="w-5 h-5" />
+</button>
             
             {conversations?.find(c => c.vehicle.id === selectedConversation)?.vehicle && (
               <>

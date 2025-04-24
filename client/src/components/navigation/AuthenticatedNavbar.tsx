@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Menu, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
+import { toast } from 'react-hot-toast';
 import {
   UserCircleIcon,
   GlobeAltIcon,
@@ -276,8 +277,16 @@ export default function AuthenticatedNavbar() {
                         className={`${
                           active ? 'bg-gray-100 dark:bg-gray-600' : ''
                         } block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 flex items-center`}
-                        onClick={() => {
-                          if (signOut) signOut();
+                        title={t('common.logout', 'Sign Out')}
+                        onClick={async () => {
+                          if (signOut) {
+                            try {
+                              await signOut();
+                              toast.success(t('auth.signedOut', 'Signed out successfully.'));
+                            } catch (err) {
+                              toast.error(t('auth.signOutError', 'Failed to sign out.'));
+                            }
+                          }
                         }}
                       >
                         <ArrowRightOnRectangleIcon className="h-5 w-5 mr-2" />
