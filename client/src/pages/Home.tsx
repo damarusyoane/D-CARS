@@ -3,14 +3,17 @@ import { Link } from 'react-router-dom';
 import { useVehicles } from '../hooks/useVehicles';
 import { MagnifyingGlassIcon, AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
+import VehicleCarousel from '../components/VehicleCarousel';
 
 const Home: React.FC = () => {
-  const { vehicles } = useVehicles();
+  const { vehicles, isLoading } = useVehicles();
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
-  const featuredVehicles = vehicles?.slice(0, 6) || [];
-  const recentVehicles = vehicles?.slice(-6) || [];
+  // Only include active vehicles for featured/recent
+  const activeVehicles = vehicles?.filter(v => v.status === 'active') || [];
+  const featuredVehicles = activeVehicles.slice(0, 6);
+  const recentVehicles = activeVehicles.slice(-6);
 
   return (
     <div className="space-y-12">
@@ -58,40 +61,51 @@ const Home: React.FC = () => {
             View All
           </Link>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {featuredVehicles.map((vehicle) => (
+        {/* Render logic for featured vehicles */}
+        {isLoading && (
+          <div className="flex justify-center items-center py-12">
+            <span className="loading loading-spinner loading-lg text-primary"></span>
+          </div>
+        )}
+        {!isLoading && featuredVehicles.length === 0 && (
+          <div className="text-center text-base-content/70 py-12">
+            No featured vehicles found.
+          </div>
+        )}
+        {!isLoading && featuredVehicles.length === 1 && (
+          <div className="flex justify-center">
             <motion.div
-              key={vehicle.id}
+              key={featuredVehicles[0].id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
-              className="card bg-base-100 shadow-card hover:shadow-card-hover transition-shadow"
+              className="card bg-base-100 shadow-card hover:shadow-card-hover transition-shadow w-full max-w-md"
             >
               <figure className="relative h-48">
                 <img
-                  src={vehicle.images[0]}
-                  alt={vehicle.model}
+                  src={featuredVehicles[0].images[0]}
+                  alt={featuredVehicles[0].model}
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute top-2 right-2">
                   <span className="badge badge-primary">
-                    {vehicle.status}
+                    {featuredVehicles[0].status}
                   </span>
                 </div>
               </figure>
               <div className="card-body">
                 <h3 className="card-title">
-                  {vehicle.make} {vehicle.model}
+                  {featuredVehicles[0].make} {featuredVehicles[0].model}
                 </h3>
                 <p className="text-base-content/70">
-                  {vehicle.year} • {vehicle.mileage.toLocaleString()} miles
+                  {featuredVehicles[0].year} • {featuredVehicles[0].mileage.toLocaleString()} miles
                 </p>
                 <div className="mt-4 flex items-center justify-between">
                   <span className="text-xl font-bold text-primary">
-                    ${vehicle.price.toLocaleString()}
+                    ${featuredVehicles[0].price.toLocaleString()}
                   </span>
                   <Link
-                    to={`/vehicles/${vehicle.id}`}
+                    to={`/vehicles/${featuredVehicles[0].id}`}
                     className="btn btn-primary btn-sm"
                   >
                     View Details
@@ -99,8 +113,56 @@ const Home: React.FC = () => {
                 </div>
               </div>
             </motion.div>
-          ))}
-        </div>
+          </div>
+        )}
+        {!isLoading && featuredVehicles.length >= 6 && (
+          <VehicleCarousel vehicles={featuredVehicles.slice(0, 6)} />
+        )}
+        {!isLoading && featuredVehicles.length > 1 && featuredVehicles.length < 6 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {featuredVehicles.map((vehicle) => (
+              <motion.div
+                key={vehicle.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="card bg-base-100 shadow-card hover:shadow-card-hover transition-shadow"
+              >
+                <figure className="relative h-48">
+                  <img
+                    src={vehicle.images[0]}
+                    alt={vehicle.model}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-2 right-2">
+                    <span className="badge badge-primary">
+                      {vehicle.status}
+                    </span>
+                  </div>
+                </figure>
+                <div className="card-body">
+                  <h3 className="card-title">
+                    {vehicle.make} {vehicle.model}
+                  </h3>
+                  <p className="text-base-content/70">
+                    {vehicle.year} • {vehicle.mileage.toLocaleString()} miles
+                  </p>
+                  <div className="mt-4 flex items-center justify-between">
+                    <span className="text-xl font-bold text-primary">
+                      ${vehicle.price.toLocaleString()}
+                    </span>
+                    <Link
+                      to={`/vehicles/${vehicle.id}`}
+                      className="btn btn-primary btn-sm"
+                    >
+                      View Details
+                    </Link>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Recent Listings */}
@@ -184,7 +246,7 @@ const Home: React.FC = () => {
       </section>
 
       {/* Why Choose D-CARS? */}
-      <section className="mb-12">
+     
         <h2 className="text-3xl font-bold text-center mb-12">
           Why Choose D-CARS?
         </h2>
@@ -254,8 +316,7 @@ const Home: React.FC = () => {
             </div>
           </div>
         </div>
-      </section>
-    </div>
+   
   );
 };
 

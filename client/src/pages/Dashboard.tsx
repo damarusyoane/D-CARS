@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import DashboardSkeleton from '../components/DashboardSkeleton';
+import EmptyState from '../components/EmptyState';
 import {
   ChartBarIcon,
   CurrencyDollarIcon,
@@ -20,6 +22,7 @@ interface DashboardStat {
   change?: number;
   icon: React.ForwardRefExoticComponent<any>;
   color: string;
+  link?: string;
 }
 
 interface VehicleOverview {
@@ -38,28 +41,29 @@ const Dashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [recentListings, setRecentListings] = useState<VehicleOverview[]>([]);
   const [recentMessages, setRecentMessages] = useState<any[]>([]);
+  const [userName, setUserName] = useState<string>('');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUserRole = async () => {
       if (!user) return;
-      
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('role')
+          .select('role, full_name')
           .eq('id', user.id)
           .single();
-          
         if (error) throw error;
         setUserRole(data.role);
+        setUserName(data.full_name || '');
       } catch (error) {
+        setError('Error fetching user role.');
         console.error('Error fetching user role:', error);
       }
     };
     
     const fetchDashboardData = async () => {
       if (!user) return;
-      
       try {
         // Fetch recent listings if seller
         const { data: listings, error: listingsError } = await supabase
@@ -68,22 +72,18 @@ const Dashboard: React.FC = () => {
           .eq('seller_id', user.id)
           .order('created_at', { ascending: false })
           .limit(5);
-          
         if (listingsError) throw listingsError;
-        
         // Transform listings data
         const formattedListings = listings?.map(listing => ({
           id: listing.id,
           title: `${listing.year} ${listing.make} ${listing.model}`,
           price: listing.price,
           imageUrl: listing.images?.[0] || '/assets/car-placeholder.jpg',
-          views: Math.floor(Math.random() * 500), // Replace with actual analytics data
-          inquiries: Math.floor(Math.random() * 20), // Replace with actual analytics data
+          views: Math.floor(Math.random() * 500), // Replace with analytics if available
+          inquiries: Math.floor(Math.random() * 20), // Replace with analytics if available
           daysListed: Math.floor((Date.now() - new Date(listing.created_at).getTime()) / (1000 * 60 * 60 * 24))
         })) || [];
-        
         setRecentListings(formattedListings);
-        
         // Fetch recent messages
         const { data: messages, error: messagesError } = await supabase
           .from('messages')
@@ -97,10 +97,10 @@ const Dashboard: React.FC = () => {
           .or(`receiver_id.eq.${user.id}`)
           .order('created_at', { ascending: false })
           .limit(5);
-          
         if (messagesError) throw messagesError;
         setRecentMessages(messages || []);
       } catch (error) {
+        setError('Error fetching dashboard data.');
         console.error('Error fetching dashboard data:', error);
       } finally {
         setIsLoading(false);
@@ -170,22 +170,37 @@ const Dashboard: React.FC = () => {
 
   const stats = userRole === 'seller' ? sellerStats : buyerStats;
 
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Sidebar activePage="dashboard" />
+        <main className="flex-1 flex flex-col p-8">
+          <DashboardSkeleton />
+        </main>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Sidebar */}
       <Sidebar activePage="dashboard" />
-      
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="bg-white shadow-sm z-10">
+        <header className="bg-white dark:bg-gray-800 shadow-sm z-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center py-6">
-              <h1 className="text-2xl font-bold text-gray-900">
-                {userRole === 'seller' ? 'Seller Dashboard' : 'Buyer Dashboard'}
-              </h1>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Welcome back{userName ? `, ${userName}` : ''}!
+                </h1>
+                <p className="text-gray-500 dark:text-gray-300 mt-1 text-sm">
+                  {userRole === 'seller' ? 'Seller Dashboard' : 'Buyer Dashboard'}
+                </p>
+              </div>
               <div className="flex items-center space-x-4">
-                <button className="flex items-center text-sm text-gray-500 hover:text-gray-700">
+                <button className="flex items-center text-sm text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white transition">
                   <ArrowPathIcon className="h-4 w-4 mr-1" />
                   Refresh
                 </button>
@@ -202,36 +217,40 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </header>
-        
         {/* Dashboard Content */}
-        <main className="flex-1 overflow-y-auto bg-gray-50 p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-4 sm:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto">
+            {/* Error State */}
+            {error && (
+              <div className="mb-6 p-4 rounded bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200">
+                {error}
+              </div>
+            )}
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               {stats.map((stat) => (
-                <div
+                <Link
                   key={stat.title}
-                  className="bg-white rounded-lg shadow overflow-hidden"
+                  to={stat.link || '#'}
+                  className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden h-32 flex flex-col justify-between p-5 hover:shadow-lg transition group focus:ring-2 focus:ring-blue-500"
                 >
-                  <div className="p-5">
-                    <div className="flex items-center">
-                      <div className={`flex-shrink-0 rounded-md p-3 ${stat.color} bg-opacity-10`}>
-                        <stat.icon className={`h-6 w-6 ${stat.color.replace('bg', 'text')}`} />
+                  <div className="flex items-center">
+                    <div className={`flex-shrink-0 rounded-md p-3 ${stat.color} bg-opacity-10 group-hover:bg-opacity-20 transition`}>
+                      <stat.icon className={`h-6 w-6 ${stat.color.replace('bg', 'text')}`} />
+                    </div>
+                    {stat.change !== undefined && (
+                      <div className={`ml-auto text-sm flex items-center ${
+                        stat.change >= 0 ? 'text-green-500' : 'text-red-500'
+                      }`}>
+                        {stat.change >= 0 ? '+' : ''}{stat.change}%
                       </div>
-                      {stat.change !== undefined && (
-                        <div className={`ml-auto text-sm flex items-center ${
-                          stat.change >= 0 ? 'text-green-500' : 'text-red-500'
-                        }`}>
-                          {stat.change >= 0 ? '+' : ''}{stat.change}%
-                        </div>
-                      )}
-                    </div>
-                    <div className="mt-4">
-                      <h3 className="text-2xl font-semibold text-gray-900">{stat.value}</h3>
-                      <p className="text-sm text-gray-500">{stat.title}</p>
-                    </div>
+                    )}
                   </div>
-                </div>
+                  <div>
+                    <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">{stat.value}</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-300">{stat.title}</p>
+                  </div>
+                </Link>
               ))}
             </div>
             

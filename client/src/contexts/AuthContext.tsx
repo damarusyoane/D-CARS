@@ -66,27 +66,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, [user]);
 
     useEffect(() => {
-        // Check active sessions and sets the user
+        console.log('[AuthProvider] Checking session...');
+        let timeoutId: NodeJS.Timeout | null = null;
+        // Timeout fallback for loading
+        timeoutId = setTimeout(() => {
+            if (isLoading) {
+                console.error('[AuthProvider] Timed out waiting for auth.');
+                setIsLoading(false);
+                toast.error('Timed out waiting for auth. Please try again.');
+            }
+        }, 5000);
+
         supabase.auth.getSession().then(async ({ data: { session } }) => {
+            console.log('[AuthProvider] Session:', session);
             setUser(session?.user ?? null);
             if (session?.user) {
                 setIsEmailVerified(session.user.email_confirmed_at != null);
                 await checkTwoFactorStatus(session.user.id);
             }
             setIsLoading(false);
+            if (timeoutId) clearTimeout(timeoutId);
+        }).catch((err) => {
+            console.error('[AuthProvider] Error getting session:', err);
+            setIsLoading(false);
+            if (timeoutId) clearTimeout(timeoutId);
+            toast.error('Error getting session. Please try again.');
         });
 
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+            console.log('[AuthProvider] Auth state change:', _event, session);
             setUser(session?.user ?? null);
             if (session?.user) {
                 setIsEmailVerified(session.user.email_confirmed_at != null);
                 await checkTwoFactorStatus(session.user.id);
             }
             setIsLoading(false);
+            if (timeoutId) clearTimeout(timeoutId);
         });
 
-        return () => subscription.unsubscribe();
+        return () => {
+            subscription.unsubscribe();
+            if (timeoutId) clearTimeout(timeoutId);
+        };
     }, []);
 
     const checkTwoFactorStatus = async (userId: string) => {

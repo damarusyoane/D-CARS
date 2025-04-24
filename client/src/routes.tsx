@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
+import ErrorBoundary from './components/common/ErrorBoundary';
 import MainLayout from './layouts/MainLayout';
 import AdminLayout from './layouts/AdminLayout';
 import AuthLayout from './layouts/AuthLayout';
@@ -44,56 +45,58 @@ const NotFound = lazy(() => import('./pages/NotFound'));
 
 function AppRoutes() {
   return (
-    <Suspense fallback={<div className="flex h-screen items-center justify-center"><LoadingSpinner size="lg" /></div>}>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<MainLayout><Outlet /></MainLayout>}>
-          <Route index element={<HomePage />} />
-          <Route path="cars" element={<Search />} />
-          <Route path="cars/:id" element={<VehicleDetails />} />
-          <Route path="search" element={<Search />} />
-          <Route path="about-us" element={<AboutUs />} />
-          <Route path="contact-us" element={<ContactUs />} />
-          <Route path="subscription" element={<Subscription />} />
-          <Route path="cart" element={<Cart />} />
-        </Route>
-
-        {/* Auth Routes */}
-        <Route path="/auth" element={<AuthLayout><Outlet /></AuthLayout>}>
-          <Route path="login" element={<Login />} />
-          <Route path="register" element={<Register />} />
-        </Route>
-
-        {/* Admin Auth Routes */}
-        <Route path="/admin">
-          <Route path="login" element={<AdminLogin />} />
-          <Route path="register" element={<AdminRegister />} />
-          
-          {/* Protected Admin Routes */}
-          <Route element={<AdminRoute><AdminLayout><Outlet /></AdminLayout></AdminRoute>}>
-            <Route index element={<AdminDashboard />} />
+    <ErrorBoundary>
+      <Suspense fallback={<div className="flex h-screen items-center justify-center"><LoadingSpinner size="lg" /></div>}>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<MainLayout><Outlet /></MainLayout>}>
+            <Route index element={<HomePage />} />
+            <Route path="cars" element={<Search />} />
+            <Route path="cars/:id" element={<VehicleDetails />} />
+            <Route path="search" element={<Search />} />
+            <Route path="about-us" element={<AboutUs />} />
+            <Route path="contact-us" element={<ContactUs />} />
+            <Route path="subscription" element={<Subscription />} />
+            <Route path="cart" element={<Cart />} />
           </Route>
-        </Route>
 
-        {/* Protected User Routes */}
-        <Route element={<ProtectedRoute><MainLayout><Outlet /></MainLayout></ProtectedRoute>}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/dashboard/profile" element={<Profile />} />
-          <Route path="/dashboard/settings" element={<Settings />} />
-          <Route path="/dashboard/messages" element={<Messages />} />
-          <Route path="/dashboard/saved" element={<SavedCars />} />
-          <Route path="/dashboard/my-listings" element={<MyListings />} />
-          <Route path="/dashboard/create-listing" element={<CreateListing />} />
-          <Route path="/dashboard/edit-listing/:id" element={<EditListing />} />
-          <Route path="/dashboard/transactions" element={<Transactions />} />
-          <Route path="/dashboard/transaction-history" element={<TransactionHistory />} />
-        </Route>
+          {/* Auth Routes */}
+          <Route path="/auth" element={<AuthLayout><Outlet /></AuthLayout>}>
+            <Route path="login" element={<Login />} />
+            <Route path="register" element={<Register />} />
+          </Route>
 
-        {/* 404 Route */}
-        <Route path="404" element={<NotFound />} />
-        <Route path="*" element={<Navigate to="/404" replace />} />
-      </Routes>
-    </Suspense>
+          {/* Admin Auth Routes */}
+          <Route path="/admin">
+            <Route path="login" element={<AdminLogin />} />
+            <Route path="register" element={<AdminRegister />} />
+            
+            {/* Protected Admin Routes */}
+            <Route element={<AdminRoute><AdminLayout><Outlet /></AdminLayout></AdminRoute>}>
+              <Route index element={<AdminDashboard />} />
+            </Route>
+          </Route>
+
+          {/* Protected User Routes */}
+          <Route element={<ProtectedRoute><MainLayout><Outlet /></MainLayout></ProtectedRoute>}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/dashboard/profile" element={<Profile />} />
+            <Route path="/dashboard/settings" element={<Settings />} />
+            <Route path="/dashboard/messages" element={<Messages />} />
+            <Route path="/dashboard/saved" element={<SavedCars />} />
+            <Route path="/dashboard/my-listings" element={<MyListings />} />
+            <Route path="/dashboard/create-listing" element={<CreateListing />} />
+            <Route path="/dashboard/edit-listing/:id" element={<EditListing />} />
+            <Route path="/dashboard/transactions" element={<Transactions />} />
+            <Route path="/dashboard/transaction-history" element={<TransactionHistory />} />
+          </Route>
+
+          {/* 404 Route */}
+          <Route path="404" element={<NotFound />} />
+          <Route path="*" element={<Navigate to="/404" replace />} />
+        </Routes>
+      </Suspense>
+    </ErrorBoundary>
   );
 }
 
