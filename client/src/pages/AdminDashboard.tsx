@@ -3,6 +3,10 @@ import { supabase } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
+
+// --- Add logout button styles ---
+const logoutBtnClass = "px-4 py-2 ml-4 rounded bg-red-500 text-white hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 transition disabled:opacity-60 disabled:cursor-not-allowed";
+
 import {
   UsersIcon,
   ShoppingCartIcon,
@@ -74,8 +78,35 @@ interface StatsData {
 }
 
 export default function AdminDashboard() {
-  const { profile } = useAuth();
+  const { signOut, profile } = useAuth();
   const navigate = useNavigate();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // Robust logout handler
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await signOut();
+      [localStorage, sessionStorage].forEach(storage => {
+        Object.keys(storage)
+          .filter((key) => key.startsWith('sb-'))
+          .forEach((key) => storage.removeItem(key));
+      });
+      if ('indexedDB' in window) {
+        try { window.indexedDB.deleteDatabase('supabase-auth-client'); } catch (e) {}
+      }
+      if (typeof supabase.removeAllChannels === 'function') {
+        supabase.removeAllChannels();
+      }
+      toast.success('Logged out successfully!');
+      setTimeout(() => { navigate('/auth/login', { replace: true }); }, 300);
+    } catch (err) {
+      toast.error('Logout failed.');
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
   // Role-based access control
   if (profile && profile.role !== 'admin') {
     toast.error("You don't have permission to access the admin dashboard");
@@ -478,7 +509,7 @@ export default function AdminDashboard() {
                   <ArrowPathIcon className="w-5 h-5" />
                 </button>
                 <div className="relative">
-                  <button className="p-2 text-gray-400 hover:text-white relative">
+                  <button className="p-2 text-gray-400 hover:text-white relative" title="Notifications">
                     <BellIcon className="w-5 h-5" />
                     <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
                   </button>
@@ -486,6 +517,14 @@ export default function AdminDashboard() {
                 <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center">
                   <span className="text-sm font-medium">{profile?.email?.charAt(0).toUpperCase()}</span>
                 </div>
+                <button
+                  className={logoutBtnClass}
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  title="Logout"
+                >
+                  {isLoggingOut ? 'Logging out...' : 'Logout'}
+                </button>
               </div>
             </div>
           </header>
