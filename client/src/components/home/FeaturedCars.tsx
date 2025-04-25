@@ -21,6 +21,7 @@ interface Vehicle {
 }
 
 export default function FeaturedCars() {
+  console.log("FeaturedCars mounted");
   const { t } = useTranslation();
   const [featuredCars, setFeaturedCars] = useState<Vehicle[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -28,18 +29,24 @@ export default function FeaturedCars() {
 
   useEffect(() => {
     async function fetchFeaturedCars() {
+      console.log("fetchFeaturedCars called");
       try {
         setIsLoading(true);
         
         // Add a small delay to prevent UI freezing
         await new Promise(resolve => setTimeout(resolve, 500));
-        
+
+        console.log("About to query Supabase");
+
         const { data, error } = await supabase
           .from('vehicles')
           .select('*')
-          .eq('status', 'active')
           .order('created_at', { ascending: false })
           .limit(6);
+
+        console.log('FeaturedCars Supabase query executed');
+        console.log('FeaturedCars Supabase data:', data);
+        console.log('FeaturedCars Supabase error:', error);
 
         if (error) throw error;
         
@@ -50,6 +57,7 @@ export default function FeaturedCars() {
         })));
       } catch (err) {
         console.error('Error fetching featured cars:', err);
+        alert('Error fetching featured cars: ' + (err instanceof Error ? err.message : String(err)));
         setError(err instanceof Error ? err : new Error('Unknown error'));
         
         // Even if there's an error, provide some sample data so UI isn't empty

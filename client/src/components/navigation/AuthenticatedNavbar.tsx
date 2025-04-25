@@ -279,6 +279,7 @@ export default function AuthenticatedNavbar() {
                         } block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 flex items-center`}
                         title={t('common.logout', 'Sign Out')}
                         onClick={async () => {
+                          console.log('Sign out clicked', signOut);
                           if (signOut) {
                             try {
                               await signOut();
@@ -286,6 +287,8 @@ export default function AuthenticatedNavbar() {
                             } catch (err) {
                               toast.error(t('auth.signOutError', 'Failed to sign out.'));
                             }
+                          } else {
+                            toast.error('Sign out function not available.');
                           }
                         }}
                       >
