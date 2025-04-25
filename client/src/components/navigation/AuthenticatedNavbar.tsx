@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { supabase } from '../../lib/supabase';
 import { Menu, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
 import { toast } from 'react-hot-toast';
@@ -283,7 +284,35 @@ export default function AuthenticatedNavbar() {
                           if (signOut) {
                             try {
                               await signOut();
-                              toast.success(t('auth.signedOut', 'Signed out successfully.'));
+
+                              // Remove all Supabase keys from localStorage and sessionStorage
+                              [localStorage, sessionStorage].forEach(storage => {
+                                Object.keys(storage)
+                                  .filter((key) => key.startsWith('sb-'))
+                                  .forEach((key) => storage.removeItem(key));
+                              });
+
+                              // Remove Supabase keys from IndexedDB (optional, for max reliability)
+                              if ('indexedDB' in window) {
+                                try {
+                                  window.indexedDB.deleteDatabase('supabase-auth-client');
+                                } catch (e) {}
+                              }
+
+                              // Remove all realtime channels if available
+                              if (typeof supabase.removeAllChannels === 'function') {
+                                supabase.removeAllChannels();
+                              }
+
+                              // Debug: log storage and user state
+                              console.log('After logout:');
+                              console.log('localStorage:', {...localStorage});
+                              console.log('sessionStorage:', {...sessionStorage});
+                              console.log('user:', user);
+
+                              setTimeout(() => {
+                                window.location.href = '/auth/login';
+                              }, 500);
                             } catch (err) {
                               toast.error(t('auth.signOutError', 'Failed to sign out.'));
                             }

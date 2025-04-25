@@ -141,7 +141,7 @@ export default function Messages() {
         return [];
       }
     },
-    enabled: !!selectedConversation,
+    enabled: !!selectedConversation && !!user?.id && !isAuthLoading,
     retry: 1,
     staleTime: 30000,
   });

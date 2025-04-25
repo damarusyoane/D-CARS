@@ -76,9 +76,9 @@ const CreateListing: React.FC = () => {
     } else {
       setFormData(prev => ({
         ...prev,
-        [name]: type === 'number' ?  name === 'price' || name === 'year' || name === 'mileage' || name === 'doors' || name === 'seats' 
-          ? parseFloat(value) 
-          : (value === '' ? 0 : globalThis.Number(value)) : value
+        [name]: type === 'number'
+          ? (value === '' ? '' : Number(value))
+          : value
       }));
     }
   };
@@ -111,22 +111,39 @@ const CreateListing: React.FC = () => {
       if (!user) throw new Error('Not authenticated');
 
       // Upload images to Supabase Storage
-      const imageUrls = await Promise.all(
-        formData.images.map(async (file) => {
-          const fileExt = file.name.split('.').pop();
-          const fileName = `${user.id}/${Date.now()}-${file.name}`;
-          const { error: uploadError } = await supabase.storage
-            .from('vehicle-images')
-            .upload(fileName, file, fileExt ? { contentType: `image/${fileExt}` } : undefined);
-          if (uploadError) throw uploadError;
+      const getMimeType = (ext: string) => {
+  switch (ext.toLowerCase()) {
+    case 'jpg':
+    case 'jpeg':
+      return 'image/jpeg';
+    case 'png':
+      return 'image/png';
+    case 'gif':
+      return 'image/gif';
+    case 'webp':
+      return 'image/webp';
+    case 'bmp':
+      return 'image/bmp';
+    default:
+      return 'application/octet-stream';
+  }
+};
+const imageUrls = await Promise.all(
+  formData.images.map(async (file) => {
+    const fileExt = file.name.split('.').pop() || '';
+    const fileName = `${user.id}/${Date.now()}-${file.name}`;
+    const { error: uploadError } = await supabase.storage
+      .from('vehicle-images')
+      .upload(fileName, file, { contentType: getMimeType(fileExt) });
+    if (uploadError) throw uploadError;
 
-          const { data: { publicUrl } } = supabase.storage
-            .from('vehicle-images')
-            .getPublicUrl(fileName);
+    const { data: { publicUrl } } = supabase.storage
+      .from('vehicle-images')
+      .getPublicUrl(fileName);
 
-          return publicUrl;
-        })
-      );
+    return publicUrl;
+  })
+);
 
       // Create vehicle listing
       const { error: dbError } = await supabase

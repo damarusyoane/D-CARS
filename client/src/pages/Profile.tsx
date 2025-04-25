@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
-import { Database } from '../lib/supabase';
+import { Database } from '../types/database';
 import { useAuth } from '../contexts/AuthContext';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { toast } from 'react-hot-toast';
@@ -46,7 +46,7 @@ const userData = {
 
 export default function Profile() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -63,7 +63,7 @@ export default function Profile() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && !isAuthLoading,
   });
 
   const updateProfile = useMutation({
@@ -209,7 +209,7 @@ export default function Profile() {
     updateProfile.mutate(updatedProfile as Partial<Profile>);
   };
 
-  if (isLoading) {
+  if (isAuthLoading || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <LoadingSpinner size="lg" />
@@ -249,16 +249,18 @@ export default function Profile() {
                   ) : (
                     <UserCircleIcon className="h-32 w-32 text-gray-400" />
                   )}
-                  <label className="absolute bottom-0 right-0 p-2 bg-white dark:bg-gray-800 rounded-full shadow-lg cursor-pointer">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleAvatarChange}
-                      className="hidden"
-                      disabled={isUploading}
-                    />
-                    <CameraIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                  </label>
+                  <label className="absolute bottom-0 right-0 ...">
+  <input
+    type="file"
+    accept="image/*"
+    onChange={handleAvatarChange}
+    className="hidden"
+    disabled={isUploading}
+    aria-label="Upload profile picture"
+    title="Upload profile picture"
+  />
+  <CameraIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" title="Upload profile picture" />
+</label>
                 </div>
                 <h2 className="mt-4 text-xl font-semibold text-gray-900 dark:text-white">
                   {profile?.full_name}

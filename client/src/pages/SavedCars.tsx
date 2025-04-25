@@ -18,6 +18,7 @@ export default function SavedCars() {
   const { t } = useTranslation();
   const { user, isLoading: isAuthLoading } = useAuth();
   const queryClient = useQueryClient();
+  
 
   if (isAuthLoading) {
     return (
@@ -42,7 +43,7 @@ export default function SavedCars() {
     transmission: 'all',
     fuelType: 'all',
   });
-  const [sortBy, setSortBy] = useState('created_at');
+  const [sortBy,] = useState('created_at');
   const [sortOrder, setSortOrder] = useState('desc');
 
   // Fetch saved vehicles

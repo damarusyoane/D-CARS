@@ -54,7 +54,15 @@ const Dashboard: React.FC = () => {
           .select('role, full_name, is_admin')
           .eq('id', user.id)
           .single();
-        if (error) throw error;
+        if (error) {
+          console.error('[Dashboard] Error fetching user role/profile:', error, 'Response:', data);
+          throw error;
+        }
+        if (!data) {
+          setError('User profile not found.');
+          console.error('[Dashboard] No profile data found for user:', user.id);
+          return;
+        }
         setUserRole(data.role);
         setUserName(data.full_name || '');
         if (data.is_admin && window.location.pathname !== '/admin') {
@@ -74,7 +82,7 @@ const Dashboard: React.FC = () => {
         const { data: listings, error: listingsError } = await supabase
           .from('vehicles')
           .select('*')
-          .eq('seller_id', user.id)
+          .eq('profile_id', user.id)
           .order('created_at', { ascending: false })
           .limit(5);
         if (listingsError) throw listingsError;

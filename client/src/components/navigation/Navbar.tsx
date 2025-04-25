@@ -1,4 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
+import { supabase } from '../../lib/supabase';
+
 import { useTranslation } from 'react-i18next';
 import { Menu, Transition } from '@headlessui/react';
 import { Fragment, useEffect, useState } from 'react';
@@ -25,6 +28,7 @@ function Navbar() {
   const navigate = useNavigate();
   const auth = useAuth();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   
   // Use local state to track login status for more reliable rendering
   useEffect(() => {
@@ -39,12 +43,44 @@ function Navbar() {
 
   // Handle logout functionality
   const handleLogout = async () => {
+    if (isSigningOut) return;
+    setIsSigningOut(true);
     try {
       await auth.signOut();
-      console.log('User logged out successfully');
-      navigate('/');
+
+      // Remove all Supabase keys from localStorage and sessionStorage
+      [localStorage, sessionStorage].forEach(storage => {
+        Object.keys(storage)
+          .filter((key) => key.startsWith('sb-'))
+          .forEach((key) => storage.removeItem(key));
+      });
+
+      // Remove Supabase keys from IndexedDB (optional, for max reliability)
+      if ('indexedDB' in window) {
+        try {
+          window.indexedDB.deleteDatabase('supabase-auth-client');
+        } catch (e) {}
+      }
+
+      // Remove all realtime channels if available
+      if (typeof supabase.removeAllChannels === 'function') {
+        supabase.removeAllChannels();
+      }
+
+      // Debug: log storage and user state
+      console.log('After logout:');
+      console.log('localStorage:', {...localStorage});
+      console.log('sessionStorage:', {...sessionStorage});
+      console.log('auth.user:', auth.user);
+
+      setTimeout(() => {
+        window.location.href = '/auth/login';
+      }, 500);
     } catch (error) {
+      toast.error('Logout failed.');
       console.error('Logout failed:', error);
+    } finally {
+      setIsSigningOut(false);
     }
   };
 

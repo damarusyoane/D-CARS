@@ -21,28 +21,25 @@ export default function Login() {
             // Use AuthContext's signIn to handle login and state
             await signIn(email, password);
 
-            // Fetch profile to check role
-            const { data: profile, error: profileError } = await supabase
-                .from('profiles')
-                .select('role')
-                .eq('email', email)
-                .single();
+            let destination = '/dashboard/search'; // default for buyers
+            try {
+                const { data: profile, error: profileError } = await supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('email', email)
+                    .single();
 
-            if (profileError) {
-                console.error('Profile fetch error:', profileError);
-                toast.error('Failed to fetch user profile');
-                setIsLoading(false);
-                return;
+                if (profileError) {
+                    toast.warn('Failed to fetch user profile. Redirecting to dashboard.');
+                } else if (profile?.role === 'admin') {
+                    destination = '/admin';
+                } else if (profile?.role === 'seller') {
+                    destination = '/dashboard/my-listings';
+                }
+            } catch (err) {
+                toast.warn('Error fetching profile. Redirecting to dashboard.');
             }
-
-            // Redirect based on role
-            if (profile?.role === 'admin') {
-                navigate('/admin', { replace: true });
-            } else if (profile?.role === 'seller') {
-                navigate('/dashboard/my-listings', { replace: true });
-            } else {
-                navigate('/dashboard/search', { replace: true });
-            }
+            navigate(destination, { replace: true });
         } catch (error) {
             console.error('Login error:', error);
             if (error instanceof Error) {
