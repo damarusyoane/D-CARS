@@ -1,3 +1,4 @@
+import  { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
@@ -25,10 +26,37 @@ import { useAuth } from '../../contexts/AuthContext';
 export default function AuthenticatedNavbar() {
   const { t, i18n } = useTranslation();
   const { signOut } = useAuth();
-
-  // Display the user's name or email in greeting if available
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { user } = useAuth();
   const displayName = user?.user_metadata?.name || user?.email || 'User';
+
+  // Robust logout handler (copied from AdminDashboard)
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await signOut();
+      [localStorage, sessionStorage].forEach(storage => {
+        Object.keys(storage)
+          .filter((key) => key.startsWith('sb-'))
+          .forEach((key) => storage.removeItem(key));
+      });
+      if ('indexedDB' in window) {
+        try { window.indexedDB.deleteDatabase('supabase-auth-client'); } catch (e) {}
+      }
+      if (typeof supabase.removeAllChannels === 'function') {
+        supabase.removeAllChannels();
+      }
+      toast.success('Logged out successfully!');
+      setTimeout(() => {
+        window.location.href = '/auth/login';
+      }, 300);
+    } catch (error) {
+      toast.error('Logout failed.');
+      console.error('Logout failed:', error);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
     <nav className="bg-white dark:bg-gray-800 shadow-md">
@@ -263,13 +291,24 @@ export default function AuthenticatedNavbar() {
                     {({ active }) => (
                       <Link
                         to="/dashboard/settings"
-                        className={`${
-                          active ? 'bg-gray-100 dark:bg-gray-600' : ''
-                        } block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 flex items-center`}
+                        className={`${active ? 'bg-gray-100 dark:bg-gray-600' : ''} block px-4 py-2 text-sm text-gray-700 dark:text-gray-200`}
                       >
-                        <CogIcon className="h-5 w-5 mr-2" />
+                        <CogIcon className="h-5 w-5 mr-2 inline" />
                         {t('common.settings', 'Settings')}
                       </Link>
+                    )}
+                  </Menu.Item>
+                  <Menu.Item>
+                    {({ active }) => (
+                      <button
+                        onClick={handleLogout}
+                        disabled={isLoggingOut}
+                        className={`${active ? 'bg-gray-100 dark:bg-gray-600' : ''} block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400`}
+                        title="Logout"
+                      >
+                        <ArrowRightOnRectangleIcon className="h-5 w-5 mr-2 inline" />
+                        {isLoggingOut ? t('common.loggingOut', 'Logging out...') : t('common.logout', 'Logout')}
+                      </button>
                     )}
                   </Menu.Item>
                   <Menu.Item>

@@ -28,7 +28,8 @@ function Navbar() {
   const navigate = useNavigate();
   const auth = useAuth();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { signOut } = useAuth();
   
   // Use local state to track login status for more reliable rendering
   useEffect(() => {
@@ -41,48 +42,34 @@ function Navbar() {
     setIsLoggedIn(!!auth.user);
   }, [auth.user, auth.isLoading]);
 
-  // Handle logout functionality
+  // Robust logout handler (copied from AdminDashboard/AuthenticatedNavbar)
   const handleLogout = async () => {
-    if (isSigningOut) return;
-    setIsSigningOut(true);
+    setIsLoggingOut(true);
     try {
-      await auth.signOut();
-
-      // Remove all Supabase keys from localStorage and sessionStorage
+      await signOut();
       [localStorage, sessionStorage].forEach(storage => {
         Object.keys(storage)
           .filter((key) => key.startsWith('sb-'))
           .forEach((key) => storage.removeItem(key));
       });
-
-      // Remove Supabase keys from IndexedDB (optional, for max reliability)
       if ('indexedDB' in window) {
-        try {
-          window.indexedDB.deleteDatabase('supabase-auth-client');
-        } catch (e) {}
+        try { window.indexedDB.deleteDatabase('supabase-auth-client'); } catch (e) {}
       }
-
-      // Remove all realtime channels if available
       if (typeof supabase.removeAllChannels === 'function') {
         supabase.removeAllChannels();
       }
-
-      // Debug: log storage and user state
-      console.log('After logout:');
-      console.log('localStorage:', {...localStorage});
-      console.log('sessionStorage:', {...sessionStorage});
-      console.log('auth.user:', auth.user);
-
+      toast.success('Logged out successfully!');
       setTimeout(() => {
         window.location.href = '/auth/login';
-      }, 500);
+      }, 300);
     } catch (error) {
       toast.error('Logout failed.');
       console.error('Logout failed:', error);
     } finally {
-      setIsSigningOut(false);
+      setIsLoggingOut(false);
     }
   };
+
 
   // Render login buttons directly (guaranteed to show)
   const renderAuthButtons = () => (
@@ -282,11 +269,13 @@ function Navbar() {
                         <button
                           className={`${
                             active ? 'bg-gray-100 dark:bg-gray-600' : ''
-                          } block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 flex items-center`}
-                          onClick={handleLogout}
+                          } block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 flex items-center disabled:opacity-60`}
+                          onClick={useAuth().signOut}
+                          disabled={isLoggingOut}
+                          title="Logout"
                         >
                           <ArrowRightOnRectangleIcon className="h-5 w-5 mr-2" />
-                          {t('common.logout', 'Sign Out')}
+                          {isLoggingOut ? t('common.loggingOut', 'Logging out...') : t('common.logout', 'Logout')}
                         </button>
                       )}
                     </Menu.Item>

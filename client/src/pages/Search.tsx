@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
-import { Database } from '../lib/supabase';
+import { Database } from '../types/database';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import { Link } from 'react-router-dom';
 import {
   AdjustmentsHorizontalIcon,
-  
   XMarkIcon,
+  ArrowTopRightOnSquareIcon
 } from '@heroicons/react/24/outline';
 
 type Vehicle = Database['public']['Tables']['vehicles']['Row'];
@@ -19,6 +20,7 @@ interface Filters {
   model: string[];
   transmission: string[];
   fuelType: string[];
+  status: string[];
 }
 
 const initialFilters: Filters = {
@@ -29,6 +31,7 @@ const initialFilters: Filters = {
   model: [],
   transmission: [],
   fuelType: [],
+  status: ['active']
 };
 
 export default function Search() {
@@ -37,13 +40,72 @@ export default function Search() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'price_asc' | 'price_desc' | 'newest' | 'mileage_asc'>('newest');
 
-  const { data: vehicles, isLoading } = useQuery<Vehicle[]>({
+  // Get available makes and models for filters
+  const [availableMakes, setAvailableMakes] = useState<string[]>([]);
+  const [availableModels, setAvailableModels] = useState<string[]>([]);
+
+  useEffect(() => {
+    // Fetch all available makes
+    const fetchMakes = async () => {
+      const { data, error } = await supabase
+        .from('vehicles')
+        .select('make')
+        .eq('status', 'active')
+        .order('make');
+      
+      if (!error && data) {
+        // Extract unique makes
+        const makes = [...new Set(data.map(v => v.make))].filter(Boolean);
+        setAvailableMakes(makes);
+      }
+    };
+    
+    fetchMakes();
+  }, []);
+
+  // Update models when makes filter changes
+  useEffect(() => {
+    const fetchModels = async () => {
+      if (filters.make.length === 0) {
+        // If no makes selected, get all models
+        const { data, error } = await supabase
+          .from('vehicles')
+          .select('model')
+          .eq('status', 'active')
+          .order('model');
+        
+        if (!error && data) {
+          const models = [...new Set(data.map(v => v.model))].filter(Boolean);
+          setAvailableModels(models);
+        }
+      } else {
+        // Get models for selected makes
+        const { data, error } = await supabase
+          .from('vehicles')
+          .select('model')
+          .eq('status', 'active')
+          .in('make', filters.make)
+          .order('model');
+        
+        if (!error && data) {
+          const models = [...new Set(data.map(v => v.model))].filter(Boolean);
+          setAvailableModels(models);
+        }
+      }
+    };
+    
+    fetchModels();
+  }, [filters.make]);
+
+  const { data: vehicles, isLoading, error } = useQuery<Vehicle[]>({
     queryKey: ['vehicles', filters, sortBy, searchQuery],
     queryFn: async () => {
+      console.log('Fetching vehicles with filters:', filters);
+      
       let query = supabase
         .from('vehicles')
         .select('*')
-        .eq('status', 'available')
+        .in('status', filters.status) // Use 'active' instead of 'available'
         .gte('price', filters.priceRange[0])
         .lte('price', filters.priceRange[1])
         .gte('year', filters.yearRange[0])
@@ -54,9 +116,16 @@ export default function Search() {
       if (filters.make.length > 0) {
         query = query.in('make', filters.make);
       }
+      
+      if (filters.model.length > 0) {
+        query = query.in('model', filters.model);
+      }
 
       if (searchQuery) {
-        query = query.or(`title.ilike.%${searchQuery}%,make.ilike.%${searchQuery}%,model.ilike.%${searchQuery}%`);
+        // Search in make, model, and description
+        query = query.or(
+          `make.ilike.%${searchQuery}%,model.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`
+        );
       }
 
       switch (sortBy) {
@@ -74,9 +143,14 @@ export default function Search() {
       }
 
       const { data, error } = await query;
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error('Error fetching vehicles:', error);
+        throw error;
+      }
+      console.log('Fetched vehicles:', data);
+      return data || [];
     },
+    staleTime: 60000, // 1 minute
   });
 
   return (
@@ -93,6 +167,8 @@ export default function Search() {
             <button
               onClick={() => setIsFilterOpen(false)}
               className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+              aria-label="Close filters"
+              title="Close filters"
             >
               <XMarkIcon className="w-5 h-5" />
             </button>
@@ -154,6 +230,70 @@ export default function Search() {
             </div>
           </div>
 
+          {/* Make */}
+          <div className="mb-6">
+            <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Make</h3>
+            <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
+              {availableMakes.length > 0 ? (
+                availableMakes.map((make) => (
+                  <div key={make} className="flex items-center">
+                    <input
+                      id={`make-${make}`}
+                      type="checkbox"
+                      checked={filters.make.includes(make)}
+                      onChange={() => {
+                        setFilters({
+                          ...filters,
+                          make: filters.make.includes(make)
+                            ? filters.make.filter(m => m !== make)
+                            : [...filters.make, make]
+                        });
+                      }}
+                      className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor={`make-${make}`} className="ml-2 block text-sm text-gray-900 dark:text-white">
+                      {make}
+                    </label>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500 dark:text-gray-400">No makes available</p>
+              )}
+            </div>
+          </div>
+
+          {/* Model */}
+          <div className="mb-6">
+            <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Model</h3>
+            <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
+              {availableModels.length > 0 ? (
+                availableModels.map((model) => (
+                  <div key={model} className="flex items-center">
+                    <input
+                      id={`model-${model}`}
+                      type="checkbox"
+                      checked={filters.model.includes(model)}
+                      onChange={() => {
+                        setFilters({
+                          ...filters,
+                          model: filters.model.includes(model)
+                            ? filters.model.filter(m => m !== model)
+                            : [...filters.model, model]
+                        });
+                      }}
+                      className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor={`model-${model}`} className="ml-2 block text-sm text-gray-900 dark:text-white">
+                      {model}
+                    </label>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500 dark:text-gray-400">No models available</p>
+              )}
+            </div>
+          </div>
+
           {/* Reset Filters */}
           <button
             onClick={() => setFilters(initialFilters)}
@@ -183,6 +323,8 @@ export default function Search() {
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
                 className="bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2"
+                aria-label="Sort vehicles"
+                title="Sort vehicles"
               >
                 <option value="newest">Newest First</option>
                 <option value="price_asc">Price: Low to High</option>
@@ -192,6 +334,8 @@ export default function Search() {
               <button
                 onClick={() => setIsFilterOpen(true)}
                 className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                aria-label="Open filters"
+                title="Open filters"
               >
                 <AdjustmentsHorizontalIcon className="w-5 h-5" />
               </button>
@@ -204,36 +348,75 @@ export default function Search() {
           <div className="flex items-center justify-center py-12">
             <LoadingSpinner size="lg" />
           </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <p className="text-red-500 mb-4">Error loading vehicles. Please try again.</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-primary-600 text-white rounded-lg"
+            >
+              Reload
+            </button>
+          </div>
+        ) : vehicles?.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500 dark:text-gray-400 mb-4">No vehicles found matching your criteria.</p>
+            <button 
+              onClick={() => setFilters(initialFilters)}
+              className="px-4 py-2 bg-primary-600 text-white rounded-lg"
+            >
+              Reset Filters
+            </button>
+          </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-4">
             {vehicles?.map((vehicle) => (
               <div
                 key={vehicle.id}
-                className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden"
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300"
               >
                 <div className="aspect-w-16 aspect-h-9 bg-gray-200 dark:bg-gray-700">
-                  {vehicle.images?.[0] && (
+                  {vehicle.images && vehicle.images[0] ? (
                     <img
                       src={vehicle.images[0]}
-                      alt={vehicle.title}
-                      className="object-cover w-full h-full"
+                      alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+                      className="object-cover w-full h-56"
+                      onError={(e) => {
+                        e.currentTarget.src = '/placeholder-car.jpg';
+                      }}
                     />
+                  ) : (
+                    <div className="flex items-center justify-center h-full bg-gray-300 dark:bg-gray-700">
+                      <span className="text-gray-500 dark:text-gray-400">No image available</span>
+                    </div>
                   )}
                 </div>
                 <div className="p-4">
-                  <h3 className="font-semibold text-gray-900 dark:text-white">
-                    {vehicle.title}
+                  <h3 className="font-semibold text-gray-900 dark:text-white text-xl">
+                    {vehicle.year} {vehicle.make} {vehicle.model}
                   </h3>
                   <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    {vehicle.make} {vehicle.model} • {vehicle.year}
+                    {vehicle.location || 'Location not specified'}
                   </p>
                   <div className="mt-2 flex items-center justify-between">
                     <p className="text-lg font-semibold text-primary-600 dark:text-primary-400">
-                      ${vehicle.price.toLocaleString()}
+                      ${vehicle.price?.toLocaleString() || '0'}
                     </p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {vehicle.mileage.toLocaleString()} miles
+                      {vehicle.mileage?.toLocaleString() || '0'} miles
                     </p>
+                  </div>
+                  <div className="mt-3 flex justify-between items-center">
+                    <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                      {vehicle.condition || 'Used'}
+                    </span>
+                    <Link
+                      to={`/cars/${vehicle.id}`}
+                      className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700"
+                    >
+                      View Details
+                      <ArrowTopRightOnSquareIcon className="ml-1 h-4 w-4" />
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -243,4 +426,4 @@ export default function Search() {
       </div>
     </div>
   );
-} 
+}

@@ -65,9 +65,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, [user]);
 
+    // Initialize auth and ensure session persistence
     useEffect(() => {
-        console.log('[AuthProvider] Checking session...');
+        console.log('[AuthProvider] Initializing auth context...');
         let timeoutId: NodeJS.Timeout | null = null;
+        
         // Timeout fallback for loading
         timeoutId = setTimeout(() => {
             if (isLoading) {
@@ -76,31 +78,94 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 toast.error('Timed out waiting for auth. Please try again.');
             }
         }, 5000);
-
-        supabase.auth.getSession().then(async ({ data: { session } }) => {
-            console.log('[AuthProvider] Session:', session);
-            setUser(session?.user ?? null);
-            if (session?.user) {
-                setIsEmailVerified(session.user.email_confirmed_at != null);
-                await checkTwoFactorStatus(session.user.id);
+        
+        // Initialize Supabase session persistence with localStorage
+        // This ensures user sessions are kept between page refreshes
+        const initializeAuth = async () => {
+            try {
+                // Check for existing session
+                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+                
+                if (sessionError) throw sessionError;
+                
+                console.log('[AuthProvider] Initial session:', session);
+                
+                // Set initial user state
+                setUser(session?.user ?? null);
+                
+                if (session?.user) {
+                    setIsEmailVerified(session.user.email_confirmed_at != null);
+                    await checkTwoFactorStatus(session.user.id);
+                    
+                    // Try to sync with profile data
+                    try {
+                        const { data: profileData, error: profileError } = await supabase
+                            .from('profiles')
+                            .select('*')
+                            .eq('id', session.user.id)
+                            .single();
+                            
+                        if (!profileError && profileData) {
+                            setProfile(profileData);
+                        }
+                    } catch (profileErr) {
+                        console.error('[AuthProvider] Error fetching profile:', profileErr);
+                    }
+                }
+                
+                setIsLoading(false);
+                if (timeoutId) clearTimeout(timeoutId);
+            } catch (err) {
+                console.error('[AuthProvider] Error initializing auth:', err);
+                setIsLoading(false);
+                if (timeoutId) clearTimeout(timeoutId);
+                // Don't show toast error on initial load
             }
-            setIsLoading(false);
-            if (timeoutId) clearTimeout(timeoutId);
-        }).catch((err) => {
-            console.error('[AuthProvider] Error getting session:', err);
-            setIsLoading(false);
-            if (timeoutId) clearTimeout(timeoutId);
-            toast.error('Error getting session. Please try again.');
-        });
+        };
+        
+        initializeAuth();
 
-        // Listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-            console.log('[AuthProvider] Auth state change:', _event, session);
-            setUser(session?.user ?? null);
-            if (session?.user) {
-                setIsEmailVerified(session.user.email_confirmed_at != null);
-                await checkTwoFactorStatus(session.user.id);
+        // Listen for auth state changes (login, logout, etc.)
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            console.log(`[AuthProvider] Auth state change: ${event}`, session);
+            
+            // Handle different auth events
+            switch (event) {
+                case 'SIGNED_IN':
+                    setUser(session?.user ?? null);
+                    if (session?.user) {
+                        setIsEmailVerified(session.user.email_confirmed_at != null);
+                        await checkTwoFactorStatus(session.user.id);
+                        toast.success('Signed in successfully!');
+                    }
+                    break;
+                    
+                case 'SIGNED_OUT':
+                    setUser(null);
+                    setProfile(null);
+                    setIsEmailVerified(false);
+                    setIsTwoFactorEnabled(false);
+                    // No toast here as signOut method handles this
+                    break;
+                    
+                case 'TOKEN_REFRESHED':
+                    setUser(session?.user ?? null);
+                    // Silent refresh, no need to notify
+                    break;
+                    
+                case 'USER_UPDATED':
+                    setUser(session?.user ?? null);
+                    if (session?.user) {
+                        setIsEmailVerified(session.user.email_confirmed_at != null);
+                        await checkTwoFactorStatus(session.user.id);
+                    }
+                    break;
+                
+                default:
+                    setUser(session?.user ?? null);
+                    break;
             }
+            
             setIsLoading(false);
             if (timeoutId) clearTimeout(timeoutId);
         });
@@ -299,10 +364,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const signOut = async () => {
         try {
+            // First try the standard signOut method
             const { error } = await supabase.auth.signOut();
             if (error) throw error;
+            
+            // Clear any cached user data
+            setUser(null);
+            setProfile(null);
+            setIsEmailVerified(false);
+            setIsTwoFactorEnabled(false);
+            
+            // Force clear any local storage related to Supabase
+            [localStorage, sessionStorage].forEach(storage => {
+                Object.keys(storage)
+                    .filter(key => key.startsWith('sb-'))
+                    .forEach(key => storage.removeItem(key));
+            });
+            
+            // Try to clear IndexedDB if available (contains token data)
+            if ('indexedDB' in window) {
+                try { 
+                    window.indexedDB.deleteDatabase('supabase-auth-db');
+                    window.indexedDB.deleteDatabase('supabase-auth-token-storage');
+                } catch (e) {
+                    console.error('Error clearing IndexedDB:', e);
+                }
+            }
+            
+            // Clear any cookies
+            document.cookie.split(';').forEach(cookie => {
+                const [name] = cookie.trim().split('=');
+                if (name.includes('sb-')) {
+                    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname}`;
+                }
+            });
+            
             toast.success('Successfully signed out!');
+            
+            // Force page reload for complete clean state
+            setTimeout(() => {
+                window.location.href = '/'; // Navigate to home page
+            }, 500);
+            
         } catch (error) {
+            console.error('Sign out error:', error);
             toast.error(error instanceof Error ? error.message : 'Failed to sign out');
             throw error;
         }

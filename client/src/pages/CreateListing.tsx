@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { PhotoIcon } from '@heroicons/react/24/outline';
@@ -28,8 +30,6 @@ interface FormData {
   features: string[];
 }
 
-
-
 const CreateListing: React.FC = () => {
   const { profile } = useAuth();
   const navigate = useNavigate();
@@ -55,120 +55,203 @@ const CreateListing: React.FC = () => {
       engine_size: '',
       color: '',
       doors: 4,
-      seats: 5
+      seats: 5,
     },
-    features: []
+    features: [],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const formik = useFormik<FormData>({
+    initialValues: {
+      make: '',
+      model: '',
+      year: new Date().getFullYear(),
+      price: 0,
+      mileage: 0,
+      condition: 'used',
+      description: '',
+      location: '',
+      images: [],
+      specifications: {
+        transmission: '',
+        fuel_type: '',
+        engine_size: '',
+        color: '',
+        doors: 4,
+        seats: 5,
+      },
+      features: [],
+    },
+    validationSchema: Yup.object(),
+    onSubmit: handleSubmit,
+  });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     if (name.includes('.')) {
       const [section, field] = name.split('.');
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         [section]: {
           ...(prev[section as keyof FormData] as Record<string, any>),
-          [field]: value
-        }
+          [field]: value,
+        },
       }));
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [name]: type === 'number'
-          ? (value === '' ? '' : Number(value))
-          : value
+        [name]: type === 'number' ? (value === '' ? '' : Number(value)) : value,
       }));
     }
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setFormData(prev => ({
-      ...prev,
-        images: Array.from(e.target.files as FileList)
-    }));
+      const fileList = Array.from(e.target.files as FileList);
+      formik.setFieldValue('images', fileList);
+
+      // Validate image file types
+      const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'image/gif'];
+      const invalidFiles = fileList.filter((file) => !validTypes.includes(file.type));
+
+      if (invalidFiles.length > 0) {
+        formik.setFieldError('images', 'Only JPEG, PNG, WEBP and GIF images are allowed');
+      } else if (fileList.some((file) => file.size > 5 * 1024 * 1024)) {
+        formik.setFieldError('images', 'Images must be smaller than 5MB');
+      }
     }
   };
 
   const handleFeatureChange = (feature: string) => {
-    setFormData(prev => ({
-      ...prev,
-      features: prev.features.includes(feature)
-        ? prev.features.filter(f => f !== feature)
-        : [...prev.features, feature]
-    }));
+    const newFeatures = formik.values.features.includes(feature)
+      ? formik.values.features.filter((f) => f !== feature)
+      : [...formik.values.features, feature];
+
+    formik.setFieldValue('features', newFeatures);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  async function handleSubmit(values: FormData) {
     setIsSubmitting(true);
     setError(null);
 
+    console.log('Form submission started');
+    console.log('Form data:', values);
+
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      // 1. Get current user
+      console.log('Getting current user...');
+      const { data: authData, error: authError } = await supabase.auth.getUser();
 
-      // Upload images to Supabase Storage
+      if (authError) {
+        console.error('Authentication error:', authError);
+        throw new Error(`Authentication failed: ${authError.message}`);
+      }
+
+      if (!authData.user) {
+        console.error('No user found');
+        throw new Error('Not authenticated - please log in again');
+      }
+
+      const user = authData.user;
+      console.log('Current user:', user.id);
+
+      // 2. Upload images to Supabase Storage
+      console.log('Uploading images...');
       const getMimeType = (ext: string) => {
-  switch (ext.toLowerCase()) {
-    case 'jpg':
-    case 'jpeg':
-      return 'image/jpeg';
-    case 'png':
-      return 'image/png';
-    case 'gif':
-      return 'image/gif';
-    case 'webp':
-      return 'image/webp';
-    case 'bmp':
-      return 'image/bmp';
-    default:
-      return 'application/octet-stream';
-  }
-};
-const imageUrls = await Promise.all(
-  formData.images.map(async (file) => {
-    const fileExt = file.name.split('.').pop() || '';
-    const fileName = `${user.id}/${Date.now()}-${file.name}`;
-    const { error: uploadError } = await supabase.storage
-      .from('vehicle-images')
-      .upload(fileName, file, { contentType: getMimeType(fileExt) });
-    if (uploadError) throw uploadError;
+        switch (ext.toLowerCase()) {
+          case 'jpg':
+          case 'jpeg':
+            return 'image/jpeg';
+          case 'png':
+            return 'image/png';
+          case 'gif':
+            return 'image/gif';
+          case 'webp':
+            return 'image/webp';
+          case 'bmp':
+            return 'image/bmp';
+          default:
+            return 'application/octet-stream';
+        }
+      };
 
-    const { data: { publicUrl } } = supabase.storage
-      .from('vehicle-images')
-      .getPublicUrl(fileName);
+      // Define imageUrls with a default empty array in case no images are uploaded
+      let imageUrls: string[] = [];
 
-    return publicUrl;
-  })
-);
+      // Only try to upload images if there are any
+      if (values.images && values.images.length > 0) {
+        try {
+          imageUrls = await Promise.all(
+            values.images.map(async (file) => {
+              const fileExt = file.name.split('.').pop() || '';
+              const fileName = `${user.id}/${Date.now()}-${file.name}`;
+              console.log(`Uploading ${fileName}...`);
 
-      // Create vehicle listing
-      const { error: dbError } = await supabase
-        .from('vehicles')
-        .insert({
-          profile_id: user.id,
-        make: formData.make,
-        model: formData.model,
-        year: formData.year,
-        price: formData.price,
-        mileage: formData.mileage,
-          condition: formData.condition,
-          description: formData.description,
-        location: formData.location,
+              const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('vehicle-images')
+                .upload(fileName, file, { contentType: getMimeType(fileExt) });
+
+              if (uploadError) {
+                console.error('Upload error:', uploadError);
+                throw new Error(`Image upload failed: ${uploadError.message}`);
+              }
+
+              console.log('Upload successful:', uploadData);
+
+              const { data: { publicUrl } } = supabase.storage
+                .from('vehicle-images')
+                .getPublicUrl(fileName);
+
+              console.log('Public URL:', publicUrl);
+              return publicUrl;
+            })
+          );
+        } catch (uploadErr) {
+          console.error('Image upload error:', uploadErr);
+          throw new Error(`Failed to upload images: ${uploadErr instanceof Error ? uploadErr.message : String(uploadErr)}`);
+        }
+      } else {
+        console.log('No images to upload');
+      }
+
+      // 3. Create vehicle listing
+      console.log('Creating vehicle listing...');
+      const vehicleData = {
+        profile_id: user.id,
+        make: values.make,
+        model: values.model,
+        year: values.year,
+        price: values.price,
+        mileage: values.mileage,
+        condition: values.condition,
+        description: values.description,
+        location: values.location,
         images: imageUrls,
-        specifications: formData.specifications,
-          features: formData.features,
-          status: 'active'
-      });
+        specifications: values.specifications,
+        features: values.features,
+        status: 'active',
+      };
 
-      if (dbError) throw dbError;
+      console.log('Vehicle data to insert:', vehicleData);
 
+      const { data: insertData, error: dbError } = await supabase
+        .from('vehicles')
+        .insert(vehicleData)
+        .select();
+
+      if (dbError) {
+        console.error('Database error:', dbError);
+        throw new Error(`Database error: ${dbError.message}`);
+      }
+
+      console.log('Vehicle created successfully:', insertData);
+      alert('Listing created successfully!');
       navigate('/my-listings');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error in form submission:', err);
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      formik.setSubmitting(false);
     } finally {
       setIsSubmitting(false);
     }
@@ -182,87 +265,92 @@ const imageUrls = await Promise.all(
           {error}
         </div>
       )}
-      <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
+      <form onSubmit={formik.handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
             <label htmlFor="make" className="block text-sm font-medium text-gray-700">
               Make
             </label>
-              <input
-                type="text"
+            <input
+              type="text"
               id="make"
-                name="make"
-                value={formData.make}
-                onChange={handleInputChange}
-                required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              />
-            </div>
+              name="make"
+              value={formik.values.make}
+              onChange={handleInputChange}
+              onBlur={formik.handleBlur}
+              className={`mt-1 block w-full rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 ${
+                formik.touched.make && formik.errors.make ? 'border-red-300' : 'border-gray-300'
+              }`}
+            />
+            {formik.touched.make && formik.errors.make && (
+              <p className="mt-1 text-sm text-red-600">{formik.errors.make}</p>
+            )}
+          </div>
 
-            <div>
+          <div>
             <label htmlFor="model" className="block text-sm font-medium text-gray-700">
               Model
             </label>
-              <input
-                type="text"
+            <input
+              type="text"
               id="model"
-                name="model"
-                value={formData.model}
-                onChange={handleInputChange}
-                required
+              name="model"
+              value={formik.values.model}
+              onChange={handleInputChange}
+              required
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              />
-            </div>
+            />
+          </div>
 
-            <div>
+          <div>
             <label htmlFor="year" className="block text-sm font-medium text-gray-700">
               Year
             </label>
-              <input
-                type="number"
+            <input
+              type="number"
               id="year"
-                name="year"
-                value={formData.year}
-                onChange={handleInputChange}
-                required
+              name="year"
+              value={formik.values.year}
+              onChange={handleInputChange}
+              required
               min="1900"
               max={new Date().getFullYear() + 1}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              />
-            </div>
+            />
+          </div>
 
-            <div>
+          <div>
             <label htmlFor="price" className="block text-sm font-medium text-gray-700">
               Price
             </label>
-              <input
-                type="number"
+            <input
+              type="number"
               id="price"
-                name="price"
-                value={formData.price}
-                onChange={handleInputChange}
-                required
+              name="price"
+              value={formik.values.price}
+              onChange={handleInputChange}
+              required
               min="0"
               step="0.01"
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              />
-            </div>
+            />
+          </div>
 
-            <div>
+          <div>
             <label htmlFor="mileage" className="block text-sm font-medium text-gray-700">
               Mileage
             </label>
-              <input
-                type="number"
+            <input
+              type="number"
               id="mileage"
-                name="mileage"
-                value={formData.mileage}
-                onChange={handleInputChange}
-                required
+              name="mileage"
+              value={formik.values.mileage}
+              onChange={handleInputChange}
+              required
               min="0"
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              />
-            </div>
+            />
+          </div>
 
           <div>
             <label htmlFor="condition" className="block text-sm font-medium text-gray-700">
@@ -271,7 +359,7 @@ const imageUrls = await Promise.all(
             <select
               id="condition"
               name="condition"
-              value={formData.condition}
+              value={formik.values.condition}
               onChange={handleInputChange}
               required
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
@@ -280,7 +368,7 @@ const imageUrls = await Promise.all(
               <option value="used">Used</option>
               <option value="certified">Certified</option>
             </select>
-        </div>
+          </div>
 
           <div>
             <label htmlFor="location" className="block text-sm font-medium text-gray-700">
@@ -290,7 +378,7 @@ const imageUrls = await Promise.all(
               type="text"
               id="location"
               name="location"
-              value={formData.location}
+              value={formik.values.location}
               onChange={handleInputChange}
               required
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
@@ -305,7 +393,7 @@ const imageUrls = await Promise.all(
           <textarea
             id="description"
             name="description"
-            value={formData.description}
+            value={formik.values.description}
             onChange={handleInputChange}
             required
             rows={4}
@@ -313,43 +401,43 @@ const imageUrls = await Promise.all(
           />
         </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
             <label htmlFor="specifications.transmission" className="block text-sm font-medium text-gray-700">
               Transmission
             </label>
-              <select
+            <select
               id="specifications.transmission"
-                name="specifications.transmission"
-                value={formData.specifications.transmission}
-                onChange={handleInputChange}
+              name="specifications.transmission"
+              value={formik.values.specifications.transmission}
+              onChange={handleInputChange}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              >
-                <option value="">Select Transmission</option>
-                <option value="automatic">Automatic</option>
-                <option value="manual">Manual</option>
-                <option value="semi-automatic">Semi-Automatic</option>
-              </select>
-            </div>
+            >
+              <option value="">Select Transmission</option>
+              <option value="automatic">Automatic</option>
+              <option value="manual">Manual</option>
+              <option value="semi-automatic">Semi-Automatic</option>
+            </select>
+          </div>
 
-            <div>
+          <div>
             <label htmlFor="specifications.fuel_type" className="block text-sm font-medium text-gray-700">
               Fuel Type
             </label>
-              <select
+            <select
               id="specifications.fuel_type"
               name="specifications.fuel_type"
-              value={formData.specifications.fuel_type}
-                onChange={handleInputChange}
+              value={formik.values.specifications.fuel_type}
+              onChange={handleInputChange}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              >
-                <option value="">Select Fuel Type</option>
-                <option value="gasoline">Gasoline</option>
-                <option value="diesel">Diesel</option>
-                <option value="electric">Electric</option>
-                <option value="hybrid">Hybrid</option>
-              </select>
-            </div>
+            >
+              <option value="">Select Fuel Type</option>
+              <option value="gasoline">Gasoline</option>
+              <option value="diesel">Diesel</option>
+              <option value="electric">Electric</option>
+              <option value="hybrid">Hybrid</option>
+            </select>
+          </div>
 
           <div>
             <label htmlFor="specifications.engine_size" className="block text-sm font-medium text-gray-700">
@@ -359,7 +447,7 @@ const imageUrls = await Promise.all(
               type="text"
               id="specifications.engine_size"
               name="specifications.engine_size"
-              value={formData.specifications.engine_size}
+              value={formik.values.specifications.engine_size}
               onChange={handleInputChange}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
             />
@@ -373,7 +461,7 @@ const imageUrls = await Promise.all(
               type="text"
               id="specifications.color"
               name="specifications.color"
-              value={formData.specifications.color}
+              value={formik.values.specifications.color}
               onChange={handleInputChange}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
             />
@@ -387,7 +475,7 @@ const imageUrls = await Promise.all(
               type="number"
               id="specifications.doors"
               name="specifications.doors"
-              value={formData.specifications.doors}
+              value={formik.values.specifications.doors}
               onChange={handleInputChange}
               min="2"
               max="5"
@@ -403,7 +491,7 @@ const imageUrls = await Promise.all(
               type="number"
               id="specifications.seats"
               name="specifications.seats"
-              value={formData.specifications.seats}
+              value={formik.values.specifications.seats}
               onChange={handleInputChange}
               min="2"
               max="9"
@@ -432,7 +520,7 @@ const imageUrls = await Promise.all(
               <label key={feature} className="flex items-center space-x-2">
                 <input
                   type="checkbox"
-                  checked={formData.features.includes(feature)}
+                  checked={formik.values.features.includes(feature)}
                   onChange={() => handleFeatureChange(feature)}
                   className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                 />
@@ -468,9 +556,9 @@ const imageUrls = await Promise.all(
               <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
             </div>
           </div>
-          {formData.images.length > 0 && (
+          {formik.values.images.length > 0 && (
             <div className="mt-2 grid grid-cols-3 gap-2">
-              {formData.images.map((file, index) => (
+              {formik.values.images.map((file, index) => (
                 <img
                   key={index}
                   src={URL.createObjectURL(file)}
@@ -496,4 +584,4 @@ const imageUrls = await Promise.all(
   );
 };
 
-export default CreateListing; 
+export default CreateListing;

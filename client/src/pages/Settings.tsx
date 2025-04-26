@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
+import { toast } from 'react-hot-toast';
 import {
   UserIcon,
   BellIcon,
@@ -48,6 +51,35 @@ type BooleanKeys<T> = {
 }[keyof T];
 
 const Settings: React.FC = () => {
+  const { user } = useAuth();
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Save changes to Supabase
+  const handleSaveChanges = async () => {
+    if (!user) {
+      toast.error('Not logged in');
+      return;
+    }
+    setIsSaving(true);
+    try {
+      // Update the profiles table with account info
+      const updates = {
+        id: user.id,
+        full_name: formData.account.name,
+        email: formData.account.email,
+        phone_number: formData.account.phone,
+        // Optionally add privacy, notifications, language fields if present in DB
+      };
+      const { error } = await supabase.from('profiles').upsert([updates], { onConflict: 'id' });
+      if (error) throw error;
+      toast.success('Settings updated successfully');
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to update settings');
+    } finally {
+      setIsSaving(false);
+    }
+  };
   const [activeSection, setActiveSection] = useState('account');
   const [formData, setFormData] = useState<FormData>({
     account: {
@@ -119,6 +151,8 @@ const Settings: React.FC = () => {
           value={formData.account.name}
           onChange={handleInputChange}
           className="w-full bg-dark-primary border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-dark-accent"
+          title="Full Name"
+          placeholder="Enter your full name"
         />
       </div>
       <div>
@@ -129,6 +163,8 @@ const Settings: React.FC = () => {
           value={formData.account.email}
           onChange={handleInputChange}
           className="w-full bg-dark-primary border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-dark-accent"
+          title="Email"
+          placeholder="Enter your email"
         />
       </div>
       <div>
@@ -139,6 +175,8 @@ const Settings: React.FC = () => {
           value={formData.account.phone}
           onChange={handleInputChange}
           className="w-full bg-dark-primary border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-dark-accent"
+          title="Phone Number"
+          placeholder="Enter your phone number"
         />
       </div>
     </div>
@@ -146,19 +184,24 @@ const Settings: React.FC = () => {
 
   const renderNotificationSettings = () => (
     <div className="space-y-4">
-      {Object.entries(formData.notifications).map(([key, value]) => (
-        <div key={key} className="flex items-center">
-          <input
-            type="checkbox"
-            checked={value}
-            onChange={() => handleCheckboxChange('notifications', key as keyof FormData['notifications'])}
-            className="h-4 w-4 rounded border-gray-300 text-dark-accent focus:ring-dark-accent"
-          />
-          <label className="ml-2 text-sm text-gray-300 capitalize">
-            {key.replace(/([A-Z])/g, ' $1').trim()}
-          </label>
-        </div>
-      ))}
+      {Object.entries(formData.notifications).map(([key, value]) => {
+        const inputId = `notifications-${key}`;
+        return (
+          <div key={key} className="flex items-center">
+            <input
+              id={inputId}
+              type="checkbox"
+              checked={value}
+              onChange={() => handleCheckboxChange('notifications', key as keyof FormData['notifications'])}
+              className="h-4 w-4 rounded border-gray-300 text-dark-accent focus:ring-dark-accent"
+              title={`Toggle ${key.replace(/([A-Z])/g, ' $1').trim()}`}
+            />
+            <label htmlFor={inputId} className="ml-2 text-sm text-gray-300 capitalize">
+              {key.replace(/([A-Z])/g, ' $1').trim()}
+            </label>
+          </div>
+        );
+      })}
     </div>
   );
 
@@ -177,6 +220,7 @@ const Settings: React.FC = () => {
                 checked={formData.privacy.profileVisibility === option}
                 onChange={(e) => handleProfileVisibilityChange(e.target.value as 'public' | 'private' | 'friends')}
                 className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                title={`Set profile visibility to ${option}`}
               />
               <label htmlFor={`visibility-${option}`} className="ml-3 block text-sm font-medium text-gray-700 capitalize">
                 {option}
@@ -194,6 +238,7 @@ const Settings: React.FC = () => {
               checked={formData.privacy.showEmail}
               onChange={() => handleCheckboxChange('privacy', 'showEmail')}
               className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              title="Show Email"
             />
           </div>
           <div className="ml-3 text-sm">
@@ -209,6 +254,7 @@ const Settings: React.FC = () => {
               checked={formData.privacy.showPhone}
               onChange={() => handleCheckboxChange('privacy', 'showPhone')}
               className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              title="Show Phone Number"
             />
           </div>
           <div className="ml-3 text-sm">
@@ -224,6 +270,7 @@ const Settings: React.FC = () => {
               checked={formData.privacy.allowMessages}
               onChange={() => handleCheckboxChange('privacy', 'allowMessages')}
               className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              title="Allow Messages"
             />
           </div>
           <div className="ml-3 text-sm">
@@ -244,6 +291,7 @@ const Settings: React.FC = () => {
           value={formData.language.preferred}
           onChange={handleInputChange}
           className="w-full bg-dark-primary border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-dark-accent"
+          title="Preferred Language"
         >
           <option value="en">English</option>
           <option value="es">Spanish</option>
@@ -304,8 +352,12 @@ const Settings: React.FC = () => {
             <button className="px-4 py-2 text-sm text-gray-400 hover:text-gray-300">
               Cancel
             </button>
-            <button className="px-4 py-2 bg-dark-accent text-white text-sm rounded-lg hover:bg-dark-accent/90">
-              Save Changes
+            <button
+              className="px-4 py-2 bg-dark-accent text-white text-sm rounded-lg hover:bg-dark-accent/90 disabled:opacity-60"
+              onClick={handleSaveChanges}
+              disabled={isSaving}
+            >
+              {isSaving ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </div>

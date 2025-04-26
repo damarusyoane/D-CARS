@@ -684,6 +684,7 @@ export default function AdminDashboard() {
                                 onClick={() => handleVehicleApproval(vehicle.id)}
                                 disabled={processingId === vehicle.id}
                                 className="p-1 text-green-500 hover:bg-green-500/10 rounded-full"
+                                title="Approve"
                               >
                                 <CheckCircleIcon className="w-6 h-6" />
                               </button>
@@ -691,6 +692,7 @@ export default function AdminDashboard() {
                                 onClick={() => handleVehicleRejection(vehicle.id, "Does not meet listing requirements")}
                                 disabled={processingId === vehicle.id}
                                 className="p-1 text-red-500 hover:bg-red-500/10 rounded-full"
+                                title="Reject"
                               >
                                 <XCircleIcon className="w-6 h-6" />
                               </button>
