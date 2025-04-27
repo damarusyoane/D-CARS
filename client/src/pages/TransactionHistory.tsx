@@ -374,11 +374,49 @@ const TransactionHistory: React.FC = () => {
     );
   }
 
+  // --- Summary Cards ---
+  const totalSpent = transactions.filter(t => t.type === 'purchase').reduce((sum, t) => sum + t.amount, 0);
+  const totalEarned = transactions.filter(t => t.type === 'sale').reduce((sum, t) => sum + t.amount, 0);
+  const totalTransactions = transactions.length;
+  const completedCount = transactions.filter(t => t.status === 'completed').length;
+
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
       <Sidebar activePage="transaction-history" />
       <main className="flex-1 p-6">
         <div className="max-w-7xl mx-auto">
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex items-center">
+              <CheckCircleIcon className="w-8 h-8 text-green-500 mr-3" />
+              <div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Total Transactions</div>
+                <div className="text-lg font-bold text-gray-900 dark:text-white">{totalTransactions}</div>
+              </div>
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex items-center">
+              <ArrowUpCircleIcon className="w-8 h-8 text-blue-500 mr-3" />
+              <div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Total Spent</div>
+                <div className="text-lg font-bold text-gray-900 dark:text-white">${totalSpent.toLocaleString()}</div>
+              </div>
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex items-center">
+              <ArrowDownCircleIcon className="w-8 h-8 text-yellow-500 mr-3" />
+              <div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Total Earned</div>
+                <div className="text-lg font-bold text-gray-900 dark:text-white">${totalEarned.toLocaleString()}</div>
+              </div>
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex items-center">
+              <CheckCircleIcon className="w-8 h-8 text-emerald-500 mr-3" />
+              <div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Completed</div>
+                <div className="text-lg font-bold text-gray-900 dark:text-white">{completedCount}</div>
+              </div>
+            </div>
+          </div>
+
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Transaction History</h1>
             <div className="flex gap-2">
@@ -490,6 +528,12 @@ const TransactionHistory: React.FC = () => {
               <div className="py-12 text-center">
                 <div className="flex flex-col items-center justify-center">
                   <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-full mb-4">
+                    <XCircleIcon className="w-8 h-8 text-red-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">No Transactions Found</h3>
+                  <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">You have no transactions matching these filters. Try adjusting your filters or check back later.</p>
+                </div>
+              </div>
                     <BanknotesIcon className="h-8 w-8 text-gray-400 dark:text-gray-500" />
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">No transactions found</h3>
@@ -551,12 +595,9 @@ const TransactionHistory: React.FC = () => {
                           </div>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
-                          <span className="px-2 py-1 text-xs font-medium rounded-full capitalize
-                            ${t.type === 'purchase' ? 'bg-blue-100 text-blue-800 dark:bg-blue-800/20 dark:text-blue-300' : 
-                              t.type === 'sale' ? 'bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-300' : 
-                              t.type === 'deposit' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800/20 dark:text-yellow-300' :
-                              'bg-purple-100 text-purple-800 dark:bg-purple-800/20 dark:text-purple-300'}">
-                            {t.type}
+                          <span className="capitalize flex items-center gap-1" title={t.type.charAt(0).toUpperCase() + t.type.slice(1)}>
+                            {t.type === 'purchase' ? <ArrowUpCircleIcon className="w-4 h-4 text-blue-500" /> : t.type === 'sale' ? <ArrowDownCircleIcon className="w-4 h-4 text-yellow-500" /> : null}
+                            {t.type.charAt(0).toUpperCase() + t.type.slice(1)}
                           </span>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-sm">
@@ -564,15 +605,17 @@ const TransactionHistory: React.FC = () => {
                           {t.payment_method && (
                             <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center mt-1">
                               {getPaymentMethodIcon(t.payment_method)}
-                              <span className="ml-1">{t.payment_method}</span>
+                              <span className="ml-1 capitalize flex items-center gap-1" title={t.payment_method}>
+                                {t.payment_method}
+                              </span>
                             </div>
                           )}
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(t.status)}`}>
+                            <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-semibold ${getStatusBadgeClass(t.status)} gap-1`} title={t.status.charAt(0).toUpperCase() + t.status.slice(1)}>
                               {getStatusIcon(t.status)}
-                              <span className="ml-1 capitalize">{t.status}</span>
+                              {t.status.charAt(0).toUpperCase() + t.status.slice(1)}
                             </span>
                           </div>
                         </td>
@@ -648,18 +691,6 @@ const TransactionHistory: React.FC = () => {
           )}
           <CommonFooter />
         </div>
-            </button>
-            <span className="text-gray-300">Page {page} of {totalPages}</span>
-            <button
-              className="px-3 py-1 rounded bg-gray-700 text-white disabled:opacity-50"
-              disabled={page === totalPages}
-              onClick={() => setPage(page + 1)}
-            >
-              Next
-            </button>
-          </div>
-        )}
-        <CommonFooter />
       </div>
     </div>
   );

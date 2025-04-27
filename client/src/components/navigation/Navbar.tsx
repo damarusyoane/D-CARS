@@ -1,21 +1,18 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { toast } from 'react-hot-toast';
-import { supabase } from '../../lib/supabase';
+import { Link } from 'react-router-dom';
 
 import { useTranslation } from 'react-i18next';
 import { Menu, Transition } from '@headlessui/react';
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useEffect } from 'react';
 import {
   UserCircleIcon,
   GlobeAltIcon,
   HeartIcon,
   ChartBarSquareIcon,
-  ChatBubbleLeftIcon,
   CogIcon,
   ArrowRightOnRectangleIcon,
-  ReceiptRefundIcon,
   TruckIcon
 } from '@heroicons/react/24/outline';
+
 import ThemeToggle from '../common/ThemeToggle';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -25,12 +22,9 @@ import { useAuth } from '../../contexts/AuthContext';
  */
 function Navbar() {
   const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
   const auth = useAuth();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const { signOut } = useAuth();
-  
+  const isLoggedIn = !!auth.user;
+
   // Use local state to track login status for more reliable rendering
   useEffect(() => {
     // Check if user is logged in
@@ -38,56 +32,7 @@ function Navbar() {
       user: auth.user, 
       isLoading: auth.isLoading 
     });
-    
-    setIsLoggedIn(!!auth.user);
   }, [auth.user, auth.isLoading]);
-
-  // Robust logout handler (copied from AdminDashboard/AuthenticatedNavbar)
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
-    try {
-      await signOut();
-      [localStorage, sessionStorage].forEach(storage => {
-        Object.keys(storage)
-          .filter((key) => key.startsWith('sb-'))
-          .forEach((key) => storage.removeItem(key));
-      });
-      if ('indexedDB' in window) {
-        try { window.indexedDB.deleteDatabase('supabase-auth-client'); } catch (e) {}
-      }
-      if (typeof supabase.removeAllChannels === 'function') {
-        supabase.removeAllChannels();
-      }
-      toast.success('Logged out successfully!');
-      setTimeout(() => {
-        window.location.href = '/auth/login';
-      }, 300);
-    } catch (error) {
-      toast.error('Logout failed.');
-      console.error('Logout failed:', error);
-    } finally {
-      setIsLoggingOut(false);
-    }
-  };
-
-
-  // Render login buttons directly (guaranteed to show)
-  const renderAuthButtons = () => (
-    <div className="ml-4 flex items-center space-x-3">
-      <Link
-        to="/auth/login"
-        className="px-3 py-2 rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-      >
-        {t('common.login', 'Sign In')}
-      </Link>
-      <Link
-        to="/auth/register"
-        className="px-3 py-2 rounded-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700"
-      >
-        {t('common.register', 'Sign Up')}
-      </Link>
-    </div>
-  );
 
   return (
     <nav className="bg-white dark:bg-gray-800 shadow-md">
@@ -102,7 +47,8 @@ function Navbar() {
                 alt="D-CARS"
               />
             </Link>
-            <div className="hidden md:ml-6 md:flex md:space-x-4">
+            {/* Desktop nav links */}
+<div className="hidden md:ml-6 md:flex md:space-x-4">
               {/* Common Links for all users */}
               <Link
                 to="/cars"
@@ -155,7 +101,58 @@ function Navbar() {
           </div>
 
           {/* Right side: Theme toggle, Language selector, Auth buttons or User menu */}
-          <div className="flex items-center">
+          {/* Hamburger for mobile */}
+<div className="flex items-center md:hidden">
+  <Menu as="div" className="relative">
+    <Menu.Button className="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-primary-600 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none">
+      <svg className="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    </Menu.Button>
+    <Transition
+      as={Fragment}
+      enter="transition ease-out duration-100"
+      enterFrom="transform opacity-0 scale-95"
+      enterTo="transform opacity-100 scale-100"
+      leave="transition ease-in duration-75"
+      leaveFrom="transform opacity-100 scale-100"
+      leaveTo="transform opacity-0 scale-95"
+    >
+      <Menu.Items className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+        {/* Place mobile nav links and user menu here, similar to desktop */}
+        <div className="px-4 py-2 space-y-1">
+          <Link to="/cars" className="block text-gray-900 dark:text-gray-100 hover:text-primary-600 px-3 py-2 rounded-md text-base font-medium">Browse Cars</Link>
+          <Link to="/about-us" className="block text-gray-900 dark:text-gray-100 hover:text-primary-600 px-3 py-2 rounded-md text-base font-medium">About Us</Link>
+          <Link to="/contact-us" className="block text-gray-900 dark:text-gray-100 hover:text-primary-600 px-3 py-2 rounded-md text-base font-medium">Contact Us</Link>
+          {isLoggedIn && (
+            <>
+              <Link to="/dashboard/my-listings" className="block text-gray-900 dark:text-gray-100 hover:text-primary-600 px-3 py-2 rounded-md text-base font-medium">My Listings</Link>
+              <Link to="/dashboard/saved" className="block text-gray-900 dark:text-gray-100 hover:text-primary-600 px-3 py-2 rounded-md text-base font-medium">Saved Cars</Link>
+              <Link to="/dashboard" className="block text-gray-900 dark:text-gray-100 hover:text-primary-600 px-3 py-2 rounded-md text-base font-medium">Dashboard</Link>
+            </>
+          )}
+        </div>
+        <div className="border-t border-gray-200 dark:border-gray-700 my-2" />
+        {/* Auth/User menu */}
+        {(!isLoggedIn || auth.isLoading) ? (
+          <>
+            <Link to="/auth/login" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200">Sign In</Link>
+            <Link to="/auth/register" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200">Sign Up</Link>
+          </>
+        ) : (
+          <Menu.Item>
+            {() => (
+              <Link to="/dashboard/profile" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200">Profile</Link>
+            )}
+          </Menu.Item>
+        )}
+      </Menu.Items>
+    </Transition>
+  </Menu>
+</div>
+
+{/* Desktop right side */}
+<div className="flex items-center hidden md:flex">
             {/* Theme Toggle */}
             <ThemeToggle />
 
@@ -219,7 +216,12 @@ function Navbar() {
               OR when authentication is still loading (auth.isLoading)
               This ensures buttons are visible during authentication checks
             */}
-            {(!isLoggedIn || auth.isLoading) && renderAuthButtons()}
+            {(!isLoggedIn || auth.isLoading) && (
+              <>
+                <Link to="/auth/login" className="px-3 py-2 rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">Sign In</Link>
+                <Link to="/auth/register" className="px-3 py-2 rounded-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700">Sign Up</Link>
+              </>
+            )}
 
             {/* User Menu - only when logged in and not loading */}
             {isLoggedIn && !auth.isLoading && (
@@ -269,13 +271,12 @@ function Navbar() {
                         <button
                           className={`${
                             active ? 'bg-gray-100 dark:bg-gray-600' : ''
-                          } block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 flex items-center disabled:opacity-60`}
-                          onClick={useAuth().signOut}
-                          disabled={isLoggingOut}
+                          } block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 flex items-center`}
+                          onClick={auth.signOut}
                           title="Logout"
                         >
                           <ArrowRightOnRectangleIcon className="h-5 w-5 mr-2" />
-                          {isLoggingOut ? t('common.loggingOut', 'Logging out...') : t('common.logout', 'Logout')}
+                          {t('common.logout', 'Logout')}
                         </button>
                       )}
                     </Menu.Item>

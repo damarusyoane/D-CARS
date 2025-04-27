@@ -242,9 +242,6 @@ export default function Profile() {
                         }}
                         onLoad={() => console.log('Image loaded successfully')}
                       />
-                      <div className="text-xs text-gray-500 mt-2">
-                        Current URL: {profile.avatar_url}
-                      </div>
                     </>
                   ) : (
                     <UserCircleIcon className="h-32 w-32 text-gray-400" />

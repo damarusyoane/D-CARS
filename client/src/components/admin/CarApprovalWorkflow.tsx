@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { CheckCircleIcon, XCircleIcon, EyeIcon, ChatBubbleLeftIcon } from '@heroicons/react/24/outline';
 import LoadingSpinner from '../common/LoadingSpinner';
+import toast from 'react-hot-toast';
+import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface Vehicle {
   id: string;
@@ -39,6 +42,44 @@ const CarApprovalWorkflow: React.FC<CarApprovalWorkflowProps> = ({
   onReject,
   processingId
 }) => {
+  const { user } = useAuth();
+  const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
+  const [messageText, setMessageText] = useState('');
+  const [sendingMessage, setSendingMessage] = useState(false);
+
+  // Messaging handler
+  const handleOpenMessageModal = (vehicle: Vehicle) => {
+    setSelectedVehicle(vehicle);
+    setIsMessageModalOpen(true);
+    setMessageText('');
+  };
+  const handleCloseMessageModal = () => {
+    setIsMessageModalOpen(false);
+    setMessageText('');
+  };
+  const handleSendMessage = async () => {
+    if (!messageText.trim() || !selectedVehicle) return;
+    setSendingMessage(true);
+    try {
+      // Admin is sender, seller is recipient
+      const { error } = await supabase.from('messages').insert({
+        sender_id: user?.id,
+        receiver_id: selectedVehicle.seller_id,
+        vehicle_id: selectedVehicle.id,
+        content: messageText.trim(),
+        status: 'unread',
+        created_at: new Date().toISOString()
+      });
+      if (error) throw error;
+      toast.success('Message sent to seller!');
+      setIsMessageModalOpen(false);
+      setMessageText('');
+    } catch (err) {
+      toast.error('Failed to send message. Please try again.');
+    } finally {
+      setSendingMessage(false);
+    }
+  };
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
@@ -143,9 +184,18 @@ const CarApprovalWorkflow: React.FC<CarApprovalWorkflowProps> = ({
                       <button
                         onClick={() => handleViewDetails(vehicle)}
                         className="text-blue-400 hover:text-blue-300 p-1"
-                        title="View Details"
+                        title="View details"
+                        aria-label="View details"
                       >
                         <EyeIcon className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => handleOpenMessageModal(vehicle)}
+                        className="text-yellow-400 hover:text-yellow-300 p-1"
+                        title="Message seller"
+                        aria-label="Message seller"
+                      >
+                        <ChatBubbleLeftIcon className="w-5 h-5" />
                       </button>
                       <button
                         onClick={() => onApprove(vehicle.id)}
@@ -178,7 +228,7 @@ const CarApprovalWorkflow: React.FC<CarApprovalWorkflowProps> = ({
           <div className="bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-700 flex justify-between items-center">
               <h3 className="text-xl font-semibold text-white">{selectedVehicle.title}</h3>
-              <button onClick={handleCloseDetails} className="text-gray-400 hover:text-white">
+              <button onClick={handleCloseDetails} className="text-gray-400 hover:text-white" title="Close details" aria-label="Close details">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -389,7 +439,54 @@ const CarApprovalWorkflow: React.FC<CarApprovalWorkflowProps> = ({
           </div>
         </div>
       )}
-    </div>
+    {/* Message Seller Modal */}
+    {isMessageModalOpen && selectedVehicle && (
+      <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+        <div className="bg-gray-800 rounded-lg max-w-md w-full">
+          <div className="p-6 border-b border-gray-700">
+            <h3 className="text-xl font-semibold text-white">Message Seller</h3>
+          </div>
+          <div className="p-6">
+            <div className="mb-4">
+              <p className="text-gray-300 mb-2">
+                Send a message to the seller of:
+              </p>
+              <p className="font-medium text-white">{selectedVehicle.year} {selectedVehicle.make} {selectedVehicle.model}</p>
+            </div>
+            <div className="mb-6">
+              <label htmlFor="adminMessage" className="block text-sm font-medium text-gray-400 mb-2">
+                Message
+              </label>
+              <textarea
+                id="adminMessage"
+                rows={4}
+                className="w-full bg-gray-700 border border-gray-600 rounded-md p-3 text-white focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Type your message to the seller..."
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+              ></textarea>
+            </div>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={handleCloseMessageModal}
+                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-md"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSendMessage}
+                disabled={!messageText.trim() || sendingMessage}
+                className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md flex items-center space-x-2 disabled:opacity-50"
+              >
+                {sendingMessage ? <LoadingSpinner size="sm" /> : <ChatBubbleLeftIcon className="w-5 h-5" />}
+                <span>Send</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
   );
 };
 

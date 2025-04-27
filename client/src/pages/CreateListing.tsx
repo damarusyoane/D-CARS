@@ -230,7 +230,7 @@ const CreateListing: React.FC = () => {
         images: imageUrls,
         specifications: values.specifications,
         features: values.features,
-        status: 'active',
+        status: 'pending',
       };
 
       console.log('Vehicle data to insert:', vehicleData);

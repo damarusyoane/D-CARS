@@ -14,6 +14,7 @@ import { Outlet } from 'react-router-dom';
 const HomePage = lazy(() => import('./pages/Index'));
 const Search = lazy(() => import('./pages/Search'));
 const VehicleDetails = lazy(() => import('./pages/VehicleDetails'));
+const SellerProfile = lazy(() => import('./pages/SellerProfile'));
 const AboutUs = lazy(() => import('./pages/AboutUs'));
 const ContactUs = lazy(() => import('./pages/ContactUs'));
 const Subscription = lazy(() => import('./pages/Subscription'));
@@ -53,6 +54,7 @@ function AppRoutes() {
             <Route index element={<HomePage />} />
             <Route path="cars" element={<Search />} />
             <Route path="cars/:id" element={<VehicleDetails />} />
+            <Route path="seller/:sellerId" element={<SellerProfile />} />
             <Route path="search" element={<Search />} />
             <Route path="about-us" element={<AboutUs />} />
             <Route path="contact-us" element={<ContactUs />} />

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import EmptyState from '../components/EmptyState';
+
 import toast from 'react-hot-toast';
 import {
   ChartBarIcon,
@@ -13,7 +13,9 @@ import {
   BanknotesIcon,
   PlusCircleIcon,
   ArrowPathIcon,
-  BellIcon
+  BellIcon,
+  CurrencyDollarIcon,
+  ArrowTrendingUpIcon
 } from '@heroicons/react/24/outline';
 import DashboardSkeleton from '../components/DashboardSkeleton';
 import { Chart, registerables } from 'chart.js';
@@ -41,11 +43,8 @@ interface VehicleOverview {
   status: string;
 }
 
-interface Profile {
-  id: string;
-  full_name: string;
-  avatar_url?: string;
-}
+
+  
 
 interface ActivityItem {
   id: string;
@@ -88,7 +87,7 @@ const Dashboard: React.FC = () => {
   const [recentListings, setRecentListings] = useState<VehicleOverview[]>([]);
   const [recentMessages, setRecentMessages] = useState<any[]>([]);
   const [userName, setUserName] = useState<string>('');
-  const [error, setError] = useState<string | null>(null);
+  const [dashboardError, setDashboardError] = useState<string | null>(null);
   const [activityFeed, setActivityFeed] = useState<ActivityItem[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [notificationCount, setNotificationCount] = useState<number>(0);
@@ -107,7 +106,7 @@ const Dashboard: React.FC = () => {
     if (!user) return;
     const fetchAll = async () => {
       setIsLoading(true);
-      setError(null);
+      setDashboardError(null);
       try {
         await Promise.all([
           fetchUserRole(),
@@ -117,7 +116,7 @@ const Dashboard: React.FC = () => {
           fetchNotifications()
         ]);
       } catch (err) {
-        setError('Failed to load dashboard data.');
+        setDashboardError('Failed to load dashboard data.');
       } finally {
         setIsLoading(false);
       }
@@ -126,7 +125,7 @@ const Dashboard: React.FC = () => {
     // Real-time messages subscription
     const messagesSubscription = supabase
       .channel('messages-channel')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `recipient_id=eq.${user.id}` }, (payload) => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `receiver_id=eq.${user.id}` }, (_payload) => {
         setNotificationCount(prev => prev + 1);
         toast.success('You have a new message!');
         fetchDashboardData();
@@ -148,263 +147,26 @@ const Dashboard: React.FC = () => {
         .select('role, full_name, is_admin')
         .eq('id', user.id)
         .single();
-      if (error || !data) throw error || new Error('No profile data');
+      if (error) {
+        console.error('[Dashboard] Error fetching user role/profile:', error, 'Response:', data);
+        throw error;
+      }
+      if (!data) {
+        setDashboardError('User profile not found.');
+        console.error('[Dashboard] No profile data found for user:', user.id);
+        return;
+      }
       setUserRole(data.role);
       setUserName(data.full_name || '');
       if (data.is_admin && window.location.pathname !== '/admin') {
         navigate('/admin', { replace: true });
       }
     } catch (error) {
-      setError('Error fetching user role.');
+      setDashboardError('Error fetching user role.');
+      console.error('Error fetching user role:', error);
     }
   };
   // Dashboard Data (Listings & Messages)
-  const fetchDashboardData = async () => {
-    if (!user) return;
-    try {
-      // Listings
-      const { data: listings, error: listingsError } = await supabase
-        .from('vehicles')
-        .select('*')
-        .eq('profile_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(5);
-      if (listingsError) throw listingsError;
-      // Analytics
-      const { data: analytics } = await supabase
-        .from('vehicle_analytics')
-        .select('vehicle_id, views, inquiries')
-        .in('vehicle_id', listings?.map(l => l.id) || []);
-      const formattedListings = (listings || []).map(listing => {
-        const stats = analytics?.find(a => a.vehicle_id === listing.id) || { views: 0, inquiries: 0 };
-        return {
-          id: listing.id,
-          title: `${listing.year} ${listing.make} ${listing.model}`,
-          price: listing.price,
-          imageUrl: listing.images?.[0] || fallbackCarImg,
-          views: stats.views || 0,
-          inquiries: stats.inquiries || 0,
-          status: listing.status,
-          daysListed: Math.floor((Date.now() - new Date(listing.created_at).getTime()) / (1000 * 60 * 60 * 24))
-        };
-      });
-      setRecentListings(formattedListings);
-      // Messages
-      const { data: messages, error: messagesError } = await supabase
-        .from('messages')
-        .select('id, content, created_at, vehicles!inner(id, make, model, year), profiles!sender_id(id, full_name, avatar_url)')
-        .or(`receiver_id.eq.${user.id}`)
-        .order('created_at', { ascending: false })
-        .limit(5);
-      if (messagesError) throw messagesError;
-      setRecentMessages(messages || []);
-    } catch (error) {
-      setError('Error fetching dashboard data.');
-    }
-  };
-  // Transactions
-  const fetchTransactions = async () => {
-    if (!user) return;
-    try {
-      const { data, error } = await supabase
-        .from('transactions')
-        .select('*, vehicle:vehicles(make, model, year)')
-        .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
-        .order('created_at', { ascending: false })
-        .limit(10);
-      if (error) throw error;
-      setTransactions(data || []);
-    } catch (error) {
-      setError('Error fetching transactions.');
-    }
-  };
-  // Activity Feed
-  const fetchActivityFeed = async () => {
-    if (!user) return;
-    try {
-      const activities: ActivityItem[] = [];
-      // Messages
-      const { data: messages } = await supabase
-        .from('messages')
-        .select('id, content, created_at, vehicles(id, make, model, year), profiles!sender_id(id, full_name, avatar_url)')
-        .or(`recipient_id.eq.${user.id},sender_id.eq.${user.id}`)
-        .order('created_at', { ascending: false })
-        .limit(5);
-      if (messages) {
-        messages.forEach(msg => {
-          activities.push({
-            id: msg.id,
-            type: 'message',
-            user: Array.isArray(msg.profiles)
-              ? {
-                  id: msg.profiles[0]?.id,
-                  name: msg.profiles[0]?.full_name,
-                  avatar: msg.profiles[0]?.avatar_url || fallbackAvatar
-                }
-              : {
-                  id: msg.profiles?.id,
-                  name: msg.profiles?.full_name,
-                  avatar: msg.profiles?.avatar_url || fallbackAvatar
-                },
-            vehicle: Array.isArray(msg.vehicles)
-              ? {
-                  id: msg.vehicles[0]?.id,
-                  title: `${msg.vehicles[0]?.year} ${msg.vehicles[0]?.make} ${msg.vehicles[0]?.model}`
-                }
-              : msg.vehicles
-              ? {
-                  id: msg.vehicles?.id,
-                  title: `${msg.vehicles?.year} ${msg.vehicles?.make} ${msg.vehicles?.model}`
-                }
-              : undefined,
-            content: msg.content,
-            timestamp: msg.created_at
-          });
-        });
-      }
-      // Transactions
-      const { data: recentTransactions } = await supabase
-        .from('transactions')
-        .select('id, type, amount, status, created_at, vehicle:vehicles(id, make, model, year), buyer:profiles!transactions_buyer_id_fkey(id, full_name), seller:profiles!transactions_seller_id_fkey(id, full_name)')
-        .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
-        .order('created_at', { ascending: false })
-        .limit(3);
-      if (recentTransactions) {
-        recentTransactions.forEach(tx => {
-          const isCurrentUserBuyer = (Array.isArray(tx.buyer) ? tx.buyer[0]?.id : tx.buyer?.id) === user.id;
-          activities.push({
-            id: tx.id,
-            type: 'transaction',
-            user: isCurrentUserBuyer
-              ? {
-                  id: Array.isArray(tx.seller) ? tx.seller[0]?.id : tx.seller?.id,
-                  name: Array.isArray(tx.seller) ? tx.seller[0]?.full_name : tx.seller?.full_name
-                }
-              : {
-                  id: Array.isArray(tx.buyer) ? tx.buyer[0]?.id : tx.buyer?.id,
-                  name: Array.isArray(tx.buyer) ? tx.buyer[0]?.full_name : tx.buyer?.full_name
-                },
-            vehicle: Array.isArray(tx.vehicle)
-              ? {
-                  id: tx.vehicle[0]?.id,
-                  title: `${tx.vehicle[0]?.year} ${tx.vehicle[0]?.make} ${tx.vehicle[0]?.model}`
-                }
-              : tx.vehicle
-              ? {
-                  id: tx.vehicle?.id,
-                  title: `${tx.vehicle?.year} ${tx.vehicle?.make} ${tx.vehicle?.model}`
-                }
-              : undefined,
-            content: `${isCurrentUserBuyer ? 'You purchased' : 'You sold'} a vehicle for $${tx.amount?.toLocaleString?.() ?? tx.amount}`,
-            timestamp: tx.created_at,
-            status: tx.status,
-            amount: tx.amount
-          });
-        });
-      }
-      activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-      setActivityFeed(activities);
-    } catch (error) {
-      setError('Error fetching activity feed.');
-    }
-  };
-  // Notifications
-  const fetchNotifications = async () => {
-    if (!user) return;
-    try {
-      const { count, error } = await supabase
-        .from('notifications')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .eq('read', false);
-      if (error) throw error;
-      setNotificationCount(count || 0);
-    } catch (error) {
-      setError('Error fetching notifications.');
-    }
-  };
-  // Refresh Button Handler
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    setError(null);
-    try {
-      await Promise.all([
-        fetchDashboardData(),
-        fetchTransactions(),
-        fetchActivityFeed(),
-        fetchNotifications(),
-      ]);
-      toast.success('Dashboard refreshed!');
-    } catch (error) {
-      setError('Failed to refresh dashboard.');
-      toast.error('Failed to refresh dashboard');
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [recentListings, setRecentListings] = useState<VehicleOverview[]>([]);
-  const [recentMessages, setRecentMessages] = useState<any[]>([]);
-  const [userName, setUserName] = useState<string>('');
-  const [error, setError] = useState<string | null>(null);
-  const [activityFeed, setActivityFeed] = useState<ActivityItem[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [notificationCount, setNotificationCount] = useState<number>(0);
-  const lineChartRef = useRef<HTMLCanvasElement | null>(null);
-  const pieChartRef = useRef<HTMLCanvasElement | null>(null);
-  const lineChart = useRef<Chart | null>(null);
-  const pieChart = useRef<Chart | null>(null);
-  const navigate = useNavigate();
-  const { user } = useAuth();
-
-  useEffect(() => {
-    const fetchUserRole = async () => {
-      if (!user) return;
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('role, full_name, is_admin')
-          .eq('id', user.id)
-          .single();
-        if (error) {
-          console.error('[Dashboard] Error fetching user role/profile:', error, 'Response:', data);
-          throw error;
-        }
-        if (!data) {
-          setError('User profile not found.');
-          console.error('[Dashboard] No profile data found for user:', user.id);
-          return;
-        }
-        setUserRole(data.role);
-        setUserName(data.full_name || '');
-        if (data.is_admin && window.location.pathname !== '/admin') {
-          navigate('/admin', { replace: true });
-          return;
-        }
-      } catch (error) {
-        setError('Error fetching user role.');
-        console.error('Error fetching user role:', error);
-      }
-    };
-
-    fetchUserRole();
-    fetchDashboardData();
-    fetchTransactions();
-    fetchActivityFeed();
-    fetchNotifications();
-
-    const messagesSubscription = supabase
-      .channel('messages-channel')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `recipient_id=eq.${user?.id}` }, (payload) => {
-        setNotificationCount(prev => prev + 1);
-        toast.success('You have a new message!');
-        fetchDashboardData();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(messagesSubscription);
-    };
-  }, [user]);
-
   const fetchDashboardData = async () => {
     if (!user) return;
     setIsLoading(true);
@@ -418,7 +180,7 @@ const Dashboard: React.FC = () => {
         .limit(5);
       if (listingsError) throw listingsError;
 
-      const { data: analytics, error: analyticsError } = await supabase
+      const { data: analytics, error: _analyticsError } = await supabase
         .from('vehicle_analytics')
         .select('vehicle_id, views, inquiries')
         .in('vehicle_id', listings?.map(l => l.id) || []);
@@ -455,13 +217,14 @@ const Dashboard: React.FC = () => {
       if (messagesError) throw messagesError;
       setRecentMessages(messages || []);
     } catch (error) {
-      setError('Error fetching dashboard data.');
+      setDashboardError('Error fetching dashboard data.');
       console.error('Error fetching dashboard data:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Transactions
   const fetchTransactions = async () => {
     if (!user) return;
     try {
@@ -482,6 +245,7 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  // Activity Feed
   const fetchActivityFeed = async () => {
     if (!user) return;
     try {
@@ -584,6 +348,7 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  // Notifications
   const fetchNotifications = async () => {
     if (!user) return;
     try {
@@ -600,6 +365,7 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  // Refresh Button Handler
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
@@ -691,7 +457,6 @@ const Dashboard: React.FC = () => {
           y: {
             beginAtZero: true,
             grid: {
-              drawBorder: false,
               color: 'rgba(0, 0, 0, 0.05)'
             },
             ticks: {
@@ -852,7 +617,7 @@ const Dashboard: React.FC = () => {
                   onClick={handleRefresh}
                   className={`flex items-center px-4 py-2 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-700/80 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 gap-2 ${isRefreshing ? 'opacity-60 cursor-not-allowed' : ''}`}
                   disabled={isRefreshing}
-                  aria-busy={isRefreshing ? 'true' : undefined}
+                  aria-busy={`${isRefreshing}`}
                 >
                   <ArrowPathIcon className={`h-5 w-5 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
                   {isRefreshing ? 'Refreshing...' : 'Refresh'}
@@ -887,9 +652,9 @@ const Dashboard: React.FC = () => {
         </header>
         <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-4 sm:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto">
-            {error && (
+            {dashboardError && (
               <div className="mb-6 p-4 rounded-lg border-l-4 border-red-400 bg-red-50 text-red-700 dark:bg-red-900 dark:text-red-200 shadow-sm animate-fade-in">
-                {error}
+                {dashboardError}
               </div>
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -909,9 +674,9 @@ const Dashboard: React.FC = () => {
                       }`}>
                         <span className="flex items-center">
                           {stat.change >= 0 ? (
-                            <TrendingUpIcon className="h-3 w-3 mr-1" />
+                            <ArrowTrendingUpIcon className="h-3 w-3 mr-1" />
                           ) : (
-                            <TrendingUpIcon className="h-3 w-3 mr-1 transform rotate-180" />
+                            <ArrowTrendingUpIcon className="h-3 w-3 mr-1 transform rotate-180" />
                           )}
                           {stat.change >= 0 ? '+' : ''}{stat.change}%
                         </span>
@@ -1042,7 +807,7 @@ const Dashboard: React.FC = () => {
                                   src={listing.imageUrl}
                                   alt={listing.title}
                                   className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
-                                  onError={(e) => { (e.target as HTMLImageElement).src = fallbackCarImg; }}
+                                  onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => { (e.target as HTMLImageElement).src = fallbackCarImg; }}
                                 />
                               </div>
                               <div className="ml-4 flex-1">
@@ -1146,14 +911,9 @@ const Dashboard: React.FC = () => {
                                 className="h-10 w-10 rounded-full border-2 border-gray-200 dark:border-gray-700 object-cover shadow-sm"
                                 src={Array.isArray(message.profiles) ? message.profiles[0]?.avatar_url : message.profiles?.avatar_url || fallbackAvatar}
                                 alt={Array.isArray(message.profiles) ? message.profiles[0]?.full_name : message.profiles?.full_name || 'User'}
-                                onError={(e) => { (e.target as HTMLImageElement).src = fallbackAvatar; }}
+                                onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => { (e.target as HTMLImageElement).src = fallbackAvatar; }}
                               />
                             </div>
-    src={Array.isArray(message.profiles) ? message.profiles[0]?.avatar_url : message.profiles?.avatar_url || fallbackAvatar}
-    alt={Array.isArray(message.profiles) ? message.profiles[0]?.full_name : message.profiles?.full_name || 'User'}
-    onError={e => { (e.target as HTMLImageElement).src = fallbackAvatar; }}
-  />
-</div>
                             <div className="ml-3 flex-1">
                               <div className="text-sm font-medium text-gray-900 dark:text-white">
                                 {message.profiles[0]?.full_name}
@@ -1191,7 +951,6 @@ const Dashboard: React.FC = () => {
               
               {/* Right Column */}
               <div className="space-y-8">
-  {/* Right column content with modern spacing */}
                 {/* Quick Actions */}
                 <div className="bg-white rounded-lg shadow overflow-hidden">
                   <div className="px-6 py-5 border-b border-gray-200">

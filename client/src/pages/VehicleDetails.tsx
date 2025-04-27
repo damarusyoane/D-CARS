@@ -13,19 +13,13 @@ import {
   ChatBubbleLeftRightIcon,
   MapPinIcon,
   ClockIcon,
-  CheckCircleIcon,
   PhoneIcon,
-  StarIcon,
   CurrencyDollarIcon,
-  CalendarIcon,
-  KeyIcon,
+  CheckCircleIcon,
   ShieldCheckIcon,
   TagIcon,
-  TruckIcon,
   DocumentArrowDownIcon,
   ShareIcon,
-  EnvelopeIcon,
-  ArrowTopRightOnSquareIcon,
 } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
 
@@ -96,8 +90,7 @@ export default function VehicleDetails() {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('profile_id', vehicle?.profile_id)
-        .eq('id', vehicle!.profile_id)
+        .eq('id', vehicle?.profile_id)
         .single();
 
       if (error) throw error;
@@ -205,7 +198,7 @@ export default function VehicleDetails() {
       }
 
       // Invalidate saved vehicles queries
-      queryClient.invalidateQueries(['savedVehicles']);
+      queryClient.invalidateQueries({ queryKey: ['savedVehicles'] });
     } catch (err) {
       console.error('Error saving vehicle:', err);
       toast.error('There was a problem saving this vehicle');
@@ -232,7 +225,7 @@ export default function VehicleDetails() {
         .from('messages')
         .insert({
           sender_id: user.id,
-          recipient_id: vehicle.profile_id,
+          receiver_id: vehicle.profile_id,
           vehicle_id: vehicle.id,
           content: messageText,
           status: 'unread',
@@ -246,7 +239,7 @@ export default function VehicleDetails() {
       setShowContactForm(false);
 
       // Invalidate messages queries
-      queryClient.invalidateQueries(['messages']);
+      queryClient.invalidateQueries({ queryKey: ['messages'] });
     } catch (err) {
       console.error('Error sending message:', err);
       toast.error('Failed to send message. Please try again.');
@@ -312,15 +305,15 @@ export default function VehicleDetails() {
 
       {/* Image Gallery */}
       <div className="relative bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden mb-8 h-96">
-        {vehicle.images?.[currentImageIndex] && (
+        {vehicle?.images?.[currentImageIndex] && (
           <img
-            src={vehicle.images[currentImageIndex]}
-            alt={`${vehicle.year} ${vehicle.make} ${vehicle.model} - Image ${currentImageIndex + 1}`}
+            src={vehicle?.images?.[currentImageIndex]}
+            alt={`${vehicle?.year ?? ''} ${vehicle?.make ?? ''} ${vehicle?.model ?? ''} - Image ${currentImageIndex + 1}`}
             className="object-cover w-full h-full cursor-pointer"
             onClick={() => setShowFullGallery(true)}
           />
         )}
-        {vehicle.images && vehicle.images.length > 1 && (
+        {vehicle?.images && vehicle.images.length > 1 && (
           <>
             <button
               onClick={handlePreviousImage}
@@ -340,15 +333,15 @@ export default function VehicleDetails() {
         )}
 
         {/* Image Counter */}
-        {vehicle.images && vehicle.images.length > 0 && (
+        {vehicle?.images && vehicle.images.length > 0 && (
           <div className="absolute bottom-4 right-4 bg-black/70 text-white text-sm px-3 py-1 rounded-full">
-            {currentImageIndex + 1} / {vehicle.images.length}
+            {currentImageIndex + 1} / {vehicle?.images.length}
           </div>
         )}
       </div>
 
       {/* Thumbnail Gallery */}
-      {vehicle.images && vehicle.images.length > 1 && (
+      {vehicle?.images && vehicle.images.length > 1 && (
         <div className="flex overflow-x-auto space-x-2 mb-8 pb-2">
           {vehicle.images.map((image, index) => (
             <div 
@@ -358,7 +351,7 @@ export default function VehicleDetails() {
             >
               <img 
                 src={image} 
-                alt={`${vehicle.year} ${vehicle.make} ${vehicle.model} thumbnail ${index + 1}`}
+                alt={`${vehicle?.year ?? 'N/A'} ${vehicle?.make ?? 'N/A'} ${vehicle?.model ?? 'N/A'} thumbnail ${index + 1}`}
                 className="w-full h-full object-cover"
               />
             </div>
@@ -383,10 +376,10 @@ export default function VehicleDetails() {
             </div>
 
             <div className="flex-1 flex items-center justify-center p-4">
-              {vehicle.images?.[currentImageIndex] && (
+              {vehicle?.images?.[currentImageIndex] && (
                 <img
-                  src={vehicle.images[currentImageIndex]}
-                  alt={`${vehicle.year} ${vehicle.make} ${vehicle.model} - Image ${currentImageIndex + 1}`}
+                  src={vehicle?.images?.[currentImageIndex]}
+                  alt={`${vehicle?.year ?? 'N/A'} ${vehicle?.make ?? 'N/A'} ${vehicle?.model ?? 'N/A'} - Image ${currentImageIndex + 1}`}
                   className="max-h-full max-w-full object-contain"
                 />
               )}
@@ -402,7 +395,7 @@ export default function VehicleDetails() {
               </button>
 
               <div className="text-white">
-                {currentImageIndex + 1} / {vehicle.images?.length}
+                {currentImageIndex + 1} / {vehicle?.images?.length}
               </div>
 
               <button
@@ -453,10 +446,10 @@ export default function VehicleDetails() {
           <div className="flex items-start justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                {vehicle.title}
+                {[vehicle?.year, vehicle?.make, vehicle?.model].filter(Boolean).join(' ')}
               </h1>
               <p className="mt-2 text-xl font-semibold text-primary-600 dark:text-primary-400">
-                ${vehicle.price.toLocaleString()}
+                ${vehicle?.price.toLocaleString()}
               </p>
             </div>
             <button
@@ -472,53 +465,145 @@ export default function VehicleDetails() {
           </div>
 
           {/* Vehicle Details */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { label: 'Make', value: vehicle.make },
-              { label: 'Model', value: vehicle.model },
-              { label: 'Year', value: vehicle.year },
-              { label: 'Mileage', value: `${vehicle.mileage.toLocaleString()} miles` },
-            ].map((detail) => (
-              <div
-                key={detail.label}
-                className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg"
-              >
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {detail.label}
-                </p>
-                <p className="mt-1 font-semibold text-gray-900 dark:text-white">
-                  {detail.value}
+          {vehicle && (
+            <div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  { label: 'Make', value: vehicle.make },
+                  { label: 'Model', value: vehicle.model },
+                  { label: 'Year', value: vehicle.year },
+                  { label: 'Mileage', value: vehicle.mileage ? `${vehicle.mileage?.toLocaleString?.()} miles` : 'N/A' },
+                ].map((detail) => (
+                  <div
+                    key={detail.label}
+                    className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg"
+                  >
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {detail.label}
+                    </p>
+                    <p className="mt-1 font-semibold text-gray-900 dark:text-white">
+                      {detail.value}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                  Description
+                </h2>
+                <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line">
+                  {vehicle.description}
                 </p>
               </div>
-            ))}
-          </div>
 
-          {/* Description */}
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-              Description
-            </h2>
-            <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line">
-              {vehicle.description}
-            </p>
-          </div>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                  Features
+                </h2>
+                <ul className="grid grid-cols-2 gap-2">
+                  {vehicle.features?.map((feature) => (
+                    <li
+                      key={feature}
+                      className="flex items-center text-gray-600 dark:text-gray-300"
+                    >
+                      <CheckCircleIcon className="w-5 h-5 text-primary-600 dark:text-primary-400 mr-2" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </div>
 
-          {/* Features */}
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-              Features
-            </h2>
-            <ul className="grid grid-cols-2 gap-2">
-              {vehicle.features.map((feature) => (
-                <li
-                  key={feature}
-                  className="flex items-center text-gray-600 dark:text-gray-300"
-                >
-                  <CheckCircleIcon className="w-5 h-5 text-primary-600 dark:text-primary-400 mr-2" />
-                  {feature}
-                </li>
-              ))}
-            </ul>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                  Specifications
+                </h2>
+                {vehicle && (
+                  <div className="grid grid-cols-2 gap-4">
+                    {Object.entries(vehicle.specifications ?? {}).map(([key, value]) => (
+                      <div
+                        key={key}
+                        className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700"
+                      >
+                        <span className="text-gray-600 dark:text-gray-300 capitalize">
+                          {key.replace(/([A-Z])/g, ' $1').trim()}
+                        </span>
+                        <span className="font-medium text-gray-900 dark:text-white">
+                          {value}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div> )}{/* End Main Content */}
+          </div>
+        </div>
+
+        {/* Sidebar */}
+        <div className="space-y-6">
+              {/* Seller Information */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                <div className="flex items-center space-x-4 mb-4">
+                  <Link
+                    to={seller?.id ? `/seller/${seller.id}` : '#'}
+                    className="h-12 w-12 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary-600"
+                    tabIndex={seller?.id ? 0 : -1}
+                  >
+                    {seller?.avatar_url ? (
+                      <img
+                        src={seller.avatar_url}
+                        alt={seller.full_name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center text-xl text-gray-400 dark:text-gray-500">
+                        ?
+                      </div>
+                    )}
+                  </Link>
+              <div className="flex items-center space-x-4 mb-4">
+                <div className="h-12 w-12 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                  {seller?.avatar_url && (
+                    <img
+                      src={seller.avatar_url}
+                      alt={seller.full_name}
+                      className="h-full w-full object-cover"
+                    />
+                  )}
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 dark:text-white text-lg mb-1 flex items-center">
+                    <Link
+                      to={seller?.id ? `/seller/${seller.id}` : '#'}
+                      className="hover:underline focus:outline-none focus:ring-2 focus:ring-primary-600"
+                      tabIndex={seller?.id ? 0 : -1}
+                    >
+                      {seller?.full_name}
+                    </Link>
+                    {seller?.role === 'seller' && (
+                      <span className="ml-2 px-2 py-0.5 bg-primary-100 text-primary-700 rounded text-xs">Dealer</span>
+                    )}
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Member since {new Date(seller?.created_at ?? '').getFullYear()}
+                  </p>
+                </div>
+              </div>
+            
+            {vehicle && (
+              <ul className="grid grid-cols-2 gap-2">
+                {vehicle.features?.map((feature) => (
+                  <li
+                    key={feature}
+                    className="flex items-center text-gray-600 dark:text-gray-300"
+                  >
+                    <CheckCircleIcon className="w-5 h-5 text-primary-600 dark:text-primary-400 mr-2" />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           {/* Specifications */}
@@ -526,23 +611,25 @@ export default function VehicleDetails() {
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
               Specifications
             </h2>
-            <div className="grid grid-cols-2 gap-4">
-              {Object.entries(vehicle.specifications).map(([key, value]) => (
-                <div
-                  key={key}
-                  className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700"
-                >
-                  <span className="text-gray-600 dark:text-gray-300 capitalize">
-                    {key.replace(/([A-Z])/g, ' $1').trim()}
-                  </span>
-                  <span className="font-medium text-gray-900 dark:text-white">
-                    {value}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+            {vehicle && (
+              <div className="grid grid-cols-2 gap-4">
+                {Object.entries(vehicle.specifications ?? {}).map(([key, value]) => (
+                  <div
+                    key={key}
+                    className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700"
+                  >
+                    <span className="text-gray-600 dark:text-gray-300 capitalize">
+                      {key.replace(/([A-Z])/g, ' $1').trim()}
+                    </span>
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      {value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div> {/* End Sidebar */}
+        </div> {/* End grid container */}
 
         {/* Sidebar */}
         <div className="space-y-6">
@@ -553,14 +640,14 @@ export default function VehicleDetails() {
                 {seller?.avatar_url && (
                   <img
                     src={seller.avatar_url}
-                    alt={seller.name}
+                    alt={seller.full_name}
                     className="h-full w-full object-cover"
                   />
                 )}
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900 dark:text-white">
-                  {seller?.name}
+                  {seller?.full_name}
                 </h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   Member since {new Date(seller?.created_at ?? '').getFullYear()}
@@ -623,15 +710,15 @@ export default function VehicleDetails() {
             <div className="space-y-4">
               <div className="flex items-center text-gray-600 dark:text-gray-300">
                 <MapPinIcon className="w-5 h-5 mr-2" />
-                <span>{vehicle.location || 'Location not specified'}</span>
+                <span>{vehicle?.location || 'Location not specified'}</span>
               </div>
               <div className="flex items-center text-gray-600 dark:text-gray-300">
                 <ClockIcon className="w-5 h-5 mr-2" />
-                <span>Listed {new Date(vehicle.created_at).toLocaleDateString()}</span>
+                <span>Listed {vehicle?.created_at ? new Date(vehicle.created_at).toLocaleDateString() : 'Unknown date'}</span>
               </div>
               <div className="flex items-center text-gray-600 dark:text-gray-300">
                 <TagIcon className="w-5 h-5 mr-2" />
-                <span>Status: <span className="text-green-600 font-medium capitalize">{vehicle.status}</span></span>
+                <span>Status: <span className="text-green-600 font-medium capitalize">{vehicle?.status || 'Unknown'}</span></span>
               </div>
               <button
                 onClick={shareVehicle}
@@ -657,12 +744,13 @@ export default function VehicleDetails() {
                 </label>
                 <input 
                   type="range" 
-                  min={Math.max(1000, Math.round(vehicle.price * 0.8))} 
-                  max={Math.round(vehicle.price * 1.2)} 
+                  min={Math.max(1000, Math.round((vehicle?.price ?? 10000) * 0.8))} 
+                  max={Math.round((vehicle?.price ?? 10000) * 1.2)} 
                   step={100}
                   value={calculatorValues.price} 
                   onChange={(e) => handleCalculatorChange('price', Number(e.target.value))}
                   className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer"
+                  title="Vehicle Price"
                 />
               </div>
               
@@ -678,6 +766,7 @@ export default function VehicleDetails() {
                   value={calculatorValues.downPayment} 
                   onChange={(e) => handleCalculatorChange('downPayment', Number(e.target.value))}
                   className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer"
+                  title="Down Payment"
                 />
               </div>
               
@@ -693,6 +782,7 @@ export default function VehicleDetails() {
                   value={calculatorValues.tradeInValue} 
                   onChange={(e) => handleCalculatorChange('tradeInValue', Number(e.target.value))}
                   className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer"
+                  title="Trade-In Value"
                 />
               </div>
               
@@ -704,6 +794,7 @@ export default function VehicleDetails() {
                   value={calculatorValues.term}
                   onChange={(e) => handleCalculatorChange('term', Number(e.target.value))}
                   className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm"
+                  title="Loan Term"
                 >
                   <option value={24}>24 months</option>
                   <option value={36}>36 months</option>
@@ -726,9 +817,9 @@ export default function VehicleDetails() {
                   value={calculatorValues.interestRate} 
                   onChange={(e) => handleCalculatorChange('interestRate', Number(e.target.value))}
                   className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer"
+                  title="Interest Rate"
                 />
               </div>
-              
               <div className="bg-primary-50 dark:bg-primary-900/20 rounded-md p-4 text-center">
                 <p className="text-sm text-gray-600 dark:text-gray-400">Estimated Monthly Payment</p>
                 <p className="text-3xl font-bold text-primary-600 dark:text-primary-400 mt-1">
@@ -772,14 +863,14 @@ export default function VehicleDetails() {
                 </div>
                 <div className="p-4">
                   <h3 className="font-semibold text-gray-900 dark:text-white truncate">
-                    {similar.year} {similar.make} {similar.model}
+                    {[similar?.year, similar?.make, similar?.model].filter(Boolean).join(' ')}
                   </h3>
                   <div className="mt-2 flex items-center justify-between">
                     <p className="text-lg font-semibold text-primary-600 dark:text-primary-400">
-                      ${similar.price?.toLocaleString()}
+                      ${similar?.price?.toLocaleString?.() ?? 'N/A'}
                     </p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {similar.mileage?.toLocaleString()} mi
+                      {similar?.mileage?.toLocaleString?.() ?? 'N/A'} mi
                     </p>
                   </div>
                 </div>
@@ -814,15 +905,15 @@ export default function VehicleDetails() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600 dark:text-gray-400">Year</span>
-                    <span className="font-medium text-gray-900 dark:text-white">{vehicle.year}</span>
+                    <span className="font-medium text-gray-900 dark:text-white">{vehicle?.year ?? 'N/A'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600 dark:text-gray-400">Make</span>
-                    <span className="font-medium text-gray-900 dark:text-white">{vehicle.make}</span>
+                    <span className="font-medium text-gray-900 dark:text-white">{vehicle?.make ?? 'N/A'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600 dark:text-gray-400">Model</span>
-                    <span className="font-medium text-gray-900 dark:text-white">{vehicle.model}</span>
+                    <span className="font-medium text-gray-900 dark:text-white">{vehicle?.model ?? 'N/A'}</span>
                   </div>
                 </div>
               </div>
@@ -847,13 +938,13 @@ export default function VehicleDetails() {
                     <div className="absolute w-3 h-3 bg-primary-600 rounded-full left-[-7px]"></div>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">First Owner</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">Jan 2018 - Oct 2020 · 2 years, 9 months</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">Purchased in {vehicle.location}</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">Purchased in {vehicle?.location ?? 'N/A'}</p>
                   </div>
                   <div className="border-l-2 border-primary-200 dark:border-primary-900 pl-4 relative">
                     <div className="absolute w-3 h-3 bg-primary-600 rounded-full left-[-7px]"></div>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">Second Owner</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">Oct 2020 - Present · 4 years, 6 months</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">Registered in {vehicle.location}</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">Registered in {vehicle?.location ?? 'N/A'}</p>
                   </div>
                 </div>
               </div>
@@ -866,8 +957,8 @@ export default function VehicleDetails() {
                     <span className="text-xs text-gray-500 dark:text-gray-400">Present</span>
                   </div>
                   <div className="relative h-2 bg-gray-300 dark:bg-gray-600 rounded-full overflow-hidden">
-                    <div className="absolute left-0 top-0 h-full bg-primary-600" style={{ width: '60%' }}></div>
-                    <div className="absolute w-3 h-3 bg-primary-600 rounded-full top-[-2px]" style={{ left: '60%' }}></div>
+                    <div className="absolute left-0 top-0 h-full bg-primary-600 w-[60%]"></div>
+                    <div className="absolute w-3 h-3 bg-primary-600 rounded-full top-[-2px] left-[60%]"></div>
                   </div>
                   <div className="mt-4 space-y-2">
                     <div className="flex justify-between text-sm">
@@ -876,7 +967,7 @@ export default function VehicleDetails() {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600 dark:text-gray-400">Last Record:</span>
-                      <span className="font-medium text-gray-900 dark:text-white">{vehicle.mileage.toLocaleString()} miles (Today)</span>
+                      <span className="font-medium text-gray-900 dark:text-white">{vehicle?.mileage?.toLocaleString?.() ?? 'N/A'} miles (Today)</span>
                     </div>
                   </div>
                 </div>
@@ -887,4 +978,4 @@ export default function VehicleDetails() {
       )}
     </div>
   );
-} 
+}
