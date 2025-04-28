@@ -12,17 +12,17 @@ function Footer() {
           <div className="space-y-4">
             <img
               className="h-8 w-auto"
-              src="/logo.svg"
+              src="../public/assets/logo.svg"
               alt="D-CARS"
             />
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              {t('common.tagline')}
+              {t('Tagline')}
             </p>
           </div>
 
           <div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">
-              {t('common.company')}
+              {t('Company')}
             </h3>
             <ul className="mt-4 space-y-4">
               <li>
@@ -30,7 +30,7 @@ function Footer() {
                   to="/about"
                   className="text-base text-gray-500 dark:text-gray-400 hover:text-primary-600"
                 >
-                  {t('common.about')}
+                  {t('About')}
                 </Link>
               </li>
               <li>
@@ -38,7 +38,7 @@ function Footer() {
                   to="/contact"
                   className="text-base text-gray-500 dark:text-gray-400 hover:text-primary-600"
                 >
-                  {t('common.contact')}
+                  {t('Contact')}
                 </Link>
               </li>
             </ul>
@@ -46,7 +46,7 @@ function Footer() {
 
           <div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">
-              {t('common.legal')}
+              {t('Legal')}
             </h3>
             <ul className="mt-4 space-y-4">
               <li>
@@ -54,7 +54,7 @@ function Footer() {
                   to="/privacy"
                   className="text-base text-gray-500 dark:text-gray-400 hover:text-primary-600"
                 >
-                  {t('common.privacy')}
+                  {t('Privacy')}
                 </Link>
               </li>
               <li>
@@ -62,7 +62,7 @@ function Footer() {
                   to="/terms"
                   className="text-base text-gray-500 dark:text-gray-400 hover:text-primary-600"
                 >
-                  {t('common.terms')}
+                  {t('Terms')}
                 </Link>
               </li>
             </ul>
@@ -70,7 +70,7 @@ function Footer() {
 
           <div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">
-              {t('common.social')}
+              {t('Social')}
             </h3>
             <div className="mt-4 flex space-x-6">
               <a
@@ -129,7 +129,7 @@ function Footer() {
 
         <div className="mt-12 border-t border-gray-200 dark:border-gray-700 pt-8">
           <p className="text-base text-gray-400 text-center">
-            &copy; {currentYear} D-CARS. {t('common.allRightsReserved')}
+            &copy; {currentYear} D-CARS. {t('AllRightsReserved')}
           </p>
         </div>
       </div>

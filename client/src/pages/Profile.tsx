@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { Database } from '../types/database';
 import { useAuth } from '../contexts/AuthContext';
+import { useSessionAwareRefresh } from '../hooks/useSessionAwareRefresh';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -51,7 +52,7 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
-  const { data: profile, isLoading } = useQuery<Profile>({
+  const { data: profile, isLoading, refetch } = useQuery<Profile>({
     queryKey: ['profile', user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -209,7 +210,23 @@ export default function Profile() {
     updateProfile.mutate(updatedProfile as Partial<Profile>);
   };
 
-  if (isAuthLoading || isLoading) {
+  useSessionAwareRefresh(refetch);
+
+  if (isAuthLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-gray-500 dark:text-gray-400">Please log in to view your profile.</p>
+      </div>
+    );
+  }
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <LoadingSpinner size="lg" />
@@ -220,7 +237,7 @@ export default function Profile() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Profile Card */}
           <div className="lg:col-span-1">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
@@ -246,7 +263,7 @@ export default function Profile() {
                   ) : (
                     <UserCircleIcon className="h-32 w-32 text-gray-400" />
                   )}
-                  <label className="absolute bottom-0 right-0 ...">
+                  <label className="absolute bottom-2 right-2 bg-white dark:bg-gray-700 rounded-full p-2 shadow cursor-pointer transition hover:bg-gray-100 dark:hover:bg-gray-600 w-9 h-9 flex items-center justify-center border border-gray-200 dark:border-gray-600" style={{ minWidth: 36, minHeight: 36 }}>
   <input
     type="file"
     accept="image/*"
@@ -278,7 +295,7 @@ export default function Profile() {
                 </div>
               </div>
 
-              <div className="mt-6 grid grid-cols-3 gap-4 border-t border-gray-200 dark:border-gray-700 pt-6">
+              <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-gray-200 dark:border-gray-700 pt-6">
                 <div className="text-center">
                   <p className="text-2xl font-semibold text-gray-900 dark:text-white">
                     {userData.totalListings}
@@ -380,7 +397,7 @@ export default function Profile() {
                   </div>
                 </form>
               ) : (
-                <div className="prose dark:prose-invert max-w-none">
+                <div className="prose dark:prose-invert max-w-none text-base md:text-lg">
                   <p className="text-gray-600 dark:text-gray-300">
                     {userData.bio}
                   </p>
@@ -399,20 +416,18 @@ export default function Profile() {
                     key={review.id}
                     className="border-b border-gray-200 dark:border-gray-700 last:border-0 pb-6 last:pb-0"
                   >
-                    <div className="flex items-start">
+                    <div className="flex flex-col xs:flex-row items-start gap-4">
                       <img
                         src={review.author.avatar}
                         alt={review.author.name}
-                        className="h-10 w-10 rounded-full"
+                        className="h-10 w-10 rounded-full mb-2 xs:mb-0"
                       />
-                      <div className="ml-4">
-                        <div className="flex items-center">
+                      <div className="flex-1">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-2">
                           <h4 className="text-sm font-medium text-gray-900 dark:text-white">
                             {review.author.name}
                           </h4>
-                          <span className="mx-2 text-gray-500 dark:text-gray-400">
-                            •
-                          </span>
+                          <span className="hidden sm:inline mx-2 text-gray-500 dark:text-gray-400">•</span>
                           <span className="text-sm text-gray-500 dark:text-gray-400">
                             {new Date(review.date).toLocaleDateString()}
                           </span>
@@ -447,4 +462,4 @@ export default function Profile() {
       </div>
     </div>
   );
-} 
+}

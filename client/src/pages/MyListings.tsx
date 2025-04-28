@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import { useSessionAwareRefresh } from '../hooks/useSessionAwareRefresh';
 
 interface Listing {
   id: string;
@@ -23,8 +24,22 @@ interface Listing {
 }
 
 const MyListings: React.FC = () => {
-  const { profile } = useAuth();
+  const { user, profile, isLoading: isAuthLoading } = useAuth();
   const navigate = useNavigate();
+  if (isAuthLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-gray-500 dark:text-gray-400">Please log in to view your listings.</p>
+      </div>
+    );
+  }
   // Role-based access control
   if (profile && profile.role !== 'seller' && profile.role !== 'admin') {
     toast.error('You do not have permission to access this page.');
@@ -35,13 +50,6 @@ const MyListings: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'active' | 'pending' | 'sold' | 'rejected'>('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [listingToDelete, setListingToDelete] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchListings();
-  }, [filter]);
 
   const fetchListings = async () => {
     try {
@@ -63,6 +71,29 @@ const MyListings: React.FC = () => {
       if (filter !== 'all') {
         query = query.eq('status', filter);
       }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      setListings(data || []);
+    } catch (error) {
+      console.error('Error fetching listings:', error);
+      setError('Failed to load your listings. Please try again later.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useSessionAwareRefresh(fetchListings);
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [listingToDelete, setListingToDelete] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchListings();
+  }, [filter]);
+    }
 
       const { data, error } = await query;
 

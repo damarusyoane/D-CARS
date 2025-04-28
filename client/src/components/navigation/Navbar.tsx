@@ -43,7 +43,7 @@ function Navbar() {
             <Link to="/" className="flex-shrink-0 flex items-center">
               <img
                 className="h-8 w-auto"
-                src="/logo.svg"
+                src="../public/assets/logo.svg"
                 alt="D-CARS"
               />
             </Link>
@@ -54,21 +54,21 @@ function Navbar() {
                 to="/cars"
                 className="text-gray-900 dark:text-gray-100 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
               >
-                {t('common.search', 'Browse Cars')}
+                {t('Search', 'Browse Cars')}
               </Link>
               
               <Link
                 to="/about-us"
                 className="text-gray-900 dark:text-gray-100 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
               >
-                {t('common.aboutUs', 'About Us')}
+                {t('AboutUs', 'About Us')}
               </Link>
               
               <Link
                 to="/contact-us"
                 className="text-gray-900 dark:text-gray-100 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
               >
-                {t('common.contactUs', 'Contact Us')}
+                {t('ContactUs', 'Contact Us')}
               </Link>
               
               {/* User-specific links (only shown when logged in) */}
@@ -79,21 +79,21 @@ function Navbar() {
                     className="text-gray-900 dark:text-gray-100 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium flex items-center"
                   >
                     <TruckIcon className="h-5 w-5 mr-1" />
-                    {t('common.myListings', 'My Listings')}
+                    {t('MyListings', 'My Listings')}
                   </Link>
                   <Link
                     to="/dashboard/saved"
                     className="text-gray-900 dark:text-gray-100 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium flex items-center"
                   >
                     <HeartIcon className="h-5 w-5 mr-1" />
-                    {t('common.savedCars', 'Saved Cars')}
+                    {t('SavedCars', 'Saved Cars')}
                   </Link>
                   <Link
                     to="/dashboard"
                     className="text-gray-900 dark:text-gray-100 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium flex items-center"
                   >
                     <ChartBarSquareIcon className="h-5 w-5 mr-1" />
-                    {t('common.dashboard', 'Dashboard')}
+                    {t('Dashboard', 'Dashboard')}
                   </Link>
                 </>
               )}
@@ -129,6 +129,16 @@ function Navbar() {
               <Link to="/dashboard/my-listings" className="block text-gray-900 dark:text-gray-100 hover:text-primary-600 px-3 py-2 rounded-md text-base font-medium">My Listings</Link>
               <Link to="/dashboard/saved" className="block text-gray-900 dark:text-gray-100 hover:text-primary-600 px-3 py-2 rounded-md text-base font-medium">Saved Cars</Link>
               <Link to="/dashboard" className="block text-gray-900 dark:text-gray-100 hover:text-primary-600 px-3 py-2 rounded-md text-base font-medium">Dashboard</Link>
+              
+                        <button
+                          className={`block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 flex items-center`}
+                          onClick={auth.signOut}
+                          title="Logout"
+                        >
+                          <ArrowRightOnRectangleIcon className="h-5 w-5 mr-2" />
+                          {t('logout', 'Logout')}
+                        </button>
+                      
             </>
           )}
         </div>
@@ -160,8 +170,8 @@ function Navbar() {
             <Menu as="div" className="ml-4 relative">
               <Menu.Button 
                 className="flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                aria-label={t('navigation.language', 'Language')}
-                title={t('navigation.language', 'Language')}
+                aria-label={t('language', 'Language')}
+                title={t('language', 'Language')}
               >
                 <GlobeAltIcon className="h-5 w-5" />
                 <span>{i18n.language === 'en' ? 'EN' : 'FR'}</span>
@@ -249,7 +259,7 @@ function Navbar() {
                           } block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 flex items-center`}
                         >
                           <UserCircleIcon className="h-5 w-5 mr-2" />
-                          {t('common.profile', 'Profile')}
+                          {t('profile', 'Profile')}
                         </Link>
                       )}
                     </Menu.Item>
@@ -262,7 +272,7 @@ function Navbar() {
                           } block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 flex items-center`}
                         >
                           <CogIcon className="h-5 w-5 mr-2" />
-                          {t('common.settings', 'Settings')}
+                          {t('settings', 'Settings')}
                         </Link>
                       )}
                     </Menu.Item>
@@ -276,7 +286,7 @@ function Navbar() {
                           title="Logout"
                         >
                           <ArrowRightOnRectangleIcon className="h-5 w-5 mr-2" />
-                          {t('common.logout', 'Logout')}
+                          {t('logout', 'Logout')}
                         </button>
                       )}
                     </Menu.Item>

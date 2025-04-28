@@ -5,6 +5,7 @@ import CommonFooter from '../components/CommonFooter';
 import { supabase } from '../lib/supabase';
 import { format } from 'date-fns';
 import { useAuth } from '../contexts/AuthContext';
+import { useSessionAwareRefresh } from '../hooks/useSessionAwareRefresh';
 import toast from 'react-hot-toast';
 import {
   ArrowPathIcon,
@@ -75,8 +76,9 @@ const TransactionHistory: React.FC = () => {
 
   useEffect(() => {
     fetchTransactions();
-    // eslint-disable-next-line
-  }, [user]);
+  }, []);
+
+  useSessionAwareRefresh(fetchTransactions);
 
   const fetchTransactions = async () => {
     setIsLoading(true);
@@ -374,7 +376,7 @@ const TransactionHistory: React.FC = () => {
     );
   }
 
-  // --- Summary Cards ---
+  // --- Summary Cards (LIVE DATA) ---
   const totalSpent = transactions.filter(t => t.type === 'purchase').reduce((sum, t) => sum + t.amount, 0);
   const totalEarned = transactions.filter(t => t.type === 'sale').reduce((sum, t) => sum + t.amount, 0);
   const totalTransactions = transactions.length;
@@ -385,31 +387,31 @@ const TransactionHistory: React.FC = () => {
       <Sidebar activePage="transaction-history" />
       <main className="flex-1 p-6">
         <div className="max-w-7xl mx-auto">
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex items-center">
-              <CheckCircleIcon className="w-8 h-8 text-green-500 mr-3" />
+          {/* Summary Cards (Responsive, Live Data) */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4 mb-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex flex-col sm:flex-row items-center">
+              <CheckCircleIcon className="w-8 h-8 text-green-500 mb-2 sm:mb-0 sm:mr-3" />
               <div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">Total Transactions</div>
                 <div className="text-lg font-bold text-gray-900 dark:text-white">{totalTransactions}</div>
               </div>
             </div>
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex items-center">
-              <ArrowUpCircleIcon className="w-8 h-8 text-blue-500 mr-3" />
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex flex-col sm:flex-row items-center">
+              <ArrowUpCircleIcon className="w-8 h-8 text-blue-500 mb-2 sm:mb-0 sm:mr-3" />
               <div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">Total Spent</div>
                 <div className="text-lg font-bold text-gray-900 dark:text-white">${totalSpent.toLocaleString()}</div>
               </div>
             </div>
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex items-center">
-              <ArrowDownCircleIcon className="w-8 h-8 text-yellow-500 mr-3" />
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex flex-col sm:flex-row items-center">
+              <ArrowDownCircleIcon className="w-8 h-8 text-yellow-500 mb-2 sm:mb-0 sm:mr-3" />
               <div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">Total Earned</div>
                 <div className="text-lg font-bold text-gray-900 dark:text-white">${totalEarned.toLocaleString()}</div>
               </div>
             </div>
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex items-center">
-              <CheckCircleIcon className="w-8 h-8 text-emerald-500 mr-3" />
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex flex-col sm:flex-row items-center">
+              <CheckCircleIcon className="w-8 h-8 text-emerald-500 mb-2 sm:mb-0 sm:mr-3" />
               <div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">Completed</div>
                 <div className="text-lg font-bold text-gray-900 dark:text-white">{completedCount}</div>

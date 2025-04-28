@@ -4,6 +4,23 @@ import { supabase } from '../../lib/supabase';
 import { Link } from 'react-router-dom';
 import LoadingSpinner from '../common/LoadingSpinner';
 
+// Fix for session/data staleness: refetch on auth state change
+import { useRef } from 'react';
+function useSupabaseAuthListener(refetch: () => void) {
+  const lastUserId = useRef<string | null>(null);
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const userId = session?.user?.id ?? null;
+      if (userId !== lastUserId.current) {
+        lastUserId.current = userId;
+        refetch();
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [refetch]);
+}
+
+
 // Define the vehicle interface
 interface Vehicle {
   id: string;
@@ -26,57 +43,75 @@ export default function FeaturedCars() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
-    async function fetchFeaturedCars() {
-      console.log("fetchFeaturedCars called");
+  // Fetch featured cars, and expose refetch for auth/session changes
+  const fetchFeaturedCars = async () => {
+    console.log("fetchFeaturedCars called");
+    try {
+      setIsLoading(true);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      console.log("About to query Supabase");
+      const startTime = Date.now();
+      // Add a timeout for the query
+      const timeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Supabase query timed out')), 5000)
+      );
       try {
-        setIsLoading(true);
-        
-        // Add a small delay to prevent UI freezing
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        console.log("About to query Supabase");
-
-        const startTime = Date.now();
-        let data, error;
-        try {
-          const result = await supabase
+        const result = await Promise.race([
+          supabase
             .from('vehicles')
             .select('*')
             .order('created_at', { ascending: false })
-            .limit(6);
-          data = result.data;
-          error = result.error;
-          console.log(`[Supabase] Query finished in ${Date.now() - startTime}ms`);
-        } catch (queryErr) {
-          console.error('[Supabase] Query threw error:', queryErr);
-          throw queryErr;
-        }
+            .limit(6),
+          timeout
+        ]) as { data: any[]; error: any };
+
+        const data = result.data;
+        const error = result.error;
+        console.log(`[Supabase] Query finished in ${Date.now() - startTime}ms`);
         console.log('[Supabase] Data:', data);
         console.log('[Supabase] Error:', error);
 
         if (error) {
-          console.log('[Supabase] Setting error state:', error);
           setError(error);
           setFeaturedCars([]);
           setIsLoading(false);
           return;
         }
-        console.log('[Supabase] Setting featured cars:', data);
-        setFeaturedCars((data || []).map(v => ({
+        setFeaturedCars((data || []).map((v: any) => ({
           ...v,
           status: v.status ?? '',
         })));
         setIsLoading(false);
-      } catch (err) {
-        console.error('[Supabase] Outer catch error fetching featured cars:', err);
-        setError(err instanceof Error ? err : new Error('Unknown error'));
-        setFeaturedCars([]);
+      } catch (queryErr) {
+        console.error('[Supabase] Query threw error:', queryErr);
+        setError(queryErr instanceof Error ? queryErr : new Error('Unknown error'));
         setIsLoading(false);
       }
+    } catch (err) {
+      console.error('[Supabase] Outer catch error fetching featured cars:', err);
+      setError(err instanceof Error ? err : new Error('Unknown error'));
+      setFeaturedCars([]);
+      setIsLoading(false);
     }
+  };
+
+  useEffect(() => {
     fetchFeaturedCars();
+    // eslint-disable-next-line
   }, []);
+  useSupabaseAuthListener(fetchFeaturedCars);
+
+
+  // Add a timeout to prevent infinite loading
+  useEffect(() => {
+    if (isLoading) {
+      const timeout = setTimeout(() => {
+        setIsLoading(false);
+        setError(new Error('Loading timed out. Please try again.'));
+      }, 8000);
+      return () => clearTimeout(timeout);
+    }
+  }, [isLoading]);
 
   if (isLoading) {
     return <LoadingSpinner />;

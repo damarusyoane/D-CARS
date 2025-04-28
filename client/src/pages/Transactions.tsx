@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { useSessionAwareRefresh } from '../hooks/useSessionAwareRefresh';
 import { format } from 'date-fns';
 
 interface Transaction {
@@ -33,6 +34,8 @@ const Transactions: React.FC = () => {
   useEffect(() => {
     fetchTransactions();
   }, []);
+  useSessionAwareRefresh(fetchTransactions);
+
 
   const fetchTransactions = async () => {
     try {

@@ -144,9 +144,9 @@ export default function VehicleDetails() {
     if (isAuthenticated && user && vehicle) {
       const checkIfSaved = async () => {
         const { data, error } = await supabase
-          .from('saved_vehicles')
+          .from('favorites')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('profile_id', user.id)
           .eq('vehicle_id', vehicle.id)
           .single();
 
@@ -170,11 +170,11 @@ export default function VehicleDetails() {
 
     try {
       if (isSaved) {
-        // Remove from saved vehicles
+        // Remove from favorites
         const { error } = await supabase
-          .from('saved_vehicles')
+          .from('favorites')
           .delete()
-          .eq('user_id', user.id)
+          .eq('profile_id', user.id)
           .eq('vehicle_id', vehicle.id);
 
         if (error) throw error;
@@ -182,26 +182,26 @@ export default function VehicleDetails() {
         setIsSaved(false);
         toast.success('Vehicle removed from favorites');
       } else {
-        // Add to saved vehicles
+        // Add to favorites
         const { error } = await supabase
-          .from('saved_vehicles')
+          .from('favorites')
           .insert({
-            user_id: user.id,
+            profile_id: user.id,
             vehicle_id: vehicle.id,
-            saved_at: new Date().toISOString()
+            created_at: new Date().toISOString()
           });
 
         if (error) throw error;
 
         setIsSaved(true);
-        toast.success('Vehicle saved to favorites');
+        toast.success('Vehicle added to favorites');
       }
 
       // Invalidate saved vehicles queries
-      queryClient.invalidateQueries({ queryKey: ['savedVehicles'] });
+      queryClient.invalidateQueries({ queryKey: ['favorites'] });
     } catch (err) {
-      console.error('Error saving vehicle:', err);
-      toast.error('There was a problem saving this vehicle');
+      console.error('Error updating favorites:', err);
+      toast.error('There was a problem updating your favorites');
     }
   };
 
@@ -216,35 +216,35 @@ export default function VehicleDetails() {
   };
 
   const handleSendMessage = async () => {
-    if (!messageText.trim() || !isAuthenticated || !user || !vehicle) {
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('messages')
-        .insert({
-          sender_id: user.id,
-          receiver_id: vehicle.profile_id,
-          vehicle_id: vehicle.id,
-          content: messageText,
-          status: 'unread',
-          created_at: new Date().toISOString()
-        });
-
-      if (error) throw error;
-
-      toast.success('Message sent to seller!');
-      setMessageText('');
-      setShowContactForm(false);
-
-      // Invalidate messages queries
-      queryClient.invalidateQueries({ queryKey: ['messages'] });
-    } catch (err) {
-      console.error('Error sending message:', err);
-      toast.error('Failed to send message. Please try again.');
-    }
-  };
+  console.log('handleSendMessage called');
+  console.log({ messageText, isAuthenticated, user, vehicle });
+  if (!messageText.trim() || !isAuthenticated || !user || !vehicle) {
+    console.log('Early return: missing data', { messageText, isAuthenticated, user, vehicle });
+    toast.error('Cannot send message: missing required information.');
+    return;
+  }
+  try {
+    const { error } = await supabase
+      .from('messages')
+      .insert({
+        sender_id: user.id,
+        receiver_id: vehicle.profile_id,
+        vehicle_id: vehicle.id,
+        content: messageText,
+        status: 'unread',
+        created_at: new Date().toISOString()
+      });
+    if (error) throw error;
+    toast.success('Message sent to seller!');
+    setMessageText('');
+    setShowContactForm(false);
+    queryClient.invalidateQueries({ queryKey: ['messages'] });
+    console.log('Message sent successfully');
+  } catch (err) {
+    console.error('Error sending message:', err);
+    toast.error('Failed to send message. Please try again.');
+  }
+};
 
   // Calculate monthly payment
   const calculateMonthlyPayment = () => {
@@ -291,11 +291,12 @@ export default function VehicleDetails() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Back Button */}
-      <div className="mb-4">
-        <button
-          onClick={() => navigate(-1)}
+    <>
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4 sm:py-8">
+        {/* Back Button */}
+        <div className="mb-4">
+          <button
+            onClick={() => navigate(-1)}
           className="flex items-center text-primary-600 hover:text-primary-800 transition-colors"
         >
           <ChevronLeftIcon className="w-5 h-5 mr-1" />
@@ -304,7 +305,7 @@ export default function VehicleDetails() {
       </div>
 
       {/* Image Gallery */}
-      <div className="relative bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden mb-8 h-96">
+      <div className="relative bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden mb-6 h-60 sm:h-80 md:h-96">
         {vehicle?.images?.[currentImageIndex] && (
           <img
             src={vehicle?.images?.[currentImageIndex]}
@@ -342,11 +343,11 @@ export default function VehicleDetails() {
 
       {/* Thumbnail Gallery */}
       {vehicle?.images && vehicle.images.length > 1 && (
-        <div className="flex overflow-x-auto space-x-2 mb-8 pb-2">
+        <div className="flex overflow-x-auto space-x-2 mb-6 pb-2">
           {vehicle.images.map((image, index) => (
             <div 
               key={index} 
-              className={`flex-shrink-0 w-24 h-16 rounded-md overflow-hidden cursor-pointer ${currentImageIndex === index ? 'ring-2 ring-primary-600' : ''}`}
+              className={`flex-shrink-0 w-20 h-12 sm:w-24 sm:h-16 rounded-md overflow-hidden cursor-pointer ${currentImageIndex === index ? 'ring-2 ring-primary-600' : ''}`}
               onClick={() => setCurrentImageIndex(index)}
             >
               <img 
@@ -411,50 +412,50 @@ export default function VehicleDetails() {
       )}
 
       {/* Content tabs */}
-      <div className="mb-8 border-b border-gray-200 dark:border-gray-700">
-        <nav className="flex space-x-8">
+      <div className="mb-6 border-b border-gray-200 dark:border-gray-700">
+        <nav className="flex flex-wrap gap-2 sm:space-x-8">
           <button
             onClick={() => setActiveTab('overview')}
-            className={`py-4 px-1 relative font-medium text-sm ${activeTab === 'overview' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`}
+            className={`w-full sm:w-auto py-2 px-2 sm:py-4 sm:px-1 relative font-medium text-sm ${activeTab === 'overview' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`}
           >
             Overview
           </button>
           <button
             onClick={() => setActiveTab('specifications')}
-            className={`py-4 px-1 relative font-medium text-sm ${activeTab === 'specifications' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`}
+            className={`w-full sm:w-auto py-2 px-2 sm:py-4 sm:px-1 relative font-medium text-sm ${activeTab === 'specifications' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`}
           >
             Specifications
           </button>
           <button
             onClick={() => setActiveTab('features')}
-            className={`py-4 px-1 relative font-medium text-sm ${activeTab === 'features' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`}
+            className={`w-full sm:w-auto py-2 px-2 sm:py-4 sm:px-1 relative font-medium text-sm ${activeTab === 'features' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`}
           >
             Features
           </button>
           <button
             onClick={() => setActiveTab('history')}
-            className={`py-4 px-1 relative font-medium text-sm ${activeTab === 'history' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`}
+            className={`w-full sm:w-auto py-2 px-2 sm:py-4 sm:px-1 relative font-medium text-sm ${activeTab === 'history' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`}
           >
             History Report
           </button>
         </nav>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="flex items-start justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                 {[vehicle?.year, vehicle?.make, vehicle?.model].filter(Boolean).join(' ')}
               </h1>
-              <p className="mt-2 text-xl font-semibold text-primary-600 dark:text-primary-400">
+              <p className="mt-2 text-lg sm:text-xl font-semibold text-primary-600 dark:text-primary-400">
                 ${vehicle?.price.toLocaleString()}
               </p>
             </div>
             <button
               onClick={handleSaveVehicle}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 self-start"
             >
               {isSaved ? (
                 <HeartIconSolid className="w-6 h-6 text-red-500" />
@@ -467,7 +468,7 @@ export default function VehicleDetails() {
           {/* Vehicle Details */}
           {vehicle && (
             <div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                 {[
                   { label: 'Make', value: vehicle.make },
                   { label: 'Model', value: vehicle.model },
@@ -476,9 +477,9 @@ export default function VehicleDetails() {
                 ].map((detail) => (
                   <div
                     key={detail.label}
-                    className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg"
+                    className="bg-gray-50 dark:bg-gray-800 p-3 sm:p-4 rounded-lg"
                   >
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                       {detail.label}
                     </p>
                     <p className="mt-1 font-semibold text-gray-900 dark:text-white">
@@ -492,7 +493,7 @@ export default function VehicleDetails() {
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
                   Description
                 </h2>
-                <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line">
+                <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line overflow-y-auto">
                   {vehicle.description}
                 </p>
               </div>
@@ -501,11 +502,11 @@ export default function VehicleDetails() {
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
                   Features
                 </h2>
-                <ul className="grid grid-cols-2 gap-2">
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
                   {vehicle.features?.map((feature) => (
                     <li
                       key={feature}
-                      className="flex items-center text-gray-600 dark:text-gray-300"
+                      className="flex items-center text-gray-600 dark:text-gray-300 text-xs sm:text-base"
                     >
                       <CheckCircleIcon className="w-5 h-5 text-primary-600 dark:text-primary-400 mr-2" />
                       {feature}
@@ -519,11 +520,11 @@ export default function VehicleDetails() {
                   Specifications
                 </h2>
                 {vehicle && (
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
                     {Object.entries(vehicle.specifications ?? {}).map(([key, value]) => (
                       <div
                         key={key}
-                        className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700"
+                        className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700 text-xs sm:text-base"
                       >
                         <span className="text-gray-600 dark:text-gray-300 capitalize">
                           {key.replace(/([A-Z])/g, ' $1').trim()}
@@ -542,54 +543,47 @@ export default function VehicleDetails() {
 
         {/* Sidebar */}
         <div className="space-y-6">
-              {/* Seller Information */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                <div className="flex items-center space-x-4 mb-4">
-                  <Link
-                    to={seller?.id ? `/seller/${seller.id}` : '#'}
-                    className="h-12 w-12 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary-600"
-                    tabIndex={seller?.id ? 0 : -1}
-                  >
-                    {seller?.avatar_url ? (
-                      <img
-                        src={seller.avatar_url}
-                        alt={seller.full_name}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="h-full w-full flex items-center justify-center text-xl text-gray-400 dark:text-gray-500">
-                        ?
-                      </div>
-                    )}
-                  </Link>
-              <div className="flex items-center space-x-4 mb-4">
-                <div className="h-12 w-12 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                  {seller?.avatar_url && (
-                    <img
-                      src={seller.avatar_url}
-                      alt={seller.full_name}
-                      className="h-full w-full object-cover"
-                    />
+          {/* Seller Information */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
+              <Link
+                to={seller?.id ? `/seller/${seller.id}` : '#'}
+                className="mx-auto sm:mx-0 h-20 w-20 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary-600 flex-shrink-0 border-2 border-primary-200 dark:border-primary-700"
+                tabIndex={seller?.id ? 0 : -1}
+                aria-label={seller?.full_name ? `View ${seller.full_name}'s profile` : 'View seller profile'}
+              >
+                {seller?.avatar_url ? (
+                  <img
+                    src={seller.avatar_url}
+                    alt={seller.full_name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center text-2xl text-gray-400 dark:text-gray-500">
+                    ?
+                  </div>
+                )}
+              </Link>
+              <div className="flex flex-col items-center sm:items-start flex-1">
+                <span className="font-semibold text-gray-900 dark:text-white text-lg mb-1">
+                  {seller?.full_name}
+                  {seller?.role === 'seller' && (
+                    <span className="ml-2 px-2 py-0.5 bg-primary-100 text-primary-700 rounded text-xs align-middle">Dealer</span>
                   )}
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white text-lg mb-1 flex items-center">
-                    <Link
-                      to={seller?.id ? `/seller/${seller.id}` : '#'}
-                      className="hover:underline focus:outline-none focus:ring-2 focus:ring-primary-600"
-                      tabIndex={seller?.id ? 0 : -1}
-                    >
-                      {seller?.full_name}
-                    </Link>
-                    {seller?.role === 'seller' && (
-                      <span className="ml-2 px-2 py-0.5 bg-primary-100 text-primary-700 rounded text-xs">Dealer</span>
-                    )}
-                  </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Member since {new Date(seller?.created_at ?? '').getFullYear()}
-                  </p>
-                </div>
+                </span>
+                <span className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                  Member since {seller?.created_at ? new Date(seller.created_at).getFullYear() : '—'}
+                </span>
+                <Link
+                  to={seller?.id ? `/seller/${seller.id}` : '#'}
+                  className="inline-block mt-1 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-600 transition-colors"
+                  tabIndex={seller?.id ? 0 : -1}
+                  aria-label={seller?.full_name ? `Go to ${seller.full_name}'s profile` : 'Go to seller profile'}
+                >
+                  View Seller Profile
+                </Link>
               </div>
+            </div>
             
             {vehicle && (
               <ul className="grid grid-cols-2 gap-2">
@@ -693,12 +687,13 @@ export default function VehicleDetails() {
                       Cancel
                     </button>
                     <button
-                      onClick={handleSendMessage}
-                      disabled={!messageText.trim()}
-                      className={`flex-1 py-2 px-4 rounded-md text-white text-sm ${messageText.trim() ? 'bg-primary-600 hover:bg-primary-700' : 'bg-gray-400 cursor-not-allowed'}`}
-                    >
-                      Send Message
-                    </button>
+  onClick={handleSendMessage}
+  disabled={!messageText.trim()}
+  aria-label="Send message to seller"
+  className={`flex-1 py-2 px-4 rounded-md text-white text-sm ${messageText.trim() ? 'bg-primary-600 hover:bg-primary-700' : 'bg-gray-400 cursor-not-allowed'}`}
+>
+  Send Message
+</button>
                   </div>
                 </div>
               )}
@@ -833,7 +828,7 @@ export default function VehicleDetails() {
       </div>
       
       {/* Similar Vehicles */}
-      {similarVehicles && similarVehicles.length > 0 && (
+      {Array.isArray(similarVehicles) && similarVehicles.length > 0 && (
         <div className="mt-12">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
             Similar Vehicles
@@ -882,7 +877,7 @@ export default function VehicleDetails() {
       
       {/* Vehicle History Report */}
       {activeTab === 'history' && (
-        <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+        <><div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
               <ShieldCheckIcon className="w-6 h-6 text-primary-600 mr-2" />
@@ -893,89 +888,61 @@ export default function VehicleDetails() {
               Download Report
             </button>
           </div>
-          
+
           <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
             <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Vehicle Information</h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">VIN</span>
-                    <span className="font-medium text-gray-900 dark:text-white">1HGBH41JXMN109186</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Year</span>
-                    <span className="font-medium text-gray-900 dark:text-white">{vehicle?.year ?? 'N/A'}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Make</span>
-                    <span className="font-medium text-gray-900 dark:text-white">{vehicle?.make ?? 'N/A'}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Model</span>
-                    <span className="font-medium text-gray-900 dark:text-white">{vehicle?.model ?? 'N/A'}</span>
-                  </div>
-                </div>
+            </div>
+          </div>
+        </div><div>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Title Information</h3>
+            <div className="bg-green-50 dark:bg-green-900/10 border-l-4 border-green-400 p-4 mb-4">
+              <div className="flex">
+                <CheckCircleIcon className="h-6 w-6 text-green-500 dark:text-green-400 mr-3" />
+                <p className="text-green-700 dark:text-green-400">Clean Title</p>
               </div>
-              
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Title Information</h3>
-                <div className="bg-green-50 dark:bg-green-900/10 border-l-4 border-green-400 p-4 mb-4">
-                  <div className="flex">
-                    <CheckCircleIcon className="h-6 w-6 text-green-500 dark:text-green-400 mr-3" />
-                    <p className="text-green-700 dark:text-green-400">Clean Title</p>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  This vehicle has a clean title, meaning it has not been declared a total loss by an insurance company or been branded with a severe title brand such as salvage, junk, rebuilt, or similar.
-                </p>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              This vehicle has a clean title, meaning it has not been declared a total loss by an insurance company or been branded with a severe title brand such as salvage, junk, rebuilt, or similar.
+            </p>
+          </div><div>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Ownership History</h3>
+            <div className="space-y-4">
+              <div className="border-l-2 border-primary-200 dark:border-primary-900 pl-4 relative">
+                <div className="absolute w-3 h-3 bg-primary-600 rounded-full left-[-7px]"></div>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">First Owner</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Jan 2018 - Oct 2020 · 2 years, 9 months</p>
+                <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">Purchased in {vehicle?.location ?? 'N/A'}</p>
               </div>
-              
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Ownership History</h3>
-                <div className="space-y-4">
-                  <div className="border-l-2 border-primary-200 dark:border-primary-900 pl-4 relative">
-                    <div className="absolute w-3 h-3 bg-primary-600 rounded-full left-[-7px]"></div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">First Owner</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Jan 2018 - Oct 2020 · 2 years, 9 months</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">Purchased in {vehicle?.location ?? 'N/A'}</p>
-                  </div>
-                  <div className="border-l-2 border-primary-200 dark:border-primary-900 pl-4 relative">
-                    <div className="absolute w-3 h-3 bg-primary-600 rounded-full left-[-7px]"></div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">Second Owner</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Oct 2020 - Present · 4 years, 6 months</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">Registered in {vehicle?.location ?? 'N/A'}</p>
-                  </div>
-                </div>
+              <div className="border-l-2 border-primary-200 dark:border-primary-900 pl-4 relative">
+                <div className="absolute w-3 h-3 bg-primary-600 rounded-full left-[-7px]"></div>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">Second Owner</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Oct 2020 - Present · 4 years, 6 months</p>
+                <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">Registered in {vehicle?.location ?? 'N/A'}</p>
               </div>
-              
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Mileage History</h3>
-                <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-xs text-gray-500 dark:text-gray-400">Jan 2018</span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">Present</span>
-                  </div>
-                  <div className="relative h-2 bg-gray-300 dark:bg-gray-600 rounded-full overflow-hidden">
-                    <div className="absolute left-0 top-0 h-full bg-primary-600 w-[60%]"></div>
-                    <div className="absolute w-3 h-3 bg-primary-600 rounded-full top-[-2px] left-[60%]"></div>
-                  </div>
-                  <div className="mt-4 space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">First Record:</span>
-                      <span className="font-medium text-gray-900 dark:text-white">5 miles (Jan 2018)</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">Last Record:</span>
-                      <span className="font-medium text-gray-900 dark:text-white">{vehicle?.mileage?.toLocaleString?.() ?? 'N/A'} miles (Today)</span>
-                    </div>
-                  </div>
+            </div>
+          </div><div>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Mileage History</h3>
+            <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-xs text-gray-500 dark:text-gray-400">Jan 2018</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">Present</span>
+              </div>
+              <div className="relative h-2 bg-gray-300 dark:bg-gray-600 rounded-full overflow-hidden">
+                <div className="absolute left-0 top-0 h-full bg-primary-600 w-[60%]"></div>
+              </div>
+              <div className="mt-4 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">First Record:</span>
+                  <span className="font-medium text-gray-900 dark:text-white">5 miles (Jan 2018)</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">Last Record:</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{vehicle?.mileage?.toLocaleString?.() ?? 'N/A'} miles (Today)</span>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+          </div></>
+        )}
+   </>
+    )
+  }

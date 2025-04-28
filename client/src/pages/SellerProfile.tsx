@@ -1,6 +1,7 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
+import { useSessionAwareRefresh } from '../hooks/useSessionAwareRefresh';
 import { Database } from '../types/database';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 
@@ -14,7 +15,8 @@ const SellerProfile = () => {
   // Fetch profile (seller) by id
   const {
     data: profile,
-    isLoading: isLoadingProfile
+    isLoading: isLoadingProfile,
+    refetch: refetchProfile
   } = useQuery<Profile | null>({
     queryKey: ['profile', sellerId],
     queryFn: async () => {
@@ -32,18 +34,25 @@ const SellerProfile = () => {
   // Fetch vehicles for this profile
   const {
     data: vehicles,
-    isLoading: isLoadingVehicles
-  } = useQuery<Vehicle[]>({
+    isLoading: isLoadingVehicles,
+    refetch: refetchVehicles
+  } = useQuery<any[]>({
     queryKey: ['vehicles', sellerId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('vehicles')
         .select('*')
-        .eq('profile_id', sellerId);
+        .eq('seller_id', sellerId);
       if (error) throw error;
-      return (data ?? []) as Vehicle[];
+      return data || [];
     },
     enabled: !!sellerId
+  });
+
+  // Session-aware refresh
+  useSessionAwareRefresh(() => {
+    refetchProfile();
+    refetchVehicles();
   });
 
   if (isLoadingProfile || isLoadingVehicles) {

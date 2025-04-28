@@ -41,12 +41,16 @@ interface Profile {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+import { useQueryClient } from '@tanstack/react-query';
+
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [profile, setProfile] = useState<Profile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isEmailVerified, setIsEmailVerified] = useState(false);
     const [isTwoFactorEnabled, setIsTwoFactorEnabled] = useState(false);
+    // React Query client for cache invalidation
+    const queryClient = useQueryClient();
 
     // Fetch profile when user changes
     useEffect(() => {
@@ -68,58 +72,81 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Initialize auth and ensure session persistence
     useEffect(() => {
         console.log('[AuthProvider] Initializing auth context...');
-        let timeoutId: NodeJS.Timeout | null = null;
-        
-        // Timeout fallback for loading
-        timeoutId = setTimeout(() => {
-            if (isLoading) {
-                console.error('[AuthProvider] Timed out waiting for auth.');
-                setIsLoading(false);
-                toast.error('Timed out waiting for auth. Please try again.');
-            }
-        }, 5000);
-        
+
         // Initialize Supabase session persistence with localStorage
         // This ensures user sessions are kept between page refreshes
+        // Invalidate all queries to ensure fresh data after session (re)hydration
+        const invalidateAll = () => {
+            if (queryClient) {
+                queryClient.invalidateQueries();
+            }
+        };
+
         const initializeAuth = async () => {
             try {
                 // Check for existing session
+                console.log('[AuthProvider] Calling supabase.auth.getSession...');
                 const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-                
-                if (sessionError) throw sessionError;
-                
-                console.log('[AuthProvider] Initial session:', session);
-                
-                // Set initial user state
-                setUser(session?.user ?? null);
-                
-                if (session?.user) {
-                    setIsEmailVerified(session.user.email_confirmed_at != null);
-                    await checkTwoFactorStatus(session.user.id);
-                    
-                    // Try to sync with profile data
-                    try {
-                        const { data: profileData, error: profileError } = await supabase
-                            .from('profiles')
-                            .select('*')
-                            .eq('id', session.user.id)
-                            .single();
-                            
-                        if (!profileError && profileData) {
-                            setProfile(profileData);
+                if (sessionError) {
+                    console.error('[AuthProvider] getSession error:', sessionError);
+                    // Only clear storage and force logout if there was a session error (i.e., user expected to be authenticated)
+                    [localStorage, sessionStorage].forEach(storage => {
+                        Object.keys(storage)
+                            .filter(key => key.startsWith('sb-'))
+                            .forEach(key => storage.removeItem(key));
+                    });
+                    document.cookie.split(';').forEach(cookie => {
+                        const name = cookie.split('=')[0].trim();
+                        if (name.includes('sb-')) {
+                            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname}`;
                         }
-                    } catch (profileErr) {
-                        console.error('[AuthProvider] Error fetching profile:', profileErr);
+                    });
+                    if ('indexedDB' in window) {
+                        try { window.indexedDB.deleteDatabase('supabase-auth-client'); } catch (e) {}
                     }
+                    setUser(null);
+                    setProfile(null);
+                    setIsEmailVerified(false);
+                    setIsTwoFactorEnabled(false);
+                    setIsLoading(false);
+                    toast.error('Session expired or invalid. Please log in again.');
+                    setTimeout(() => {
+                        window.location.href = '/auth/login';
+                    }, 500);
+                    return;
+                } else if (!session) {
+                    // If there is simply no session (anonymous visitor), just set user/profile to null and proceed
+                    setUser(null);
+                    setProfile(null);
+                    setIsEmailVerified(false);
+                    setIsTwoFactorEnabled(false);
+                    setIsLoading(false);
+                    return;
                 }
-                
+                setIsEmailVerified(session.user.email_confirmed_at != null);
+                await checkTwoFactorStatus(session.user.id);
+
+                // Try to sync with profile data
+                try {
+                    const { data: profileData, error: profileError } = await supabase
+                        .from('profiles')
+                        .select('*')
+                        .eq('id', session.user.id)
+                        .single();
+
+                    if (!profileError && profileData) {
+                        setProfile(profileData);
+                    }
+                } catch (profileErr) {
+                    console.error('[AuthProvider] Error fetching profile:', profileErr);
+                }
+
                 setIsLoading(false);
-                if (timeoutId) clearTimeout(timeoutId);
+                invalidateAll();
             } catch (err) {
                 console.error('[AuthProvider] Error initializing auth:', err);
                 setIsLoading(false);
-                if (timeoutId) clearTimeout(timeoutId);
-                // Don't show toast error on initial load
+                toast.error('Failed to initialize authentication. Please try again.');
             }
         };
         
@@ -136,43 +163,92 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     if (session?.user) {
                         setIsEmailVerified(session.user.email_confirmed_at != null);
                         await checkTwoFactorStatus(session.user.id);
+                        // Fetch profile after sign in
+                        try {
+                            const { data: profileData, error: profileError } = await supabase
+                                .from('profiles')
+                                .select('*')
+                                .eq('id', session.user.id)
+                                .single();
+                            if (!profileError && profileData) {
+                                setProfile(profileData);
+                            } else {
+                                setProfile(null);
+                            }
+                        } catch (profileErr) {
+                            setProfile(null);
+                            console.error('[AuthProvider] Error fetching profile after SIGNED_IN:', profileErr);
+                        }
                         toast.success('Signed in successfully!');
                     }
+                    invalidateAll();
+                    setIsLoading(false);
                     break;
-                    
                 case 'SIGNED_OUT':
                     setUser(null);
                     setProfile(null);
                     setIsEmailVerified(false);
                     setIsTwoFactorEnabled(false);
+                    invalidateAll();
                     // No toast here as signOut method handles this
                     break;
-                    
                 case 'TOKEN_REFRESHED':
                     setUser(session?.user ?? null);
+                    if (session?.user) {
+                        // Fetch profile after token refresh
+                        try {
+                            const { data: profileData, error: profileError } = await supabase
+                                .from('profiles')
+                                .select('*')
+                                .eq('id', session.user.id)
+                                .single();
+                            if (!profileError && profileData) {
+                                setProfile(profileData);
+                            } else {
+                                setProfile(null);
+                            }
+                        } catch (profileErr) {
+                            setProfile(null);
+                            console.error('[AuthProvider] Error fetching profile after TOKEN_REFRESHED:', profileErr);
+                        }
+                    }
+                    invalidateAll();
+                    setIsLoading(false);
                     // Silent refresh, no need to notify
                     break;
-                    
                 case 'USER_UPDATED':
                     setUser(session?.user ?? null);
                     if (session?.user) {
                         setIsEmailVerified(session.user.email_confirmed_at != null);
                         await checkTwoFactorStatus(session.user.id);
+                        // Fetch profile after user update
+                        try {
+                            const { data: profileData, error: profileError } = await supabase
+                                .from('profiles')
+                                .select('*')
+                                .eq('id', session.user.id)
+                                .single();
+                            if (!profileError && profileData) {
+                                setProfile(profileData);
+                            } else {
+                                setProfile(null);
+                            }
+                        } catch (profileErr) {
+                            setProfile(null);
+                            console.error('[AuthProvider] Error fetching profile after USER_UPDATED:', profileErr);
+                        }
                     }
+                    setIsLoading(false);
                     break;
-                
                 default:
                     setUser(session?.user ?? null);
                     break;
             }
-            
             setIsLoading(false);
-            if (timeoutId) clearTimeout(timeoutId);
         });
 
         return () => {
             subscription.unsubscribe();
-            if (timeoutId) clearTimeout(timeoutId);
         };
     }, []);
 
@@ -413,25 +489,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const value = {
+        user,
+        profile,
+        isAuthenticated: !!user,
+        isLoading,
+        isEmailVerified,
+        isTwoFactorEnabled,
+        signIn,
+        signUp,
+        signOut,
+        resetPassword,
+        updatePassword,
+        signInWithProvider,
+        enableTwoFactor,
+        verifyTwoFactor,
+        disableTwoFactor,
+        resendVerificationEmail
+    };
+
+    // Only block rendering during the initial auth check, not on every profile fetch
+    if (isLoading && user === null) {
+        return <div className="flex items-center justify-center min-h-screen"><span>Loading authentication...</span></div>;
+    }
     return (
-        <AuthContext.Provider value={{
-            user,
-            profile,
-            isAuthenticated: !!user,
-            isLoading,
-            isEmailVerified,
-            isTwoFactorEnabled,
-            signIn,
-            signUp,
-            signOut,
-            resetPassword,
-            updatePassword,
-            signInWithProvider,
-            enableTwoFactor,
-            verifyTwoFactor,
-            disableTwoFactor,
-            resendVerificationEmail
-        }}>
+        <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
     );

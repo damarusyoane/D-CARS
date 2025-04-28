@@ -4,12 +4,14 @@ import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import { useSessionAwareRefresh } from '../hooks/useSessionAwareRefresh';
 import {
   PaperAirplaneIcon,
   ChevronLeftIcon,
   ExclamationCircleIcon,
   ChatBubbleOvalLeftEllipsisIcon
 } from '@heroicons/react/24/outline';
+import ThreadsDemo from '../components/messages/ThreadsDemo';
 
 // Define types properly 
 type Message = {
@@ -46,14 +48,20 @@ export default function Messages() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const [searchParams] = useSearchParams();
 
-  if (isAuthLoading && !user) {
+  if (isAuthLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <LoadingSpinner size="lg" />
       </div>
     );
   }
-  // If user is loaded (authenticated or not), show the page contents. If user is null, you can show a login prompt inside the page body if desired.
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-gray-500 dark:text-gray-400">Please log in to view your messages.</p>
+      </div>
+    );
+  }
 
   const [selectedConversation, setSelectedConversation] = useState<string | null>(
     searchParams.get('vehicle')
@@ -64,9 +72,51 @@ export default function Messages() {
   const queryClient = useQueryClient();
 
   // Fetch conversations with timeout and error handling
-  const { data: conversations, isLoading: isLoadingConversations, isError: isConversationsError } = useQuery<Conversation[]>({
+  const { data: conversations, isLoading: isLoadingConversations, isError: isConversationsError, refetch: refetchConversations } = useQuery<Conversation[]>({
     queryKey: ['conversations', user?.id],
     queryFn: async () => {
+      if (!user?.id) {
+        return [];
+      }
+      const { data: messages, error } = await supabase
+      .from('messages')
+      .select(`
+        *,
+        sender:sender_id (id, full_name, avatar_url),
+        receiver:receiver_id (id, full_name, avatar_url),
+        vehicle:vehicle_id (id, title)
+      `)
+      .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+      .order('created_at', { ascending: false });
+      if (error || !messages) return [];
+      // Group messages by vehicle and get the last message for each
+      const conversationsMap = new Map<string, Conversation>();
+      messages.forEach((message: any) => {
+        const vehicleId = message.vehicle_id;
+        const otherUser = message.sender_id === user.id ? message.receiver : message.sender;
+        if (!vehicleId || !otherUser) return;
+        if (!conversationsMap.has(vehicleId)) {
+          conversationsMap.set(vehicleId, {
+            vehicle: message.vehicle || { id: vehicleId, title: 'Unknown Vehicle' },
+            otherUser,
+            lastMessage: message,
+            unreadCount: message.receiver_id === user.id && !message.read ? 1 : 0,
+          });
+        } else if (message.receiver_id === user.id && !message.read) {
+          const conv = conversationsMap.get(vehicleId)!;
+          conv.unreadCount += 1;
+        }
+      });
+      return Array.from(conversationsMap.values());
+    },
+    enabled: !!user?.id,
+    retry: 1,
+    staleTime: 30000,
+    gcTime: 300000,
+  });
+
+  useSessionAwareRefresh(refetchConversations);
+
       try {
         if (!user?.id) {
           throw new Error('User not authenticated');
@@ -110,14 +160,6 @@ export default function Messages() {
       } catch (err) {
         console.error('Error fetching conversations:', err);
         setError('Failed to load conversations. Please try again later.');
-        return [];
-      }
-    },
-    retry: 1,
-    staleTime: 30000,
-    gcTime: 300000,
-  });
-
   // Fetch messages for selected conversation with better error handling
   const { data: messages, isLoading: isLoadingMessages, isError: isMessagesError } = useQuery<Message[]>({
     queryKey: ['messages', selectedConversation],
@@ -254,7 +296,14 @@ export default function Messages() {
   }
 
   return (
-    <div className="flex h-full">
+    <div className="flex flex-col h-full">
+      {/* --- New Threads Demo Section --- */}
+      <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 p-4">
+        <h2 className="text-xl font-semibold mb-2">(New) Threaded Messaging Demo</h2>
+        <ThreadsDemo />
+      </div>
+      <div className="flex-1 flex min-h-0">
+        {/* --- Legacy Messaging UI Below --- */}
       {/* Conversations List */}
       <div className={`w-80 border-r border-gray-200 dark:border-gray-700 ${
         selectedConversation ? 'hidden lg:block' : 'block'
@@ -332,12 +381,12 @@ export default function Messages() {
           {/* Conversation Header */}
           <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center">
           <button
-  title="Back to conversations"
-  onClick={() => setSelectedConversation(null)}
-  className="lg:hidden mr-3 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
->
-  <ChevronLeftIcon className="w-5 h-5" />
-</button>
+              title="Back to conversations"
+              onClick={() => setSelectedConversation(null)}
+               className="lg:hidden mr-3 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+              <ChevronLeftIcon className="w-5 h-5" />
+          </button>
             
             {conversations?.find(c => c.vehicle.id === selectedConversation)?.vehicle && (
               <>
@@ -448,6 +497,7 @@ export default function Messages() {
           </div>
         </div>
       )}
+      </div> {/* Close flex-1 flex min-h-0 */}
     </div>
   );
-}
+};

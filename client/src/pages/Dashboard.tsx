@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { useSessionAwareRefresh } from '../hooks/useSessionAwareRefresh';
 
 import toast from 'react-hot-toast';
 import {
@@ -80,7 +81,7 @@ interface Transaction {
 
 const Dashboard: React.FC = () => {
   // --- STATE MANAGEMENT ---
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -223,6 +224,7 @@ const Dashboard: React.FC = () => {
       setIsLoading(false);
     }
   };
+  useSessionAwareRefresh(fetchDashboardData);
 
   // Transactions
   const fetchTransactions = async () => {
@@ -586,14 +588,22 @@ const Dashboard: React.FC = () => {
 
   const stats = userRole === 'seller' ? sellerStats : buyerStats;
 
-  if (isLoading) {
+  if (isAuthLoading) {
     return (
-      <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Sidebar activePage="dashboard" />
-        <main className="flex-1 flex flex-col p-8">
-          <DashboardSkeleton />
-        </main>
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="lg" />
       </div>
+    );
+  }
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-gray-500 dark:text-gray-400">Please log in to view your dashboard.</p>
+      </div>
+    );
+  }
+  if (isLoading) {
+    return <DashboardSkeleton />;
     );
   }
 
@@ -617,7 +627,7 @@ const Dashboard: React.FC = () => {
                   onClick={handleRefresh}
                   className={`flex items-center px-4 py-2 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-700/80 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 gap-2 ${isRefreshing ? 'opacity-60 cursor-not-allowed' : ''}`}
                   disabled={isRefreshing}
-                  aria-busy={`${isRefreshing}`}
+                  aria-busy={isRefreshing ? "true" : "false"}
                 >
                   <ArrowPathIcon className={`h-5 w-5 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
                   {isRefreshing ? 'Refreshing...' : 'Refresh'}
