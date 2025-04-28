@@ -36,6 +36,13 @@ export default function Register() {
             return;
         }
 
+        // Require full name and phone number before proceeding
+        if (!formData.fullName.trim() || !formData.phoneNumber.trim()) {
+            toast.error('Full name and phone number are required.');
+            setIsLoading(false);
+            return;
+        }
+
         try {
             console.log('Starting registration process for:', formData.email);
 

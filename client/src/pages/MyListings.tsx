@@ -50,6 +50,9 @@ const MyListings: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'active' | 'pending' | 'sold' | 'rejected'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [listingToDelete, setListingToDelete] = useState<string | null>(null);
 
   const fetchListings = async () => {
     try {
@@ -86,26 +89,9 @@ const MyListings: React.FC = () => {
 
   useSessionAwareRefresh(fetchListings);
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [listingToDelete, setListingToDelete] = useState<string | null>(null);
-
   useEffect(() => {
     fetchListings();
   }, [filter]);
-    }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      setListings(data || []);
-    } catch (error) {
-      console.error('Error fetching listings:', error);
-      setError('Failed to load your listings. Please try again later.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleDeleteListing = async (id: string) => {
     try {

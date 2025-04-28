@@ -126,6 +126,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setIsEmailVerified(session.user.email_confirmed_at != null);
                 await checkTwoFactorStatus(session.user.id);
 
+                // --- Explicitly sync session to localStorage ---
+                if (session) {
+                    try {
+                        const { access_token, refresh_token, user } = session;
+                        localStorage.setItem('sb-access-token', access_token);
+                        localStorage.setItem('sb-refresh-token', refresh_token);
+                        localStorage.setItem('sb-user', JSON.stringify(user));
+                    } catch (e) { console.warn('Could not sync session to localStorage:', e); }
+                }
+                // --- END explicit sync ---
+
                 // Try to sync with profile data
                 try {
                     const { data: profileData, error: profileError } = await supabase
@@ -163,6 +174,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     if (session?.user) {
                         setIsEmailVerified(session.user.email_confirmed_at != null);
                         await checkTwoFactorStatus(session.user.id);
+                        // --- Explicitly sync session to localStorage on SIGNED_IN ---
+                        if (session) {
+                            try {
+                                const { access_token, refresh_token, user } = session;
+                                localStorage.setItem('sb-access-token', access_token);
+                                localStorage.setItem('sb-refresh-token', refresh_token);
+                                localStorage.setItem('sb-user', JSON.stringify(user));
+                            } catch (e) { console.warn('Could not sync session to localStorage:', e); }
+                        }
                         // Fetch profile after sign in
                         try {
                             const { data: profileData, error: profileError } = await supabase
@@ -195,6 +215,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 case 'TOKEN_REFRESHED':
                     setUser(session?.user ?? null);
                     if (session?.user) {
+                        // --- Explicitly sync session to localStorage on TOKEN_REFRESHED ---
+                        if (session) {
+                            try {
+                                const { access_token, refresh_token, user } = session;
+                                localStorage.setItem('sb-access-token', access_token);
+                                localStorage.setItem('sb-refresh-token', refresh_token);
+                                localStorage.setItem('sb-user', JSON.stringify(user));
+                            } catch (e) { console.warn('Could not sync session to localStorage:', e); }
+                        }
                         // Fetch profile after token refresh
                         try {
                             const { data: profileData, error: profileError } = await supabase
@@ -267,36 +296,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const signIn = async (email: string, password: string, code?: string) => {
-        try {
-            let authResponse: AuthResponse;
-
-            if (code) {
-                // Sign in with 2FA
-                const signInOptions = {
-                    email,
-                    password,
-                };
-                authResponse = await supabase.auth.signInWithPassword(signInOptions);
-
-                // Verify 2FA code separately
-                const { error: verifyError } = await supabase.functions.invoke('verify-2fa', {
-                    body: { code }
-                });
-                if (verifyError) throw verifyError;
-            } else {
-                // Regular sign in
-                authResponse = await supabase.auth.signInWithPassword({ email, password });
-            }
-
-            if (authResponse.error) throw authResponse.error;
-
-        // No email confirmation check needed; allow all authenticated users to proceed
-        toast.success('Successfully signed in!');
-        } catch (error) {
-            toast.error(error instanceof Error ? error.message : 'Failed to sign in');
-            throw error;
+    const signIn = async (email: string, password: string, code?: string): Promise<void> => {
+        let authResponse: AuthResponse;
+        if (code) {
+            // Sign in with 2FA
+            const signInOptions = {
+                email,
+                password,
+            };
+            authResponse = await supabase.auth.signInWithPassword(signInOptions);
+            // Verify 2FA code separately
+            const { error: verifyError } = await supabase.functions.invoke('verify-2fa', {
+                body: { code }
+            });
+            if (verifyError) throw verifyError;
+        } else {
+            // Regular sign in
+            authResponse = await supabase.auth.signInWithPassword({ email, password });
         }
+        if (authResponse.error) throw authResponse.error;
+        toast.success('Successfully signed in!');
     };
 
     const signUp = async (email: string, password: string, name: string) => {
@@ -305,7 +324,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 email,
                 password,
                 options: {
-                    data: { 
+                    data: {
                         name,
                         two_factor_enabled: false
                     }
@@ -318,6 +337,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             throw error;
         }
     };
+
 
     const signInWithProvider = async (provider: Provider) => {
         try {
@@ -527,4 +547,4 @@ export function useAuth() {
     return context;
 }
 
-export default AuthContext; 
+export default AuthContext;

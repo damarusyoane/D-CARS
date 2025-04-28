@@ -4,6 +4,7 @@ import Sidebar from '../components/Sidebar';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useSessionAwareRefresh } from '../hooks/useSessionAwareRefresh';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 import toast from 'react-hot-toast';
 import {
@@ -604,7 +605,6 @@ const Dashboard: React.FC = () => {
   }
   if (isLoading) {
     return <DashboardSkeleton />;
-    );
   }
 
   return (

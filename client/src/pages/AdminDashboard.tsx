@@ -27,6 +27,7 @@ import LoadingSpinner from '../components/common/LoadingSpinner';
 import TrafficAnalytics from '../components/admin/TrafficAnalytics';
 import CarApprovalWorkflow from '../components/admin/CarApprovalWorkflow';
 import UserStatistics from '../components/admin/UserStatistics';
+import './AdminDashboard.mobile.css';
 
 interface Vehicle {
   id: string;
@@ -78,6 +79,8 @@ interface StatsData {
 }
 
 export default function AdminDashboard() {
+  // Responsive sidebar state
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { signOut, profile } = useAuth();
   const navigate = useNavigate();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -87,19 +90,8 @@ export default function AdminDashboard() {
     setIsLoggingOut(true);
     try {
       await signOut();
-      [localStorage, sessionStorage].forEach(storage => {
-        Object.keys(storage)
-          .filter((key) => key.startsWith('sb-'))
-          .forEach((key) => storage.removeItem(key));
-      });
-      if ('indexedDB' in window) {
-        try { window.indexedDB.deleteDatabase('supabase-auth-client'); } catch (e) {}
-      }
-      if (typeof supabase.removeAllChannels === 'function') {
-        supabase.removeAllChannels();
-      }
-      toast.success('Logged out successfully!');
-      setTimeout(() => { navigate('/auth/login', { replace: true }); }, 300);
+      // Force a full reload to ensure all session data is cleared (matches AuthContext signOut)
+      window.location.href = '/auth/login';
     } catch (err) {
       toast.error('Logout failed.');
     } finally {
@@ -303,7 +295,7 @@ export default function AdminDashboard() {
             title: 'Vehicle Listing Approved',
             message: `Your listing for ${vehicle.make} ${vehicle.model} has been approved and is now live.`,
             type: 'success',
-            is_read: false
+            read: false
           });
 
         if (notificationError) throw notificationError;
@@ -344,7 +336,7 @@ export default function AdminDashboard() {
             title: 'Vehicle Listing Rejected',
             message: `Your listing for ${vehicle.make} ${vehicle.model} has been rejected. Reason: ${reason}`,
             type: 'error',
-            is_read: false
+            read: false
           });
 
         if (notificationError) throw notificationError;
@@ -412,140 +404,147 @@ export default function AdminDashboard() {
       {/* Admin Dashboard Layout */}
       <div className="flex">
         {/* Sidebar */}
-        <div className="w-64 bg-gray-800 min-h-screen fixed left-0 top-0 z-10 hidden lg:block">
+        {/* Sidebar - responsive */}
+        {/* Desktop Sidebar */}
+        <div className="admin-sidebar-desktop hidden lg:block w-64 bg-gray-800 min-h-screen fixed left-0 top-0 z-30">
           <div className="p-6 border-b border-gray-700">
             <h1 className="text-2xl font-bold">D-CARS Admin</h1>
             <p className="text-sm text-gray-400">Management Dashboard</p>
           </div>
-          
           <nav className="p-4">
             <ul className="space-y-2">
               <li>
-                <button 
-                  onClick={() => setActiveTab('overview')}
-                  className={`w-full flex items-center px-4 py-3 rounded-lg ${
-                    activeTab === 'overview' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'
-                  }`}
-                >
-                  <HomeIcon className="w-5 h-5 mr-3" />
-                  Dashboard Overview
+                <button onClick={() => setActiveTab('overview')} className={`w-full flex items-center px-4 py-3 rounded-lg ${activeTab === 'overview' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`}>
+                  <HomeIcon className="w-5 h-5 mr-3" />Dashboard Overview
                 </button>
               </li>
               <li>
-                <button 
-                  onClick={() => setActiveTab('pending')}
-                  className={`w-full flex items-center px-4 py-3 rounded-lg ${
-                    activeTab === 'pending' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'
-                  }`}
-                >
-                  <ClockIcon className="w-5 h-5 mr-3" />
-                  Pending Approvals
-                  {stats.pendingApprovals > 0 && (
-                    <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1">
-                      {stats.pendingApprovals}
-                    </span>
-                  )}
+                <button onClick={() => setActiveTab('pending')} className={`w-full flex items-center px-4 py-3 rounded-lg ${activeTab === 'pending' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`}>
+                  <ClockIcon className="w-5 h-5 mr-3" />Pending Approvals
+                  {stats.pendingApprovals > 0 && (<span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1">{stats.pendingApprovals}</span>)}
                 </button>
               </li>
               <li>
-                <button 
-                  onClick={() => setActiveTab('users')}
-                  className={`w-full flex items-center px-4 py-3 rounded-lg ${
-                    activeTab === 'users' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'
-                  }`}
-                >
-                  <UsersIcon className="w-5 h-5 mr-3" />
-                  User Management
+                <button onClick={() => setActiveTab('users')} className={`w-full flex items-center px-4 py-3 rounded-lg ${activeTab === 'users' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`}>
+                  <UsersIcon className="w-5 h-5 mr-3" />User Management
                 </button>
               </li>
               <li>
-                <button 
-                  onClick={() => setActiveTab('analytics')}
-                  className={`w-full flex items-center px-4 py-3 rounded-lg ${
-                    activeTab === 'analytics' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'
-                  }`}
-                >
-                  <ChartBarIcon className="w-5 h-5 mr-3" />
-                  Traffic Analytics
+                <button onClick={() => setActiveTab('analytics')} className={`w-full flex items-center px-4 py-3 rounded-lg ${activeTab === 'analytics' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`}>
+                  <ChartBarIcon className="w-5 h-5 mr-3" />Traffic Analytics
                 </button>
               </li>
               <li>
-                <button 
-                  onClick={() => navigate('/admin/settings')}
-                  className="w-full flex items-center px-4 py-3 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white"
-                >
-                  <Cog6ToothIcon className="w-5 h-5 mr-3" />
-                  Settings
+                <button onClick={() => setActiveTab('settings')} className={`w-full flex items-center px-4 py-3 rounded-lg ${activeTab === 'settings' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`}>
+                  <Cog6ToothIcon className="w-5 h-5 mr-3" />Settings
                 </button>
               </li>
               <li>
-                <button 
-                  onClick={() => navigate('/')}
-                  className="w-full flex items-center px-4 py-3 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white"
-                >
-                  <ArrowPathIcon className="w-5 h-5 mr-3" />
-                  Back to Site
+                <button onClick={() => navigate('/')} className="w-full flex items-center px-4 py-3 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white">
+                  <ArrowPathIcon className="w-5 h-5 mr-3" />Back to Site
                 </button>
               </li>
             </ul>
           </nav>
         </div>
-        
+        {/* Mobile Sidebar */}
+        <div className={`admin-sidebar-mobile lg:hidden ${sidebarOpen ? 'open' : ''}`}>
+          <div className="p-6 border-b border-gray-700 flex items-center justify-between">
+            <h1 className="text-2xl font-bold">D-CARS Admin</h1>
+            <button className="admin-mobile-nav-btn" onClick={() => setSidebarOpen(false)} aria-label="Close sidebar">
+              <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <nav className="p-4">
+            <ul className="space-y-2">
+              <li>
+                <button onClick={() => { setActiveTab('overview'); setSidebarOpen(false); }} className={`w-full flex items-center px-4 py-3 rounded-lg ${activeTab === 'overview' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`}> <HomeIcon className="w-5 h-5 mr-3" />Dashboard Overview</button>
+              </li>
+              <li>
+                <button onClick={() => { setActiveTab('pending'); setSidebarOpen(false); }} className={`w-full flex items-center px-4 py-3 rounded-lg ${activeTab === 'pending' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`}> <ClockIcon className="w-5 h-5 mr-3" />Pending Approvals{stats.pendingApprovals > 0 && (<span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1">{stats.pendingApprovals}</span>)} </button>
+              </li>
+              <li>
+                <button onClick={() => { setActiveTab('users'); setSidebarOpen(false); }} className={`w-full flex items-center px-4 py-3 rounded-lg ${activeTab === 'users' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`}> <UsersIcon className="w-5 h-5 mr-3" />User Management</button>
+              </li>
+              <li>
+                <button onClick={() => { setActiveTab('analytics'); setSidebarOpen(false); }} className={`w-full flex items-center px-4 py-3 rounded-lg ${activeTab === 'analytics' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`}> <ChartBarIcon className="w-5 h-5 mr-3" />Traffic Analytics</button>
+              </li>
+              <li>
+                <button onClick={() => { setActiveTab('settings'); setSidebarOpen(false); }} className={`w-full flex items-center px-4 py-3 rounded-lg ${activeTab === 'settings' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`}> <Cog6ToothIcon className="w-5 h-5 mr-3" />Settings</button>
+              </li>
+              <li>
+                <button onClick={() => { navigate('/'); setSidebarOpen(false); }} className="w-full flex items-center px-4 py-3 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white"> <ArrowPathIcon className="w-5 h-5 mr-3" />Back to Site</button>
+              </li>
+            </ul>
+          </nav>
+        </div>
+        {/* Overlay for sidebar on mobile */}
+        {sidebarOpen && (<div className="admin-sidebar-overlay lg:hidden" onClick={() => setSidebarOpen(false)}></div>)}
+
         {/* Main Content */}
-        <div className="lg:ml-64 w-full">
+        <div className="admin-main-content w-full lg:ml-64 min-h-screen flex flex-col bg-gray-900">
+
           {/* Header */}
-          <header className="bg-gray-800 p-6 shadow-lg sticky top-0 z-10">
-            <div className="flex justify-between items-center">
+          <header className="bg-gray-800 p-4 shadow-lg sticky top-0 z-20 flex flex-col sm:flex-row items-center justify-between">
+            <div className="flex items-center w-full sm:w-auto justify-between">
+              {/* Mobile menu button */}
+              <button
+                className="lg:hidden text-gray-400 hover:text-white mr-4"
+                onClick={() => setSidebarOpen((v: boolean) => !v)}
+                aria-label="Open sidebar"
+              >
+                <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
               <div>
                 <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-                <p className="text-gray-400">Welcome back, {profile?.email}</p>
+                <p className="text-gray-400 text-sm">Welcome back, {profile?.email}</p>
               </div>
-              <div className="flex items-center space-x-4">
-                <button 
-                  onClick={fetchData}
-                  className="p-2 text-gray-400 hover:text-white"
-                  title="Refresh Data"
-                >
-                  <ArrowPathIcon className="w-5 h-5" />
-                </button>
-                <div className="relative">
-                  <button className="p-2 text-gray-400 hover:text-white relative" title="Notifications">
-                    <BellIcon className="w-5 h-5" />
-                    <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
-                  </button>
-                </div>
-                <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center">
-                  <span className="text-sm font-medium">{profile?.email?.charAt(0).toUpperCase()}</span>
-                </div>
-                <button
-                  className={logoutBtnClass}
-                  onClick={handleLogout}
-                  disabled={isLoggingOut}
-                  title="Logout"
-                >
-                  {isLoggingOut ? 'Logging out...' : 'Logout'}
+            </div>
+            <div className="flex items-center space-x-4 mt-4 sm:mt-0">
+              <button 
+                onClick={fetchData}
+                className="p-2 text-gray-400 hover:text-white"
+                title="Refresh Data"
+              >
+                <ArrowPathIcon className="w-5 h-5" />
+              </button>
+              <div className="relative">
+                <button className="p-2 text-gray-400 hover:text-white relative" title="Notifications">
+                  <BellIcon className="w-5 h-5" />
+                  <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
                 </button>
               </div>
+              <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center">
+                <span className="text-sm font-medium">{profile?.email?.charAt(0).toUpperCase()}</span>
+              </div>
+              <button
+                className={logoutBtnClass}
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                title="Logout"
+              >
+                {isLoggingOut ? 'Logging out...' : 'Logout'}
+              </button>
             </div>
           </header>
           
           {/* Dashboard Content */}
           <main className="p-6">
             {/* Mobile Navigation */}
-            <div className="flex lg:hidden overflow-x-auto mb-6 bg-gray-800 rounded-lg">
+            <div className="admin-mobile-tabs lg:hidden">
               <button
                 onClick={() => setActiveTab('overview')}
-                className={`px-4 py-3 whitespace-nowrap ${
-                  activeTab === 'overview' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-400'
-                }`}
+                className={activeTab === 'overview' ? 'active' : ''}
               >
                 Overview
               </button>
               <button
                 onClick={() => setActiveTab('pending')}
-                className={`px-4 py-3 whitespace-nowrap ${
-                  activeTab === 'pending' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-400'
-                }`}
+                className={activeTab === 'pending' ? 'active' : ''}
               >
                 Approvals
                 {stats.pendingApprovals > 0 && (
@@ -556,17 +555,13 @@ export default function AdminDashboard() {
               </button>
               <button
                 onClick={() => setActiveTab('users')}
-                className={`px-4 py-3 whitespace-nowrap ${
-                  activeTab === 'users' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-400'
-                }`}
+                className={activeTab === 'users' ? 'active' : ''}
               >
                 Users
               </button>
               <button
                 onClick={() => setActiveTab('analytics')}
-                className={`px-4 py-3 whitespace-nowrap ${
-                  activeTab === 'analytics' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-400'
-                }`}
+                className={activeTab === 'analytics' ? 'active' : ''}
               >
                 Analytics
               </button>
@@ -578,7 +573,7 @@ export default function AdminDashboard() {
               {activeTab === 'overview' && (
                 <>
                   {/* Stats Cards */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                     <StatCard 
                       icon={UsersIcon} 
                       title="Total Users" 
@@ -736,6 +731,38 @@ export default function AdminDashboard() {
                   conversionRate={stats.conversionRate}
                   previousPeriodChange={previousPeriodChange}
                 />
+              )}
+              
+              {/* Settings Tab */}
+              {activeTab === 'settings' && (
+                <div className="bg-gray-800 rounded-lg p-6 mt-4">
+                  <h2 className="text-xl font-semibold mb-4">Admin Settings</h2>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-gray-400 mb-1">Admin Email</label>
+                      <input
+                        type="email"
+                        value={profile?.email || ''}
+                        disabled
+                        className="w-full p-2 rounded bg-gray-700 text-gray-200 border border-gray-600 focus:outline-none"
+                        title="Admin email address"
+                        placeholder="Admin email address"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-gray-400 mb-1">Theme</label>
+                      <select
+                        className="w-full p-2 rounded bg-gray-700 text-gray-200 border border-gray-600 focus:outline-none"
+                        title="Theme selection"
+                        disabled
+                      >
+                        <option>Dark</option>
+                        <option>Light</option>
+                      </select>
+                    </div>
+                    <div className="text-gray-400 text-sm mt-4">More settings coming soon...</div>
+                  </div>
+                </div>
               )}
             </div>
           </main>

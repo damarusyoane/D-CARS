@@ -15,6 +15,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
+    storage: window.sessionStorage, // Use sessionStorage for session persistence
     autoRefreshToken: true,
     detectSessionInUrl: true
   }
