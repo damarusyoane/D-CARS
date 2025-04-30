@@ -11,14 +11,15 @@ import {
   ChartBarIcon,
   EyeIcon,
   ChatBubbleLeftRightIcon,
+  ChatBubbleOvalLeftIcon,
   HeartIcon,
   BanknotesIcon,
   PlusCircleIcon,
   ArrowPathIcon,
-  BellIcon,
   CurrencyDollarIcon,
   ArrowTrendingUpIcon
 } from '@heroicons/react/24/outline';
+import Notifications from '../components/common/Notifications';
 import DashboardSkeleton from '../components/DashboardSkeleton';
 import { Chart, registerables } from 'chart.js';
 
@@ -92,7 +93,7 @@ const Dashboard: React.FC = () => {
   const [dashboardError, setDashboardError] = useState<string | null>(null);
   const [activityFeed, setActivityFeed] = useState<ActivityItem[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [notificationCount, setNotificationCount] = useState<number>(0);
+  const [, setNotificationCount] = useState<number>(0);
   const lineChartRef = useRef<HTMLCanvasElement | null>(null);
   const pieChartRef = useRef<HTMLCanvasElement | null>(null);
   const lineChart = useRef<Chart | null>(null);
@@ -118,7 +119,7 @@ const Dashboard: React.FC = () => {
           fetchNotifications()
         ]);
       } catch (err) {
-        setDashboardError('Failed to load dashboard data.');
+        setDashboardError('Échec du chargement des données du tableau de bord.');
       } finally {
         setIsLoading(false);
       }
@@ -129,7 +130,7 @@ const Dashboard: React.FC = () => {
       .channel('messages-channel')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `receiver_id=eq.${user.id}` }, (_payload) => {
         setNotificationCount(prev => prev + 1);
-        toast.success('You have a new message!');
+        toast.success('Vous avez un nouveau message !');
         fetchDashboardData();
       })
       .subscribe();
@@ -154,7 +155,7 @@ const Dashboard: React.FC = () => {
         throw error;
       }
       if (!data) {
-        setDashboardError('User profile not found.');
+        setDashboardError('Profil utilisateur introuvable.');
         console.error('[Dashboard] No profile data found for user:', user.id);
         return;
       }
@@ -164,7 +165,7 @@ const Dashboard: React.FC = () => {
         navigate('/admin', { replace: true });
       }
     } catch (error) {
-      setDashboardError('Error fetching user role.');
+      setDashboardError('Erreur lors de la récupération du rôle utilisateur.');
       console.error('Error fetching user role:', error);
     }
   };
@@ -182,14 +183,13 @@ const Dashboard: React.FC = () => {
         .limit(5);
       if (listingsError) throw listingsError;
 
-      const { data: analytics, error: _analyticsError } = await supabase
+      const { data: analytics } = await supabase
         .from('vehicle_analytics')
         .select('vehicle_id, views, inquiries')
         .in('vehicle_id', listings?.map(l => l.id) || []);
 
       const formattedListings = listings?.map((listing: any) => {
-        const stats = analytics?.find(a => a.vehicle_id === listing.id) || { views: 0, inquiries: 0 };
-
+        const stats = analytics?.find((a: any) => a.vehicle_id === listing.id) || { views: 0, inquiries: 0 };
         return {
           id: listing.id,
           title: `${listing.year} ${listing.make} ${listing.model}`,
@@ -213,13 +213,13 @@ const Dashboard: React.FC = () => {
           vehicles!inner(id, make, model, year),
           profiles!sender_id(id, full_name, avatar_url)
         `)
-        .or(`receiver_id.eq.${user.id}`)
+        .or(`receiver_id.eq.${user.id},sender_id.eq.${user.id}`)
         .order('created_at', { ascending: false })
         .limit(5);
       if (messagesError) throw messagesError;
       setRecentMessages(messages || []);
     } catch (error) {
-      setDashboardError('Error fetching dashboard data.');
+      setDashboardError('Erreur lors de la récupération des données du tableau de bord.');
       console.error('Error fetching dashboard data:', error);
     } finally {
       setIsLoading(false);
@@ -239,7 +239,7 @@ const Dashboard: React.FC = () => {
         `)
         .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(10); // No aggregation in query, sum in JS
 
       if (error) throw error;
       setTransactions(data || []);
@@ -336,7 +336,7 @@ const Dashboard: React.FC = () => {
                 title: `${tx.vehicle?.year} ${tx.vehicle?.make} ${tx.vehicle?.model}`
               }
               : undefined,
-            content: `${isCurrentUserBuyer ? 'You purchased' : 'You sold'} a vehicle for $${tx.amount.toLocaleString()}`,
+            content: `${isCurrentUserBuyer ? 'Vous avez acheté' : 'Vous avez vendu'} un véhicule pour ${tx.amount.toLocaleString()} XAF`,
             timestamp: tx.created_at,
             status: tx.status,
             amount: tx.amount
@@ -430,7 +430,7 @@ const Dashboard: React.FC = () => {
       data: {
         labels: dates,
         datasets: [{
-          label: 'Transaction Amount ($)',
+          label: 'Montant de la Transaction (XAF)',
           data: amounts,
           borderColor: '#3b82f6',
           backgroundColor: 'rgba(59, 130, 246, 0.1)',
@@ -549,7 +549,7 @@ const Dashboard: React.FC = () => {
       title: 'Monthly Sales',
       value: `$${transactions
         .filter((t: any) => t.status === 'completed' && new Date(t.created_at).getMonth() === new Date().getMonth())
-        .reduce((sum: any, t: any) => sum + t.amount, 0).toLocaleString()}`,
+        .reduce((sum: any, t: any) => sum + (t.amount || 0), 0).toLocaleString()}`,
       change: 12.3,
       icon: BanknotesIcon,
       color: 'bg-yellow-500',
@@ -599,7 +599,7 @@ const Dashboard: React.FC = () => {
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <p className="text-gray-500 dark:text-gray-400">Please log in to view your dashboard.</p>
+        <p className="text-gray-500 dark:text-gray-400">Veuillez vous connecter pour voir votre tableau de bord.</p>
       </div>
     );
   }
@@ -616,10 +616,10 @@ const Dashboard: React.FC = () => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-6 gap-4 transition-all duration-300">
               <div>
                 <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-1">
-                  Welcome back{userName ? `, ${userName}` : ''}!
+                  Bienvenue{userName ? `, ${userName}` : ''} !
                 </h1>
                 <p className="text-gray-500 dark:text-gray-300 text-base font-medium">
-                  {userRole === 'seller' ? 'Seller Dashboard' : 'Buyer Dashboard'}
+                  {userRole === 'seller' ? 'Tableau de Bord Vendeur' : 'Tableau de Bord Acheteur'}
                 </p>
               </div>
               <div className="flex items-center gap-3 sm:gap-4">
@@ -630,21 +630,11 @@ const Dashboard: React.FC = () => {
                   aria-busy={isRefreshing ? "true" : "false"}
                 >
                   <ArrowPathIcon className={`h-5 w-5 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
-                  {isRefreshing ? 'Refreshing...' : 'Refresh'}
+                  {isRefreshing ? 'Actualisation...' : 'Actualiser'}
                 </button>
 
-                <div className="relative">
-                  <button
-                    className="relative p-2 rounded-full bg-white dark:bg-gray-700 shadow hover:shadow-md transition focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white"
-                    aria-label="Notifications"
-                  >
-                    <BellIcon className="h-6 w-6" />
-                    {notificationCount > 0 && (
-                      <span className="absolute -top-1 -right-1 block h-4 w-4 rounded-full bg-red-500 text-white text-xs flex items-center justify-center border-2 border-white dark:border-gray-800 animate-pulse">
-                        {notificationCount}
-                      </span>
-                    )}
-                  </button>
+                <div className="relative z-30">
+                  <Notifications />
                 </div>
 
                 {userRole === 'seller' && (
@@ -713,7 +703,7 @@ const Dashboard: React.FC = () => {
                       <canvas ref={lineChartRef} />
                     ) : (
                       <div className="flex items-center justify-center h-full">
-                        <p className="text-gray-500 dark:text-gray-400">No transaction data available</p>
+                        <p className="text-gray-500 dark:text-gray-400">Aucune donnée de transaction disponible</p>
                       </div>
                     )}
                   </div>
@@ -722,14 +712,14 @@ const Dashboard: React.FC = () => {
                 <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6 border border-gray-100 dark:border-gray-700">
                   <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
                     <ChartBarIcon className="h-5 w-5 mr-2 text-primary-600" />
-                    Listing Status
+                    État des Annonces
                   </h3>
                   <div className="h-64">
                     {recentListings.length > 0 ? (
                       <canvas ref={pieChartRef} />
                     ) : (
                       <div className="flex items-center justify-center h-full">
-                        <p className="text-gray-500 dark:text-gray-400">No listing data available</p>
+                        <p className="text-gray-500 dark:text-gray-400">Aucune donnée d'annonce disponible</p>
                       </div>
                     )}
                   </div>
@@ -740,7 +730,7 @@ const Dashboard: React.FC = () => {
             <div className="mb-8">
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md overflow-hidden">
                 <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
-                  <h3 className="text-lg font-medium text-gray-900">Recent Activity</h3>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">Activité Récente</h3>
                 </div>
 
                 <div className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -773,7 +763,7 @@ const Dashboard: React.FC = () => {
                           </p>
                           {activity.vehicle && (
                             <p className="mt-1 text-xs text-gray-500">
-                              Re: <span className="text-primary-600 dark:text-primary-400">{activity.vehicle.title}</span>
+                              À propos de: <span className="text-primary-600 dark:text-primary-400">{activity.vehicle.title}</span>
                             </p>
                           )}
                           {activity.status && (
@@ -804,7 +794,7 @@ const Dashboard: React.FC = () => {
                 {userRole === 'seller' && (
                   <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md overflow-hidden">
                     <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
-                      <h3 className="text-lg font-medium text-gray-900">Your Listings</h3>
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-white">Vos Annonces</h3>
                     </div>
 
                     <div className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -828,18 +818,19 @@ const Dashboard: React.FC = () => {
                                         {listing.title}
                                       </Link>
                                     </h4>
-                                    <p className="mt-1 text-sm text-gray-500">{listing.daysListed} days listed</p>
+                                    <p className="mt-1 text-sm text-gray-500">{listing.daysListed} jours listés</p>
                                   </div>
                                   <p className="text-lg font-medium text-gray-900">${listing.price.toLocaleString()}</p>
+                                  <div className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">Actif</div>
                                 </div>
                                 <div className="mt-2 flex items-center text-sm text-gray-500 space-x-4">
                                   <div className="flex items-center">
                                     <EyeIcon className="h-4 w-4 mr-1 text-gray-400" />
-                                    {listing.views} views
+                                    <span>{listing.views} vues</span>
                                   </div>
                                   <div className="flex items-center">
-                                    <ChatBubbleLeftRightIcon className="h-4 w-4 mr-1 text-gray-400" />
-                                    {listing.inquiries} inquiries
+                                    <ChatBubbleOvalLeftIcon className="h-4 w-4 mr-1 text-gray-400" />
+                                    <span>{listing.inquiries} demandes</span>
                                   </div>
                                 </div>
                                 <div className="mt-3 flex space-x-2">
@@ -847,13 +838,13 @@ const Dashboard: React.FC = () => {
                                     to={`/dashboard/edit-listing/${listing.id}`}
                                     className="text-sm font-medium text-blue-600 hover:text-blue-500"
                                   >
-                                    Edit
+                                    Modifier
                                   </Link>
                                   <Link
                                     to={`/cars/${listing.id}`}
                                     className="text-sm font-medium text-gray-500 hover:text-gray-700"
                                   >
-                                    View Details
+                                    Voir détails
                                   </Link>
                                 </div>
                               </div>
@@ -862,13 +853,13 @@ const Dashboard: React.FC = () => {
                         ))
                       ) : (
                         <div className="p-6 text-center">
-                          <p className="text-gray-500">You don't have any listings yet.</p>
+                          <p className="text-gray-500">Vous n'avez pas encore d'annonces.</p>
                           <Link
                             to="/dashboard/create-listing"
                             className="mt-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
                           >
                             <PlusCircleIcon className="h-5 w-5 mr-2" />
-                            Create Your First Listing
+                            Créer votre première annonce
                           </Link>
                         </div>
                       )}
@@ -890,17 +881,17 @@ const Dashboard: React.FC = () => {
                 {userRole === 'buyer' && (
                   <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md overflow-hidden">
                     <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
-                      <h3 className="text-lg font-medium text-gray-900">Recently Viewed Cars</h3>
+                      <h3 className="text-lg font-medium text-gray-900">Voitures Récemment Consultées</h3>
                     </div>
 
                     <div className="p-6 text-center">
-                      <p className="text-gray-500">You haven't viewed any cars yet.</p>
+                      <p className="text-gray-500">Vous n'avez pas encore consulté de voitures.</p>
                       <Link
                         to="/search"
                         className="mt-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
                       >
                         <ChartBarIcon className="h-5 w-5 mr-2" />
-                        Browse Cars
+                        Parcourir les Voitures
                       </Link>
                     </div>
                   </div>
@@ -964,7 +955,7 @@ const Dashboard: React.FC = () => {
                 {/* Quick Actions */}
                 <div className="bg-white rounded-lg shadow overflow-hidden">
                   <div className="px-6 py-5 border-b border-gray-200">
-                    <h3 className="text-lg font-medium text-gray-900">Quick Actions</h3>
+                    <h3 className="text-lg font-medium text-gray-900">Actions Rapides</h3>
                   </div>
                   
                   <div className="p-6 space-y-4">
@@ -978,8 +969,8 @@ const Dashboard: React.FC = () => {
                             <PlusCircleIcon className="h-5 w-5 text-blue-500" />
                           </div>
                           <div className="ml-3">
-                            <h4 className="text-sm font-medium text-gray-900">List a New Vehicle</h4>
-                            <p className="text-xs text-gray-500">Create a new car listing</p>
+                            <h4 className="text-sm font-medium text-gray-900">Ajouter un Nouveau Véhicule</h4>
+                            <p className="text-xs text-gray-500">Créer une nouvelle annonce de voiture</p>
                           </div>
                         </Link>
                         
@@ -991,8 +982,8 @@ const Dashboard: React.FC = () => {
                             <ChatBubbleLeftRightIcon className="h-5 w-5 text-purple-500" />
                           </div>
                           <div className="ml-3">
-                            <h4 className="text-sm font-medium text-gray-900">Check Messages</h4>
-                            <p className="text-xs text-gray-500">View and respond to buyer inquiries</p>
+                            <h4 className="text-sm font-medium text-gray-900">Consulter les Messages</h4>
+                            <p className="text-xs text-gray-500">Voir et répondre aux demandes des acheteurs</p>
                           </div>
                         </Link>
                         
@@ -1004,8 +995,8 @@ const Dashboard: React.FC = () => {
                             <CurrencyDollarIcon className="h-5 w-5 text-green-500" />
                           </div>
                           <div className="ml-3">
-                            <h4 className="text-sm font-medium text-gray-900">View Sales</h4>
-                            <p className="text-xs text-gray-500">Check your transaction history</p>
+                            <h4 className="text-sm font-medium text-gray-900">Voir les Ventes</h4>
+                            <p className="text-xs text-gray-500">Consulter l'historique de vos transactions</p>
                           </div>
                         </Link>
                       </>
@@ -1019,8 +1010,8 @@ const Dashboard: React.FC = () => {
                             <ChartBarIcon className="h-5 w-5 text-blue-500" />
                           </div>
                           <div className="ml-3">
-                            <h4 className="text-sm font-medium text-gray-900">Search Cars</h4>
-                            <p className="text-xs text-gray-500">Find your next vehicle</p>
+                            <h4 className="text-sm font-medium text-gray-900">Rechercher des Voitures</h4>
+                            <p className="text-xs text-gray-500">Trouvez votre prochain véhicule</p>
                           </div>
                         </Link>
                         
@@ -1032,8 +1023,8 @@ const Dashboard: React.FC = () => {
                             <HeartIcon className="h-5 w-5 text-red-500" />
                           </div>
                           <div className="ml-3">
-                            <h4 className="text-sm font-medium text-gray-900">Saved Vehicles</h4>
-                            <p className="text-xs text-gray-500">View your favorite listings</p>
+                            <h4 className="text-sm font-medium text-gray-900">Véhicules Sauvegardés</h4>
+                            <p className="text-xs text-gray-500">Voir vos annonces favorites</p>
                           </div>
                         </Link>
                         
@@ -1045,8 +1036,8 @@ const Dashboard: React.FC = () => {
                             <ChatBubbleLeftRightIcon className="h-5 w-5 text-purple-500" />
                           </div>
                           <div className="ml-3">
-                            <h4 className="text-sm font-medium text-gray-900">My Messages</h4>
-                            <p className="text-xs text-gray-500">Contact sellers about listings</p>
+                            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Messages récents</h3>
+                            <p className="text-xs text-gray-500">Contacter les vendeurs à propos des annonces</p>
                           </div>
                         </Link>
                       </>
@@ -1057,7 +1048,7 @@ const Dashboard: React.FC = () => {
                 {/* Tips & Insights */}
                 <div className="bg-white rounded-lg shadow overflow-hidden">
                   <div className="px-6 py-5 border-b border-gray-200">
-                    <h3 className="text-lg font-medium text-gray-900">Tips & Insights</h3>
+                    <h3 className="text-lg font-medium text-gray-900">Conseils & Astuces</h3>
                   </div>
                   
                   <div className="p-6">
@@ -1071,9 +1062,9 @@ const Dashboard: React.FC = () => {
                               </svg>
                             </div>
                             <div className="ml-3">
-                              <h4 className="text-sm font-medium text-blue-800">Better Photos, Better Results</h4>
+                              <h4 className="text-sm font-medium text-blue-800">Meilleures Photos, Meilleurs Résultats</h4>
                               <p className="mt-1 text-xs text-blue-700">
-                                Listings with 5+ photos get 2x more views. Add multiple angles of your vehicle!
+                                Les annonces avec 5+ photos reçoivent 2x plus de vues. Ajoutez plusieurs angles de votre véhicule !
                               </p>
                             </div>
                           </div>
@@ -1087,9 +1078,9 @@ const Dashboard: React.FC = () => {
                               </svg>
                             </div>
                             <div className="ml-3">
-                              <h4 className="text-sm font-medium text-green-800">Respond Quickly</h4>
+                              <h4 className="text-sm font-medium text-green-800">Répondez Rapidement</h4>
                               <p className="mt-1 text-xs text-green-700">
-                                Sellers who respond to messages within 1 hour are 80% more likely to make a sale.
+                                Les vendeurs qui répondent aux messages en moins d'une heure ont 80% plus de chances de réaliser une vente.
                               </p>
                             </div>
                           </div>
@@ -1105,9 +1096,9 @@ const Dashboard: React.FC = () => {
                               </svg>
                             </div>
                             <div className="ml-3">
-                              <h4 className="text-sm font-medium text-blue-800">Save Your Searches</h4>
+                              <h4 className="text-sm font-medium text-blue-800">Enregistrez Vos Recherches</h4>
                               <p className="mt-1 text-xs text-blue-700">
-                                Save your search criteria to get notified when new matches are listed.
+                                Sauvegardez vos critères de recherche pour être notifié lorsque de nouveaux véhicules correspondants sont ajoutés.
                               </p>
                             </div>
                           </div>
@@ -1121,9 +1112,9 @@ const Dashboard: React.FC = () => {
                               </svg>
                             </div>
                             <div className="ml-3">
-                              <h4 className="text-sm font-medium text-green-800">Check Vehicle History</h4>
+                              <h4 className="text-sm font-medium text-green-800">Vérifiez l'Historique du Véhicule</h4>
                               <p className="mt-1 text-xs text-green-700">
-                                Always review the full vehicle history report before making a purchase.
+                                Consultez toujours le rapport complet d'historique du véhicule avant d'effectuer un achat.
                               </p>
                             </div>
                           </div>

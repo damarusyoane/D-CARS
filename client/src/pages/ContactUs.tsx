@@ -22,7 +22,7 @@ export default function ContactUs() {
     e.preventDefault();
     
     if (!name || !email || !subject || !message) {
-      toast.error('Please fill in all fields');
+      toast.error('Veuillez remplir tous les champs');
       return;
     }
     
@@ -43,7 +43,7 @@ export default function ContactUs() {
         
       if (error) throw error;
       
-      toast.success('Message sent successfully! We\'ll get back to you soon.');
+      toast.success('Message envoyé avec succès ! Nous vous répondrons bientôt.');
       
       // Reset form
       setName('');
@@ -52,7 +52,7 @@ export default function ContactUs() {
       setMessage('');
     } catch (error) {
       console.error('Error sending message:', error);
-      toast.error('Failed to send message. Please try again later.');
+      toast.error('Échec de l\'envoi du message. Veuillez réessayer plus tard.');
     } finally {
       setIsSubmitting(false);
     }
@@ -63,9 +63,9 @@ export default function ContactUs() {
       {/* Hero Section */}
       <section className="py-16 px-4">
         <div className="max-w-6xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">Contact Us</h1>
+          <h1 className="text-4xl md:text-5xl font-bold mb-6">Contactez-Nous</h1>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            Have questions or feedback? We're here to help. Reach out to our team and we'll respond as soon as possible.
+            Vous avez des questions ou des commentaires ? Nous sommes là pour vous aider. Contactez notre équipe et nous vous répondrons dans les plus brefs délais.
           </p>
         </div>
       </section>
@@ -77,7 +77,7 @@ export default function ContactUs() {
             {/* Contact Information */}
             <div className="lg:w-1/3">
               <div className="bg-gray-800 rounded-lg p-6 h-full">
-                <h2 className="text-2xl font-bold mb-6">Get in Touch</h2>
+                <h2 className="text-2xl font-bold mb-6">Entrer en Contact</h2>
                 
                 <div className="space-y-6">
                   <div className="flex items-start">
@@ -85,7 +85,7 @@ export default function ContactUs() {
                       <MapPinIcon className="h-6 w-6 text-blue-400" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-medium mb-1">Our Location</h3>
+                      <h3 className="text-lg font-medium mb-1">Notre Adresse</h3>
                       <p className="text-gray-400">123 Auto Plaza Drive</p>
                       <p className="text-gray-400">San Francisco, CA 94158</p>
                     </div>
@@ -96,7 +96,7 @@ export default function ContactUs() {
                       <EnvelopeIcon className="h-6 w-6 text-blue-400" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-medium mb-1">Email Us</h3>
+                      <h3 className="text-lg font-medium mb-1">Contactez-nous par Email</h3>
                       <p className="text-gray-400">support@dcars.com</p>
                       <p className="text-gray-400">sales@dcars.com</p>
                     </div>
@@ -107,7 +107,7 @@ export default function ContactUs() {
                       <PhoneIcon className="h-6 w-6 text-blue-400" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-medium mb-1">Call Us</h3>
+                      <h3 className="text-lg font-medium mb-1">Appelez-nous</h3>
                       <p className="text-gray-400">+1 (555) 123-4567</p>
                       <p className="text-gray-400">+1 (555) 765-4321</p>
                     </div>
@@ -118,7 +118,7 @@ export default function ContactUs() {
                       <ClockIcon className="h-6 w-6 text-blue-400" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-medium mb-1">Business Hours</h3>
+                      <h3 className="text-lg font-medium mb-1">Heures d'Ouverture</h3>
                       <p className="text-gray-400">Monday-Friday: 9AM - 6PM</p>
                       <p className="text-gray-400">Saturday: 10AM - 4PM</p>
                       <p className="text-gray-400">Sunday: Closed</p>
@@ -127,7 +127,7 @@ export default function ContactUs() {
                 </div>
                 
                 <div className="mt-8">
-                  <h3 className="text-lg font-medium mb-4">Connect With Us</h3>
+                  <h3 className="text-lg font-medium mb-4">Suivez-nous</h3>
                   <div className="flex space-x-4">
                     <a 
                       href="https://facebook.com" 
@@ -189,12 +189,12 @@ export default function ContactUs() {
             {/* Contact Form */}
             <div className="lg:w-2/3">
               <div className="bg-gray-800 rounded-lg p-6">
-                <h2 className="text-2xl font-bold mb-6">Send Us a Message</h2>
+                <h2 className="text-2xl font-bold mb-6">Envoyez-nous un Message</h2>
                 
                 <form onSubmit={handleSubmit}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-gray-400 mb-2">Your Name</label>
+                      <label htmlFor="name" className="block text-sm font-medium text-gray-400 mb-2">Votre Nom</label>
                       <input
                         type="text"
                         id="name"
@@ -207,7 +207,7 @@ export default function ContactUs() {
                     </div>
                     
                     <div>
-                      <label htmlFor="email" className="block text-sm font-medium text-gray-400 mb-2">Your Email</label>
+                      <label htmlFor="email" className="block text-sm font-medium text-gray-400 mb-2">Votre Email</label>
                       <input
                         type="email"
                         id="email"
@@ -221,7 +221,7 @@ export default function ContactUs() {
                   </div>
                   
                   <div className="mb-6">
-                    <label htmlFor="subject" className="block text-sm font-medium text-gray-400 mb-2">Subject</label>
+                    <label htmlFor="subject" className="block text-sm font-medium text-gray-400 mb-2">Sujet</label>
                     <input
                       type="text"
                       id="subject"
@@ -256,7 +256,7 @@ export default function ContactUs() {
                     ) : (
                       <>
                         <PaperAirplaneIcon className="h-5 w-5 mr-2" />
-                        Send Message
+                        Envoyer le Message
                       </>
                     )}
                   </button>
@@ -270,7 +270,7 @@ export default function ContactUs() {
       {/* FAQ Section */}
       <section className="py-12 px-4 bg-gray-800">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bold mb-8 text-center">Frequently Asked Questions</h2>
+          <h2 className="text-2xl font-bold mb-8 text-center">Questions Fréquemment Posées</h2>
           
           <div className="space-y-4">
             <div className="bg-gray-700 rounded-lg p-6">
@@ -301,14 +301,13 @@ export default function ContactUs() {
         <div className="max-w-6xl mx-auto">
           <div className="bg-gray-800 rounded-lg overflow-hidden">
             <div className="aspect-w-16 aspect-h-9">
-              <iframe 
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3153.0956138677766!2d-122.38790708433136!3d37.77638997975903!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzfCsDQ2JzM1LjMiTiAxMjLCsDIzJzA5LjUiVw!5e0!3m2!1sen!2sus!4v1620870138879!5m2!1sen!2sus" 
-                width="100%" 
-                height="450" 
-                style={{ border: 0 }} 
-                allowFullScreen={false} 
-                title="D-CARS Location"
-                className="w-full h-full"
+                <iframe 
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3153.0956138677766!2d-122.38790708433136!3d37.77638997975903!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzfCsDQ2JzM1LjMiTiAxMjLCsDIzJzA5LjUiVw!5e0!3m2!1sen!2sus!4v1620870138879!5m2!1sen!2sus" 
+                  width="100%" 
+                  height="450" 
+                  allowFullScreen={false} 
+                  title="D-CARS Location"
+                  className="w-full h-full border-0"
               ></iframe>
             </div>
           </div>

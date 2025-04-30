@@ -30,15 +30,13 @@ export default function Register() {
         e.preventDefault();
         setIsLoading(true);
 
-        if (formData.password !== formData.confirmPassword) {
-            toast.error(t('register.passwordMismatch'));
+        if (!formData.email.trim()) {
+            toast.error('Email is required.');
             setIsLoading(false);
             return;
         }
-
-        // Require full name and phone number before proceeding
-        if (!formData.fullName.trim() || !formData.phoneNumber.trim()) {
-            toast.error('Full name and phone number are required.');
+        if (formData.password !== formData.confirmPassword) {
+            toast.error(t('register.passwordMismatch'));
             setIsLoading(false);
             return;
         }
@@ -46,35 +44,39 @@ export default function Register() {
         try {
             console.log('Starting registration process for:', formData.email);
 
-            // Register the user with Supabase Auth
+            // Register the user with Supabase Auth (only email and password)
             const { data, error: authError } = await supabase.auth.signUp({
                 email: formData.email,
-                password: formData.password,
-                options: {
-                    data: {
-                        full_name: formData.fullName,
-                        phone_number: formData.phoneNumber,
-                        role: formData.role
-                    }
-                }
+                password: formData.password
             });
 
             if (authError) {
                 console.error('Auth error:', authError);
-                if (authError.message.includes('already registered')) {
-                    toast.error(t('register.emailInUse') || 'Email is already in use.');
-                } else if (authError.message.toLowerCase().includes('password')) {
-                    toast.error(t('register.weakPassword') || 'Password is too weak.');
-                } else {
-                    toast.error(authError.message);
-                }
+                // Show full error details for debugging
+                toast.error(authError.message || JSON.stringify(authError));
                 setIsLoading(false);
                 return;
             }
 
-            if (!data?.user) {
+            const user = data.user;
+            if (!user) {
                 console.error('No user data returned from signup');
                 toast.error('Failed to create user account');
+                setIsLoading(false);
+                return;
+            }
+
+            // Insert extra profile info into 'profiles' table using user.id
+            const { error: profileError } = await supabase.from('profiles').insert({
+                id: user.id,
+                email: formData.email,
+                full_name: formData.fullName,
+                phone_number: formData.phoneNumber,
+                role: formData.role
+            });
+            if (profileError) {
+                console.error('Profile insert error:', profileError);
+                toast.error('Failed to save profile information.');
                 setIsLoading(false);
                 return;
             }
@@ -90,13 +92,16 @@ export default function Register() {
                 return;
             }
 
-            // Fetch user profile to determine role
+            // Fetch user profile to determine role (by id, not email)
             let userProfile = null;
             try {
+                const { data: userData, error: userError } = await supabase.auth.getUser();
+                if (userError || !userData?.user) throw userError || new Error('User not found after registration');
+                const userId = userData.user.id;
                 const { data: profile, error: profileError } = await supabase
                     .from('profiles')
                     .select('role')
-                    .eq('email', formData.email)
+                    .eq('id', userId)
                     .single();
                 if (profileError) {
                     console.error('Profile fetch error:', profileError);

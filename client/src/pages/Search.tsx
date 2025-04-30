@@ -204,7 +204,7 @@ export default function Search() {
 
           {/* Year Range */}
           <div className="mb-6">
-            <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Year</h3>
+            <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Année</h3>
             <div className="flex items-center space-x-2">
               <input
                 type="number"
@@ -214,7 +214,7 @@ export default function Search() {
                   yearRange: [Number(e.target.value), filters.yearRange[1]]
                 })}
                 className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm"
-                placeholder="From"
+                placeholder="De"
               />
               <span className="text-gray-500">-</span>
               <input
@@ -225,14 +225,14 @@ export default function Search() {
                   yearRange: [filters.yearRange[0], Number(e.target.value)]
                 })}
                 className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm"
-                placeholder="To"
+                placeholder="À"
               />
             </div>
           </div>
 
           {/* Make */}
           <div className="mb-6">
-            <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Make</h3>
+            <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Marque</h3>
             <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
               {availableMakes.length > 0 ? (
                 availableMakes.map((make) => (
@@ -257,14 +257,14 @@ export default function Search() {
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-gray-500 dark:text-gray-400">No makes available</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Aucune marque disponible</p>
               )}
             </div>
           </div>
 
           {/* Model */}
           <div className="mb-6">
-            <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Model</h3>
+            <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Modèle</h3>
             <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
               {availableModels.length > 0 ? (
                 availableModels.map((model) => (
@@ -289,7 +289,7 @@ export default function Search() {
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-gray-500 dark:text-gray-400">No models available</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Aucun modèle disponible</p>
               )}
             </div>
           </div>
@@ -299,7 +299,7 @@ export default function Search() {
             onClick={() => setFilters(initialFilters)}
             className="mt-auto w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
           >
-            Reset Filters
+            Réinitialiser les filtres
           </button>
         </div>
       </div>
@@ -314,7 +314,7 @@ export default function Search() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search vehicles..."
+                placeholder="Rechercher des véhicules..."
                 className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2"
               />
             </div>
@@ -326,16 +326,16 @@ export default function Search() {
                 aria-label="Sort vehicles"
                 title="Sort vehicles"
               >
-                <option value="newest">Newest First</option>
-                <option value="price_asc">Price: Low to High</option>
-                <option value="price_desc">Price: High to Low</option>
-                <option value="mileage_asc">Lowest Mileage</option>
+                <option value="newest">Plus récents d'abord</option>
+                <option value="price_asc">Prix: Bas à Élevé</option>
+                <option value="price_desc">Prix: Élevé à Bas</option>
+                <option value="mileage_asc">Kilométrage le plus bas</option>
               </select>
               <button
                 onClick={() => setIsFilterOpen(true)}
                 className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-                aria-label="Open filters"
-                title="Open filters"
+                aria-label="Ouvrir les filtres"
+                title="Ouvrir les filtres"
               >
                 <AdjustmentsHorizontalIcon className="w-5 h-5" />
               </button>
@@ -350,22 +350,22 @@ export default function Search() {
           </div>
         ) : error ? (
           <div className="text-center py-12">
-            <p className="text-red-500 mb-4">Error loading vehicles. Please try again.</p>
+            <p className="text-red-500 mb-4">Erreur lors du chargement des véhicules. Veuillez réessayer.</p>
             <button 
               onClick={() => window.location.reload()}
               className="px-4 py-2 bg-primary-600 text-white rounded-lg"
             >
-              Reload
+              Recharger
             </button>
           </div>
         ) : vehicles?.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 dark:text-gray-400 mb-4">No vehicles found matching your criteria.</p>
+            <p className="text-gray-500 dark:text-gray-400 mb-4">Aucun véhicule ne correspond à vos critères.</p>
             <button 
               onClick={() => setFilters(initialFilters)}
               className="px-4 py-2 bg-primary-600 text-white rounded-lg"
             >
-              Reset Filters
+              Réinitialiser les filtres
             </button>
           </div>
         ) : (

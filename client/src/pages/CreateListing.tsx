@@ -34,7 +34,7 @@ const CreateListing: React.FC = () => {
   const { profile } = useAuth();
   const navigate = useNavigate();
   if (profile && profile.role !== 'seller' && profile.role !== 'admin') {
-    alert('You do not have permission to create listings.');
+    alert('Vous n\'avez pas la permission de créer des annonces.');
     navigate('/');
     return null;
   }
@@ -116,9 +116,9 @@ const CreateListing: React.FC = () => {
       const invalidFiles = fileList.filter((file) => !validTypes.includes(file.type));
 
       if (invalidFiles.length > 0) {
-        formik.setFieldError('images', 'Only JPEG, PNG, WEBP and GIF images are allowed');
+        formik.setFieldError('images', 'Seules les images JPEG, PNG, WEBP et GIF sont autorisées');
       } else if (fileList.some((file) => file.size > 5 * 1024 * 1024)) {
-        formik.setFieldError('images', 'Images must be smaller than 5MB');
+        formik.setFieldError('images', 'Les images doivent être inférieures à 5 Mo');
       }
     }
   };
@@ -246,11 +246,11 @@ const CreateListing: React.FC = () => {
       }
 
       console.log('Vehicle created successfully:', insertData);
-      alert('Listing created successfully!');
+      alert('Annonce créée avec succès !');
       navigate('/my-listings');
     } catch (err) {
       console.error('Error in form submission:', err);
-      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      setError(err instanceof Error ? err.message : 'Une erreur inconnue est survenue');
       formik.setSubmitting(false);
     } finally {
       setIsSubmitting(false);
@@ -259,7 +259,7 @@ const CreateListing: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Create New Vehicle Listing</h1>
+      <h1 className="text-2xl font-bold mb-6">Créer une nouvelle annonce de véhicule</h1>
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
           {error}
@@ -269,7 +269,7 @@ const CreateListing: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label htmlFor="make" className="block text-sm font-medium text-gray-700">
-              Make
+              Marque
             </label>
             <input
               type="text"

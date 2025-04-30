@@ -40,7 +40,7 @@ interface FormData {
 }
 
 const sections: SettingsSection[] = [
-  { id: 'account', name: 'Account Settings', icon: UserIcon },
+  { id: 'account', name: 'Paramètres du compte', icon: UserIcon },
   { id: 'notifications', name: 'Notifications', icon: BellIcon },
   { id: 'privacy', name: 'Privacy & Security', icon: ShieldCheckIcon },
   { id: 'language', name: 'Language & Region', icon: GlobeAltIcon },
@@ -54,10 +54,10 @@ const Settings: React.FC = () => {
   const { user } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
 
-  // Save changes to Supabase
+  // Enregistrer les modifications to Supabase
   const handleSaveChanges = async () => {
     if (!user) {
-      toast.error('Not logged in');
+      toast.error('Vous n\'êtes pas connecté');
       return;
     }
     setIsSaving(true);
@@ -152,7 +152,7 @@ const Settings: React.FC = () => {
           onChange={handleInputChange}
           className="w-full bg-dark-primary border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-dark-accent"
           title="Full Name"
-          placeholder="Enter your full name"
+          placeholder="Entrez votre nom complet"
         />
       </div>
       <div>
@@ -164,7 +164,7 @@ const Settings: React.FC = () => {
           onChange={handleInputChange}
           className="w-full bg-dark-primary border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-dark-accent"
           title="Email"
-          placeholder="Enter your email"
+          placeholder="Entrez votre e-mail"
         />
       </div>
       <div>
@@ -176,7 +176,7 @@ const Settings: React.FC = () => {
           onChange={handleInputChange}
           className="w-full bg-dark-primary border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-dark-accent"
           title="Phone Number"
-          placeholder="Enter your phone number"
+          placeholder="Entrez votre numéro de téléphone"
         />
       </div>
     </div>
@@ -208,7 +208,7 @@ const Settings: React.FC = () => {
   const renderPrivacySettings = () => (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium">Profile Visibility</h3>
+        <h3 className="text-lg font-medium">Visibilité du profil</h3>
         <div className="mt-4 space-y-4">
           {['public', 'private', 'friends'].map((option) => (
             <div key={option} className="flex items-center">
@@ -243,7 +243,7 @@ const Settings: React.FC = () => {
           </div>
           <div className="ml-3 text-sm">
             <label className="font-medium text-gray-700">Show Email</label>
-            <p className="text-gray-500">Allow others to see your email address</p>
+            <p className="text-gray-500">Autoriser les autres à voir votre adresse e-mail</p>
           </div>
         </div>
 
@@ -259,7 +259,7 @@ const Settings: React.FC = () => {
           </div>
           <div className="ml-3 text-sm">
             <label className="font-medium text-gray-700">Show Phone Number</label>
-            <p className="text-gray-500">Allow others to see your phone number</p>
+            <p className="text-gray-500">Autoriser les autres à voir votre numéro de téléphone</p>
           </div>
         </div>
 
@@ -275,7 +275,7 @@ const Settings: React.FC = () => {
           </div>
           <div className="ml-3 text-sm">
             <label className="font-medium text-gray-700">Allow Messages</label>
-            <p className="text-gray-500">Allow others to send you messages</p>
+            <p className="text-gray-500">Autoriser les autres à vous envoyer des messages</p>
           </div>
         </div>
       </div>
@@ -293,9 +293,9 @@ const Settings: React.FC = () => {
           className="w-full bg-dark-primary border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-dark-accent"
           title="Preferred Language"
         >
-          <option value="en">English</option>
+          <option value="en">Anglais</option>
           <option value="es">Spanish</option>
-          <option value="fr">French</option>
+          <option value="fr">Français</option>
           <option value="de">German</option>
         </select>
       </div>
@@ -350,14 +350,14 @@ const Settings: React.FC = () => {
           {renderContent()}
           <div className="mt-8 flex justify-end space-x-4">
             <button className="px-4 py-2 text-sm text-gray-400 hover:text-gray-300">
-              Cancel
+              Annuler
             </button>
             <button
               className="px-4 py-2 bg-dark-accent text-white text-sm rounded-lg hover:bg-dark-accent/90 disabled:opacity-60"
               onClick={handleSaveChanges}
               disabled={isSaving}
             >
-              {isSaving ? 'Saving...' : 'Save Changes'}
+              {isSaving ? 'Enregistrement...' : 'Enregistrer les modifications'}
             </button>
           </div>
         </div>

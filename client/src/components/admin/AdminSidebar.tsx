@@ -9,11 +9,11 @@ import {
 } from '@heroicons/react/24/outline';
 
 const navigation = [
-  { name: 'Dashboard', href: '/admin', icon: HomeIcon },
-  { name: 'Users', href: '/admin/users', icon: UsersIcon },
-  { name: 'Vehicles', href: '/admin/vehicles', icon: TruckIcon }, // Updated icon
-  { name: 'Analytics', href: '/admin/analytics', icon: ChartBarIcon },
-  { name: 'Settings', href: '/admin/settings', icon: Cog6ToothIcon }, // Updated icon
+  { name: 'Tableau de Bord', href: '/admin', icon: HomeIcon },
+  { name: 'Utilisateurs', href: '/admin/users', icon: UsersIcon },
+  { name: 'Véhicules', href: '/admin/vehicles', icon: TruckIcon }, // Updated icon
+  { name: 'Analytiques', href: '/admin/analytics', icon: ChartBarIcon },
+  { name: 'Paramètres', href: '/admin/settings', icon: Cog6ToothIcon }, // Updated icon
 ];
 
 export default function AdminSidebar() {
@@ -23,7 +23,7 @@ export default function AdminSidebar() {
     <div className="w-64 bg-base-100 border-r border-base-300">
       <div className="flex flex-col h-full">
         <div className="flex items-center justify-center h-16 border-b border-base-300">
-          <h1 className="text-xl font-bold text-base-content">Admin Panel</h1>
+          <h1 className="text-xl font-bold text-base-content">Panneau d'Administration</h1>
         </div>
         <nav className="flex-1 px-2 py-4 space-y-1">
           {navigation.map((item) => {

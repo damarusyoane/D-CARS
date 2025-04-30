@@ -51,6 +51,7 @@ export default function Profile() {
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const { data: profile, isLoading, refetch } = useQuery<Profile>({
     queryKey: ['profile', user?.id],
@@ -69,6 +70,7 @@ export default function Profile() {
 
   const updateProfile = useMutation({
     mutationFn: async (updatedProfile: Partial<Profile>) => {
+      setIsUpdating(true);
       const { data, error } = await supabase
         .from('profiles')
         .update(updatedProfile)
@@ -97,10 +99,12 @@ export default function Profile() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile', user?.id] });
       setIsEditing(false);
+      setIsUpdating(false);
       toast.success(t('profile.updateSuccess'));
     },
     onError: (error: Error) => {
       console.error('Profile update error:', error);
+      setIsUpdating(false);
       toast.error(error.message || t('profile.updateError'));
     },
   });
@@ -222,7 +226,7 @@ export default function Profile() {
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <p className="text-gray-500 dark:text-gray-400">Please log in to view your profile.</p>
+        <p className="text-gray-500 dark:text-gray-400">Veuillez vous connecter pour voir votre profil.</p>
       </div>
     );
   }
@@ -263,17 +267,17 @@ export default function Profile() {
                   ) : (
                     <UserCircleIcon className="h-32 w-32 text-gray-400" />
                   )}
-                  <label className="absolute bottom-2 right-2 bg-white dark:bg-gray-700 rounded-full p-2 shadow cursor-pointer transition hover:bg-gray-100 dark:hover:bg-gray-600 w-9 h-9 flex items-center justify-center border border-gray-200 dark:border-gray-600" style={{ minWidth: 36, minHeight: 36 }}>
+                  <label className={"absolute bottom-2 right-2 avatarUploadButton"}>
   <input
     type="file"
     accept="image/*"
     onChange={handleAvatarChange}
     className="hidden"
     disabled={isUploading}
-    aria-label="Upload profile picture"
-    title="Upload profile picture"
+    aria-label="Télécharger photo de profil"
+    title="Télécharger photo de profil"
   />
-  <CameraIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" title="Upload profile picture" />
+  <CameraIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" title="Télécharger photo de profil" />
 </label>
                 </div>
                 <h2 className="mt-4 text-xl font-semibold text-gray-900 dark:text-white">
@@ -291,7 +295,7 @@ export default function Profile() {
                 </div>
                 <div className="flex items-center text-gray-600 dark:text-gray-300">
                   <PhoneIcon className="h-5 w-5 mr-2" />
-                  {profile?.phone_number || 'Not provided'}
+                  {profile?.phone_number || 'Non fourni'}
                 </div>
               </div>
 
@@ -390,9 +394,17 @@ export default function Profile() {
                   <div className="flex justify-end">
                     <button
                       type="submit"
-                      className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
+                      className="w-full px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
+                      disabled={isUpdating}
                     >
-                      {t('common.save')}
+                      {isUpdating ? (
+                        <div className="flex items-center justify-center">
+                          <LoadingSpinner size="sm" color="white" />
+                          <span className="ml-2">Enregistrement...</span>
+                        </div>
+                      ) : (
+                        t('common.save')
+                      )}
                     </button>
                   </div>
                 </form>
@@ -408,7 +420,7 @@ export default function Profile() {
             {/* Reviews */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
-                {t('profile.reviews')}
+                Biographie
               </h3>
               <div className="space-y-6">
                 {userData.reviews.map((review) => (

@@ -60,7 +60,7 @@ const SellerProfile = () => {
   }
 
   if (!profile) {
-    return <div className="text-center mt-10">Profile not found.</div>;
+    return <div className="text-center mt-10">Profil introuvable.</div>;
   }
 
   // Type assertion for lint-free property access
@@ -78,7 +78,7 @@ const SellerProfile = () => {
         className="mb-6 flex items-center text-primary-600 hover:text-primary-800"
         onClick={() => navigate(-1)}
       >
-        &larr; Back
+        &larr; Retour
       </button>
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 flex flex-col md:flex-row items-center md:items-start gap-8 mb-10">
         <div className="flex-shrink-0 h-28 w-28 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
@@ -93,11 +93,11 @@ const SellerProfile = () => {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{userProfile.full_name}</h1>
           <p className="text-gray-600 dark:text-gray-300 mb-2">{userProfile.email}</p>
-          {userProfile.phone_number && <p className="text-gray-600 dark:text-gray-300 mb-2">Phone: {userProfile.phone_number}</p>}
+          {userProfile.phone_number && <p className="text-gray-600 dark:text-gray-300 mb-2">Téléphone: {userProfile.phone_number}</p>}
           {/* Add more profile info here if needed */}
         </div>
       </div>
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Vehicles for Sale or Rent</h2>
+      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Véhicules à Vendre ou à Louer</h2>
       {isSellerOrDealer ? (
         profileVehicles.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -117,7 +117,7 @@ const SellerProfile = () => {
                 <div className="p-4">
                   <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-1">{vehicle.make} {vehicle.model}</h3>
                   <p className="text-gray-600 dark:text-gray-300 mb-1">{vehicle.year} &bull; {vehicle.specifications?.transmission} &bull; {vehicle.specifications?.fuel_type}</p>
-                  <p className="text-gray-700 dark:text-gray-200 mb-1">{vehicle.status === 'pending' ? 'Pending' : vehicle.status === 'sold' ? 'Sold' : 'For Sale'}</p>
+                  <p className="text-gray-700 dark:text-gray-200 mb-1">{vehicle.status === 'pending' ? 'En attente' : vehicle.status === 'sold' ? 'Vendu' : 'À vendre'}</p>
                   <p className="text-primary-600 font-semibold text-xl">${vehicle.price.toLocaleString()}</p>
                 </div>
               </Link>

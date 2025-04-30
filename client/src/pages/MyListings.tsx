@@ -36,13 +36,13 @@ const MyListings: React.FC = () => {
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <p className="text-gray-500 dark:text-gray-400">Please log in to view your listings.</p>
+        <p className="text-gray-500 dark:text-gray-400">Veuillez vous connecter pour voir vos annonces.</p>
       </div>
     );
   }
   // Role-based access control
   if (profile && profile.role !== 'seller' && profile.role !== 'admin') {
-    toast.error('You do not have permission to access this page.');
+    toast.error('Vous n\'avez pas la permission d\'accéder à cette page.');
     navigate('/');
     return null;
   }
@@ -150,13 +150,13 @@ const MyListings: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-gray-900 text-white p-4">
         <ExclamationCircleIcon className="w-16 h-16 text-red-500 mb-4" />
-        <h2 className="text-2xl font-bold mb-2">Error Loading Listings</h2>
+        <h2 className="text-2xl font-bold mb-2">Erreur de chargement des annonces</h2>
         <p className="text-gray-400 mb-4 text-center">{error}</p>
         <button 
           onClick={() => fetchListings()}
           className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
         >
-          Try Again
+          Réessayer
         </button>
       </div>
     );
@@ -167,8 +167,8 @@ const MyListings: React.FC = () => {
       {/* Header */}
       <header className="bg-gray-800 p-6 shadow-lg">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl font-bold mb-2">My Vehicle Listings</h1>
-          <p className="text-gray-400">Manage all your vehicle listings in one place</p>
+          <h1 className="text-3xl font-bold mb-2">Mes Annonces de Véhicules</h1>
+          <p className="text-gray-400">Gérez toutes vos annonces de véhicules en un seul endroit</p>
         </div>
       </header>
       
@@ -182,31 +182,31 @@ const MyListings: React.FC = () => {
               onClick={() => setFilter('all')}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap ${filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
             >
-              All Listings
+              Toutes les annonces
             </button>
             <button
               onClick={() => setFilter('active')}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap ${filter === 'active' ? 'bg-green-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
             >
-              Active
+              Actives
             </button>
             <button
               onClick={() => setFilter('pending')}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap ${filter === 'pending' ? 'bg-yellow-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
             >
-              Pending Approval
+              En attente
             </button>
             <button
               onClick={() => setFilter('sold')}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap ${filter === 'sold' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
             >
-              Sold
+              Vendus
             </button>
             <button
               onClick={() => setFilter('rejected')}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap ${filter === 'rejected' ? 'bg-red-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
             >
-              Rejected
+              Refusés
             </button>
           </div>
           
@@ -215,7 +215,7 @@ const MyListings: React.FC = () => {
             <div className="relative flex-grow md:max-w-xs">
               <input 
                 type="text" 
-                placeholder="Search listings..." 
+                placeholder="Rechercher des annonces..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full px-4 py-2 bg-gray-800 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -231,7 +231,7 @@ const MyListings: React.FC = () => {
               className="flex items-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors whitespace-nowrap"
             >
               <PlusIcon className="w-5 h-5 mr-1" />
-              <span>Add Listing</span>
+              <span>Ajouter une annonce</span>
             </Link>
           </div>
         </div>
@@ -248,20 +248,20 @@ const MyListings: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold mb-2">No listings found</h3>
+            <h3 className="text-xl font-semibold mb-2">Aucune annonce trouvée</h3>
             <p className="text-gray-400 mb-6">
               {filter !== 'all' 
-                ? `You don't have any ${filter} listings at the moment.` 
+                ? `Vous n'avez aucune annonce ${filter === 'active' ? 'active' : filter === 'pending' ? 'en attente' : filter === 'sold' ? 'vendue' : filter === 'rejected' ? 'refusée' : ''} pour le moment.` 
                 : searchQuery 
-                  ? `No results found for "${searchQuery}".`
-                  : "You haven't created any vehicle listings yet."}
+                  ? `Aucun résultat trouvé pour "${searchQuery}".`
+                  : "Vous n'avez pas encore créé d'annonces de véhicules."}
             </p>
             <Link
               to="/dashboard/create-listing"
               className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md font-medium transition-colors"
             >
               <PlusIcon className="w-5 h-5 mr-2" />
-              Create Your First Listing
+              Créer votre première annonce
             </Link>
           </div>
         ) : (
@@ -281,15 +281,15 @@ const MyListings: React.FC = () => {
                       />
                     ) : (
                       <div className="flex items-center justify-center h-full text-gray-500">
-                        <span>No image available</span>
+                        <span>Aucune image disponible</span>
                       </div>
                     )}
                     <div className="absolute top-3 right-3">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(listing.status)}`}>
-                        {listing.status === 'active' && 'Active'}
-                        {listing.status === 'pending' && 'Pending Approval'}
-                        {listing.status === 'sold' && 'Sold'}
-                        {listing.status === 'rejected' && 'Rejected'}
+                        {listing.status === 'active' && 'Actif'}
+                        {listing.status === 'pending' && 'En attente'}
+                        {listing.status === 'sold' && 'Vendu'}
+                        {listing.status === 'rejected' && 'Refusé'}
                       </span>
                     </div>
                   </div>
@@ -328,7 +328,7 @@ const MyListings: React.FC = () => {
                       </div>
                     </div>
                     <div className="text-xs">
-                      Posted: {new Date(listing.created_at).toLocaleDateString()}
+                      Publié le: {new Date(listing.created_at).toLocaleDateString()}
                     </div>
                   </div>
 
@@ -338,7 +338,7 @@ const MyListings: React.FC = () => {
                       className="flex items-center px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm rounded transition-colors"
                     >
                       <PencilIcon className="w-4 h-4 mr-1" />
-                      Edit
+                      Modifier
                     </Link>
                     <button 
                       onClick={() => confirmDelete(listing.id)}
@@ -350,7 +350,7 @@ const MyListings: React.FC = () => {
                       ) : (
                         <>
                           <TrashIcon className="w-4 h-4 mr-1" />
-                          Remove
+                          Supprimer
                         </>
                       )}
                     </button>
@@ -358,13 +358,13 @@ const MyListings: React.FC = () => {
 
                   {listing.status === 'rejected' && (
                     <div className="mt-3 p-2 bg-red-500/10 rounded text-xs text-red-400 italic">
-                      Your listing was rejected by admin. Please edit and resubmit.
+                      Votre annonce a été refusée par l'administrateur. Veuillez la modifier et la soumettre à nouveau.
                     </div>
                   )}
 
                   {listing.status === 'pending' && (
                     <div className="mt-3 p-2 bg-yellow-500/10 rounded text-xs text-yellow-400 italic">
-                      Waiting for admin approval before being visible to buyers.
+                      En attente d'approbation par l'administrateur avant d'être visible par les acheteurs.
                     </div>
                   )}
                 </div>

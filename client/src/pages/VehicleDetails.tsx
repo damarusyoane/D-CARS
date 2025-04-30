@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import VehicleDetailsAnalytics from './VehicleDetailsAnalytics';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
@@ -43,6 +44,10 @@ const defaultFinanceValues: FinanceCalculatorValues = {
 };
 
 export default function VehicleDetails() {
+  // ...existing state
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
+
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
@@ -140,6 +145,57 @@ export default function VehicleDetails() {
   });
 
   // Check if user has saved this vehicle
+  // Increment vehicle views on detail page load
+  useEffect(() => {
+    const incrementViews = async () => {
+      if (vehicle?.id) {
+        try {
+          await supabase.rpc('increment_vehicle_views', { v_id: vehicle.id });
+        } catch (err: unknown) {
+          console.error('Error incrementing vehicle views:', err);
+        }
+      }
+    };
+    incrementViews();
+  }, [vehicle?.id]);
+
+  // Fetch analytics (views/inquiries by day)
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      if (!vehicle?.id) return;
+      setAnalyticsLoading(true);
+      try {
+        // Example: assumes you have a vehicle_analytics_daily table or can group by day
+        // If not, this will fallback to total views/inquiries only
+        const { data, error } = await supabase
+          .from('vehicle_analytics_daily')
+          .select('date, views, inquiries')
+          .eq('vehicle_id', vehicle.id)
+          .order('date', { ascending: true });
+        let analytics = {
+          views: vehicle.views || 0,
+          inquiries: vehicle.inquiries || 0,
+          dates: [],
+          viewsByDay: [],
+          inquiriesByDay: []
+        };
+        if (data && data.length > 0) {
+          analytics.dates = data.map((d: any) => d.date);
+          analytics.viewsByDay = data.map((d: any) => d.views);
+          analytics.inquiriesByDay = data.map((d: any) => d.inquiries);
+          analytics.views = data.reduce((sum: number, d: any) => sum + (d.views || 0), 0);
+          analytics.inquiries = data.reduce((sum: number, d: any) => sum + (d.inquiries || 0), 0);
+        }
+        setAnalyticsData(analytics);
+      } catch (err) {
+        setAnalyticsData(null);
+      } finally {
+        setAnalyticsLoading(false);
+      }
+    };
+    fetchAnalytics();
+  }, [vehicle?.id, vehicle?.views, vehicle?.inquiries]);
+
   useEffect(() => {
     if (isAuthenticated && user && vehicle) {
       const checkIfSaved = async () => {
@@ -201,13 +257,13 @@ export default function VehicleDetails() {
       queryClient.invalidateQueries({ queryKey: ['favorites'] });
     } catch (err) {
       console.error('Error updating favorites:', err);
-      toast.error('There was a problem updating your favorites');
+      toast.error('Un problème est survenu lors de la mise à jour de vos favoris');
     }
   };
 
   const handleContactSeller = () => {
     if (!isAuthenticated) {
-      toast.error('Please log in to contact the seller');
+      toast.error('Veuillez vous connecter pour contacter le vendeur');
       navigate('/login', { state: { from: `/cars/${id}` } });
       return;
     }
@@ -216,35 +272,39 @@ export default function VehicleDetails() {
   };
 
   const handleSendMessage = async () => {
-  console.log('handleSendMessage called');
-  console.log({ messageText, isAuthenticated, user, vehicle });
-  if (!messageText.trim() || !isAuthenticated || !user || !vehicle) {
-    console.log('Early return: missing data', { messageText, isAuthenticated, user, vehicle });
-    toast.error('Cannot send message: missing required information.');
-    return;
-  }
-  try {
-    const { error } = await supabase
-      .from('messages')
-      .insert({
-        sender_id: user.id,
-        receiver_id: vehicle.profile_id,
-        vehicle_id: vehicle.id,
-        content: messageText,
-        status: 'unread',
-        created_at: new Date().toISOString()
-      });
-    if (error) throw error;
-    toast.success('Message sent to seller!');
-    setMessageText('');
-    setShowContactForm(false);
-    queryClient.invalidateQueries({ queryKey: ['messages'] });
-    console.log('Message sent successfully');
-  } catch (err) {
-    console.error('Error sending message:', err);
-    toast.error('Failed to send message. Please try again.');
-  }
-};
+    if (!messageText.trim() || !isAuthenticated || !user || !vehicle) {
+      toast.error("Impossible d'envoyer le message: informations requises manquantes.");
+      return;
+    }
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .insert({
+          sender_id: user.id,
+          receiver_id: vehicle.profile_id,
+          vehicle_id: vehicle.id,
+          content: messageText,
+          status: 'unread',
+          created_at: new Date().toISOString()
+        });
+      if (error) throw error;
+
+      // Increment inquiries count after successful message send
+      try {
+        await supabase.rpc('increment_vehicle_inquiries', { v_id: vehicle.id });
+      } catch (rpcErr) {
+        console.error('Failed to increment vehicle inquiries:', rpcErr);
+      }
+
+      toast.success('Message envoyé au vendeur !');
+      setMessageText('');
+      setShowContactForm(false);
+      queryClient.invalidateQueries({ queryKey: ['messages'] });
+    } catch (err) {
+      console.error('Error sending message:', err);
+      toast.error('Failed to send message. Please try again.');
+    }
+  };
 
   // Calculate monthly payment
   const calculateMonthlyPayment = () => {
@@ -300,7 +360,7 @@ export default function VehicleDetails() {
           className="flex items-center text-primary-600 hover:text-primary-800 transition-colors"
         >
           <ChevronLeftIcon className="w-5 h-5 mr-1" />
-          <span>Back to search results</span>
+          <span>Retour aux résultats de recherche</span>
         </button>
       </div>
 
@@ -319,14 +379,14 @@ export default function VehicleDetails() {
             <button
               onClick={handlePreviousImage}
               className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/75 transition-colors"
-              aria-label="Previous image"
+              aria-label="Image précédente"
             >
               <ChevronLeftIcon className="w-6 h-6" />
             </button>
             <button
               onClick={handleNextImage}
               className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/75 transition-colors"
-              aria-label="Next image"
+              aria-label="Image suivante"
             >
               <ChevronRightIcon className="w-6 h-6" />
             </button>
@@ -390,7 +450,7 @@ export default function VehicleDetails() {
               <button
                 onClick={handlePreviousImage}
                 className="p-2 rounded-full bg-black/50 text-white hover:bg-black/75 transition-colors"
-                aria-label="Previous image"
+                aria-label="Image précédente"
               >
                 <ChevronLeftIcon className="w-6 h-6" />
               </button>
@@ -402,7 +462,7 @@ export default function VehicleDetails() {
               <button
                 onClick={handleNextImage}
                 className="p-2 rounded-full bg-black/50 text-white hover:bg-black/75 transition-colors"
-                aria-label="Next image"
+                aria-label="Image suivante"
               >
                 <ChevronRightIcon className="w-6 h-6" />
               </button>
@@ -418,25 +478,25 @@ export default function VehicleDetails() {
             onClick={() => setActiveTab('overview')}
             className={`w-full sm:w-auto py-2 px-2 sm:py-4 sm:px-1 relative font-medium text-sm ${activeTab === 'overview' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`}
           >
-            Overview
+            Aperçu
           </button>
           <button
             onClick={() => setActiveTab('specifications')}
             className={`w-full sm:w-auto py-2 px-2 sm:py-4 sm:px-1 relative font-medium text-sm ${activeTab === 'specifications' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`}
           >
-            Specifications
+            Spécifications
           </button>
           <button
             onClick={() => setActiveTab('features')}
             className={`w-full sm:w-auto py-2 px-2 sm:py-4 sm:px-1 relative font-medium text-sm ${activeTab === 'features' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`}
           >
-            Features
+            Caractéristiques
           </button>
           <button
             onClick={() => setActiveTab('history')}
             className={`w-full sm:w-auto py-2 px-2 sm:py-4 sm:px-1 relative font-medium text-sm ${activeTab === 'history' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`}
           >
-            History Report
+            Historique du Véhicule
           </button>
         </nav>
       </div>
@@ -470,10 +530,10 @@ export default function VehicleDetails() {
             <div>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                 {[
-                  { label: 'Make', value: vehicle.make },
-                  { label: 'Model', value: vehicle.model },
-                  { label: 'Year', value: vehicle.year },
-                  { label: 'Mileage', value: vehicle.mileage ? `${vehicle.mileage?.toLocaleString?.()} miles` : 'N/A' },
+                  { label: 'Marque', value: vehicle.make },
+                  { label: 'Modèle', value: vehicle.model },
+                  { label: 'Année', value: vehicle.year },
+                  { label: 'Kilométrage', value: vehicle.mileage ? `${vehicle.mileage?.toLocaleString?.()} km` : 'N/D' },
                 ].map((detail) => (
                   <div
                     key={detail.label}
@@ -500,7 +560,7 @@ export default function VehicleDetails() {
 
               <div>
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                  Features
+                  Caractéristiques
                 </h2>
                 <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
                   {vehicle.features?.map((feature) => (
@@ -517,7 +577,7 @@ export default function VehicleDetails() {
 
               <div>
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                  Specifications
+                  Spécifications
                 </h2>
                 {vehicle && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
@@ -644,7 +704,7 @@ export default function VehicleDetails() {
                   {seller?.full_name}
                 </h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Member since {new Date(seller?.created_at ?? '').getFullYear()}
+                  Membre depuis {new Date(seller?.created_at ?? '').getFullYear()}
                 </p>
               </div>
             </div>
@@ -655,7 +715,7 @@ export default function VehicleDetails() {
                 className="w-full flex items-center justify-center space-x-2 bg-primary-600 hover:bg-primary-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
               >
                 <ChatBubbleLeftRightIcon className="w-5 h-5" />
-                <span>Message Seller</span>
+                <span>Contacter le vendeur</span>
               </button>
               
               <a 
@@ -663,19 +723,19 @@ export default function VehicleDetails() {
                 className="w-full flex items-center justify-center space-x-2 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600 text-primary-600 dark:text-primary-400 border border-primary-600 dark:border-primary-400 font-medium py-3 px-4 rounded-lg transition-colors"
               >
                 <PhoneIcon className="w-5 h-5" />
-                <span>Call Seller</span>
+                <span>Appeler le vendeur</span>
               </a>
               
               {/* Contact form */}
               {showContactForm && (
                 <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                   <h4 className="font-medium text-gray-900 dark:text-white mb-2">
-                    Send a message about this vehicle
+                    Envoyer un message concernant ce véhicule
                   </h4>
                   <textarea 
                     value={messageText}
                     onChange={(e) => setMessageText(e.target.value)}
-                    placeholder="I'm interested in this vehicle. Is it still available?"
+                    placeholder="Je suis intéressé(e) par ce véhicule. Est-il toujours disponible ?"
                     className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-sm mb-2"
                     rows={4}
                   />
@@ -889,7 +949,13 @@ export default function VehicleDetails() {
             </button>
           </div>
 
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+          {analyticsLoading ? (
+  <div className="flex justify-center my-8"><LoadingSpinner size="md" /></div>
+) : analyticsData ? (
+  <VehicleDetailsAnalytics analytics={analyticsData} />
+) : null}
+
+<div className="border-t border-gray-200 dark:border-gray-700 pt-4">
             <div className="space-y-6">
             </div>
           </div>

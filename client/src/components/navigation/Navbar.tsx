@@ -121,14 +121,14 @@ function Navbar() {
       <Menu.Items className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
         {/* Place mobile nav links and user menu here, similar to desktop */}
         <div className="px-4 py-2 space-y-1">
-          <Link to="/cars" className="block text-gray-900 dark:text-gray-100 hover:text-primary-600 px-3 py-2 rounded-md text-base font-medium">Browse Cars</Link>
-          <Link to="/about-us" className="block text-gray-900 dark:text-gray-100 hover:text-primary-600 px-3 py-2 rounded-md text-base font-medium">About Us</Link>
-          <Link to="/contact-us" className="block text-gray-900 dark:text-gray-100 hover:text-primary-600 px-3 py-2 rounded-md text-base font-medium">Contact Us</Link>
+          <Link to="/cars" className="block text-gray-900 dark:text-gray-100 hover:text-primary-600 px-3 py-2 rounded-md text-base font-medium">{t('Search', 'Browse Cars')}</Link>
+          <Link to="/about-us" className="block text-gray-900 dark:text-gray-100 hover:text-primary-600 px-3 py-2 rounded-md text-base font-medium">{t('AboutUs', 'About Us')}</Link>
+          <Link to="/contact-us" className="block text-gray-900 dark:text-gray-100 hover:text-primary-600 px-3 py-2 rounded-md text-base font-medium">{t('ContactUs', 'Contact Us')}</Link>
           {isLoggedIn && (
             <>
-              <Link to="/dashboard/my-listings" className="block text-gray-900 dark:text-gray-100 hover:text-primary-600 px-3 py-2 rounded-md text-base font-medium">My Listings</Link>
-              <Link to="/dashboard/saved" className="block text-gray-900 dark:text-gray-100 hover:text-primary-600 px-3 py-2 rounded-md text-base font-medium">Saved Cars</Link>
-              <Link to="/dashboard" className="block text-gray-900 dark:text-gray-100 hover:text-primary-600 px-3 py-2 rounded-md text-base font-medium">Dashboard</Link>
+              <Link to="/dashboard/my-listings" className="block text-gray-900 dark:text-gray-100 hover:text-primary-600 px-3 py-2 rounded-md text-base font-medium">{t('MyListings', 'My Listings')}</Link>
+              <Link to="/dashboard/saved" className="block text-gray-900 dark:text-gray-100 hover:text-primary-600 px-3 py-2 rounded-md text-base font-medium">{t('SavedCars', 'Saved Cars')}</Link>
+              <Link to="/dashboard" className="block text-gray-900 dark:text-gray-100 hover:text-primary-600 px-3 py-2 rounded-md text-base font-medium">{t('Dashboard', 'Dashboard')}</Link>
               
                         <button
                           className={`block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 flex items-center`}
@@ -146,13 +146,13 @@ function Navbar() {
         {/* Auth/User menu */}
         {(!isLoggedIn || auth.isLoading) ? (
           <>
-            <Link to="/auth/login" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200">Sign In</Link>
-            <Link to="/auth/register" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200">Sign Up</Link>
+            <Link to="/auth/login" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200">{t('login', 'Se Connecter')}</Link>
+            <Link to="/auth/register" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200">{t('register', 'S\'inscrire')}</Link>
           </>
         ) : (
           <Menu.Item>
             {() => (
-              <Link to="/dashboard/profile" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200">Profile</Link>
+              <Link to="/dashboard/profile" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200">{t('profile', 'Profil')}</Link>
             )}
           </Menu.Item>
         )}

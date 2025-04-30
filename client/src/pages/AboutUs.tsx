@@ -59,17 +59,17 @@ export default function AboutUs() {
       {/* Hero Section */}
       <section className="py-20 px-4">
         <div className="max-w-6xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">About D-CARS</h1>
+          <h1 className="text-4xl md:text-5xl font-bold mb-6">À Propos de D-CARS</h1>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-10">
-            We're revolutionizing the way people buy and sell vehicles online with a secure,
-            transparent, and user-friendly platform.
+            Nous révolutionnons la façon dont les gens achètent et vendent des véhicules en ligne grâce à une plateforme
+            sécurisée, transparente et conviviale.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link
               to="/contact-us"
               className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
             >
-              Contact Us
+              Contactez-Nous
             </Link>
             <Link
               to="/cars"
@@ -86,7 +86,7 @@ export default function AboutUs() {
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row items-center gap-10">
             <div className="md:w-1/2">
-              <h2 className="text-3xl font-bold mb-6">Our Story</h2>
+              <h2 className="text-3xl font-bold mb-6">Notre Histoire</h2>
               <p className="text-gray-300 mb-4">
                 Founded in 2022, D-CARS emerged from a simple idea: make buying and selling cars
                 more transparent, secure, and enjoyable. We recognized the challenges faced by
@@ -116,7 +116,7 @@ export default function AboutUs() {
       {/* Our Values Section */}
       <section className="py-16 px-4">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold mb-12 text-center">Our Values</h2>
+          <h2 className="text-3xl font-bold mb-12 text-center">Nos Valeurs</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {values.map((value, index) => (
               <div key={index} className="bg-gray-800 p-6 rounded-lg">
@@ -134,7 +134,7 @@ export default function AboutUs() {
       {/* Team Section */}
       <section className="py-16 bg-gray-800 px-4">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold mb-12 text-center">Meet Our Team</h2>
+          <h2 className="text-3xl font-bold mb-12 text-center">Notre Équipe</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {teamMembers.map((member, index) => (
               <div key={index} className="bg-gray-900 rounded-lg overflow-hidden shadow-lg">
@@ -161,17 +161,17 @@ export default function AboutUs() {
             <div className="bg-gray-800 p-8 rounded-lg text-center">
               <TruckIcon className="h-12 w-12 mx-auto text-blue-400 mb-4" />
               <p className="text-4xl font-bold mb-2">10,000+</p>
-              <p className="text-gray-400">Vehicles Listed</p>
+              <p className="text-gray-400">Véhicules Listés</p>
             </div>
             <div className="bg-gray-800 p-8 rounded-lg text-center">
               <UserGroupIcon className="h-12 w-12 mx-auto text-blue-400 mb-4" />
               <p className="text-4xl font-bold mb-2">5,000+</p>
-              <p className="text-gray-400">Happy Customers</p>
+              <p className="text-gray-400">Clients Satisfaits</p>
             </div>
             <div className="bg-gray-800 p-8 rounded-lg text-center">
               <ChatBubbleLeftRightIcon className="h-12 w-12 mx-auto text-blue-400 mb-4" />
               <p className="text-4xl font-bold mb-2">24/7</p>
-              <p className="text-gray-400">Customer Support</p>
+              <p className="text-gray-400">Support Client</p>
             </div>
           </div>
         </div>
@@ -180,16 +180,16 @@ export default function AboutUs() {
       {/* CTA Section */}
       <section className="py-16 bg-blue-600 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-6">Ready to Get Started?</h2>
+          <h2 className="text-3xl font-bold mb-6">Prêt à Commencer ?</h2>
           <p className="text-xl mb-8">
-            Join thousands of satisfied users buying and selling vehicles on our platform.
+            Rejoignez des milliers d'utilisateurs satisfaits qui achètent et vendent des véhicules sur notre plateforme.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link
               to="/auth/register"
               className="px-6 py-3 bg-white text-blue-600 font-medium rounded-md hover:bg-gray-100 transition-colors"
             >
-              Create an Account
+              Créer un Compte
             </Link>
             <Link
               to="/cars"

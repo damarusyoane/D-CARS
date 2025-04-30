@@ -1,0 +1,27 @@
+.avatarUploadButton {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.5rem;
+  background: var(--color-white, #fff);
+  border-radius: 9999px;
+  padding: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  cursor: pointer;
+  transition: background 0.2s;
+  min-width: 36px;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border, #e5e7eb);
+}
+.avatarUploadButton:hover {
+  background: var(--color-gray-100, #f3f4f6);
+}
+.dark .avatarUploadButton {
+  background: var(--color-gray-700, #374151);
+  border-color: var(--color-gray-600, #4b5563);
+}
+.dark .avatarUploadButton:hover {
+  background: var(--color-gray-600, #4b5563);
+}

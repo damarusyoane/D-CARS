@@ -25,6 +25,7 @@ const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const AdminLogin = lazy(() => import('./pages/AdminLogin'));
 const AdminRegister = lazy(() => import('./pages/AdminRegister'));
+const AuthCallback = lazy(() => import('./pages/AuthCallback'));
 
 // User Dashboard Pages
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -66,6 +67,7 @@ function AppRoutes() {
           <Route path="/auth" element={<AuthLayout><Outlet /></AuthLayout>}>
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
+            <Route path="callback" element={<AuthCallback />} />
           </Route>
 
           {/* Admin Auth Routes */}

@@ -58,7 +58,7 @@ const CarCard = ({ car }: { car: CarData }) => {
           </div>
           <div className="text-right">
             <p className="font-bold text-lg">${car.price.toLocaleString()}</p>
-            <p className="text-xs text-muted-foreground">Estimated payment</p>
+            <p className="text-xs text-muted-foreground">Paiement estimé</p>
           </div>
         </div>
 
@@ -74,7 +74,7 @@ const CarCard = ({ car }: { car: CarData }) => {
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span>{car.mileage.toLocaleString()} mi</span>
+            <span>{car.mileage.toLocaleString()} km</span>
           </div>
           <div className="flex items-center text-xs text-muted-foreground">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -93,10 +93,10 @@ const CarCard = ({ car }: { car: CarData }) => {
         {/* Action Buttons */}
         <div className="pt-2 border-t border-border flex justify-between gap-2">
           <button className="w-full py-1.5 text-sm font-medium text-blue-500 hover:text-blue-600">
-            View Details
+            Voir détails
           </button>
           <button className="w-full py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium">
-            Send Offer
+            Envoyer une offre
           </button>
         </div>
       </div>

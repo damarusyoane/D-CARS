@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import type { Database } from '../types/database';
 import { useAuth } from '../contexts/AuthContext';
-import { useSessionAwareRefresh } from '../hooks/useSessionAwareRefresh';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -32,7 +31,7 @@ export default function SavedCars() {
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <p className="text-gray-500 dark:text-gray-400">{t('auth.pleaseLogin', 'Please log in to view this page.')}</p>
+        <p className="text-gray-500 dark:text-gray-400">{t('auth.pleaseLogin', 'Veuillez vous connecter pour voir cette page.')}</p>
       </div>
     );
   }
@@ -89,7 +88,7 @@ export default function SavedCars() {
     enabled: !!user?.id,
   });
 
-  // Remove from saved vehicles
+  // Retirer from saved vehicles
   const removeFromSaved = useMutation({
     mutationFn: async (vehicleId: string) => {
       const { error } = await supabase
@@ -167,7 +166,7 @@ export default function SavedCars() {
                     className="w-full h-48 object-cover"
                   />
                   <button
-                    title="Remove from saved"
+                    title="Retirer from saved"
                     onClick={() => removeFromSaved.mutate(vehicle.id)}
                     className="absolute top-2 right-2 p-2 bg-white dark:bg-gray-800 rounded-full shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700"
                   >

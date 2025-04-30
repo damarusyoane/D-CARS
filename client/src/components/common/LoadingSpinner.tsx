@@ -1,4 +1,4 @@
-import React from 'react';
+// React is imported implicitly with JSX usage
 import { useTranslation } from 'react-i18next';
 
 interface LoadingSpinnerProps {
@@ -34,7 +34,7 @@ export default function LoadingSpinner({
       <div
         className={`animate-spin rounded-full border-2 border-current border-t-transparent ${sizeClasses[size]} ${colorClasses[color]}`}
         role="status"
-        aria-label="Loading"
+        aria-label="Chargement"
       >
         <span className="sr-only">{t('common.loading')}</span>
       </div>

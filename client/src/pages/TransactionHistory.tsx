@@ -149,7 +149,7 @@ const TransactionHistory: React.FC = () => {
       
     } catch (err) {
       console.error('Error fetching transactions:', err);
-      setError('Failed to load transactions. Please try again later.');
+      setError('Échec du chargement des transactions. Veuillez réessayer plus tard.');
       
       // Try to load from cache if network request fails
       const cachedData = localStorage.getItem('transactionHistory');
@@ -157,7 +157,7 @@ const TransactionHistory: React.FC = () => {
         try {
           const parsed = JSON.parse(cachedData);
           setTransactions(parsed.data);
-          setError('Showing cached data. Pull down to refresh.');
+          setError('Affichage des données en cache. Tirez vers le bas pour actualiser.');
         } catch (cacheErr) {
           console.error('Error parsing cached data:', cacheErr);
         }
@@ -172,7 +172,7 @@ const TransactionHistory: React.FC = () => {
     setIsRefreshing(true);
     fetchTransactions().then(() => {
       setIsRefreshing(false);
-      toast.success('Transactions refreshed');
+      toast.success('Transactions actualisées');
     });
   };
 
@@ -392,28 +392,28 @@ const TransactionHistory: React.FC = () => {
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex flex-col sm:flex-row items-center">
               <CheckCircleIcon className="w-8 h-8 text-green-500 mb-2 sm:mb-0 sm:mr-3" />
               <div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">Total Transactions</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Total des Transactions</div>
                 <div className="text-lg font-bold text-gray-900 dark:text-white">{totalTransactions}</div>
               </div>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex flex-col sm:flex-row items-center">
               <ArrowUpCircleIcon className="w-8 h-8 text-blue-500 mb-2 sm:mb-0 sm:mr-3" />
               <div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">Total Spent</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Total Dépensé</div>
                 <div className="text-lg font-bold text-gray-900 dark:text-white">${totalSpent.toLocaleString()}</div>
               </div>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex flex-col sm:flex-row items-center">
               <ArrowDownCircleIcon className="w-8 h-8 text-yellow-500 mb-2 sm:mb-0 sm:mr-3" />
               <div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">Total Earned</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Total Gagné</div>
                 <div className="text-lg font-bold text-gray-900 dark:text-white">${totalEarned.toLocaleString()}</div>
               </div>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex flex-col sm:flex-row items-center">
               <CheckCircleIcon className="w-8 h-8 text-emerald-500 mb-2 sm:mb-0 sm:mr-3" />
               <div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">Completed</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Terminées</div>
                 <div className="text-lg font-bold text-gray-900 dark:text-white">{completedCount}</div>
               </div>
             </div>

@@ -117,49 +117,7 @@ export default function Messages() {
 
   useSessionAwareRefresh(refetchConversations);
 
-      try {
-        if (!user?.id) {
-          throw new Error('User not authenticated');
-        }
-        
-        const { data: messages, error } = await supabase
-          .from('messages')
-          .select('*, vehicle:vehicles(*), sender:profiles!messages_sender_id_fkey(*), receiver:profiles!messages_receiver_id_fkey(*)')
-          .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        
-        if (!messages || messages.length === 0) {
-          return [];
-        }
-
-        // Group messages by vehicle and get the last message for each
-        const conversationsMap = new Map<string, Conversation>();
-        
-        messages.forEach((message: any) => {
-          const vehicleId = message.vehicle_id;
-          const otherUser = message.sender_id === user.id ? message.receiver : message.sender;
-          
-          if (!vehicleId || !otherUser) return;
-
-          if (!conversationsMap.has(vehicleId)) {
-            conversationsMap.set(vehicleId, {
-              vehicle: message.vehicle || { id: vehicleId, title: 'Unknown Vehicle' },
-              otherUser,
-              lastMessage: message,
-              unreadCount: message.receiver_id === user.id && !message.read ? 1 : 0,
-            });
-          } else if (message.receiver_id === user.id && !message.read) {
-            const conv = conversationsMap.get(vehicleId)!;
-            conv.unreadCount += 1;
-          }
-        });
-
-        return Array.from(conversationsMap.values());
-      } catch (err) {
-        console.error('Error fetching conversations:', err);
-        setError('Failed to load conversations. Please try again later.');
+  setError('Failed to load conversations. Please try again later.');
   // Fetch messages for selected conversation with better error handling
   const { data: messages, isLoading: isLoadingMessages, isError: isMessagesError } = useQuery<Message[]>({
     queryKey: ['messages', selectedConversation],
@@ -188,7 +146,7 @@ export default function Messages() {
     staleTime: 30000,
   });
 
-  // Send message mutation with better error handling
+  // Envoyer message mutation with better error handling
   const sendMessage = useMutation({
     mutationFn: async (content: string) => {
       if (!selectedConversation || !content.trim() || !user?.id) {
@@ -258,7 +216,7 @@ export default function Messages() {
     };
   }, [selectedConversation, queryClient, user?.id]);
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleEnvoyerMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (messageInput.trim()) {
       sendMessage.mutate(messageInput);
@@ -464,7 +422,7 @@ export default function Messages() {
 
           {/* Message Input */}
           <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-            <form onSubmit={handleSendMessage} className="flex space-x-2">
+            <form onSubmit={handleEnvoyerMessage} className="flex space-x-2">
               <input
                 type="text"
                 value={messageInput}
@@ -490,7 +448,7 @@ export default function Messages() {
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center max-w-md p-6">
             <ChatBubbleOvalLeftEllipsisIcon className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
-            <h2 className="text-xl font-medium text-gray-900 dark:text-white mb-2">Your Messages</h2>
+            <h2 className="text-xl font-medium text-gray-900 dark:text-white mb-2">Vousr Messages</h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               Select a conversation from the list to view and send messages about vehicles.
             </p>

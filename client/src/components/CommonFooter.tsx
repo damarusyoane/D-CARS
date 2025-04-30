@@ -7,12 +7,12 @@ export default function CommonFooter() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">
-              About
+              À propos
             </h3>
             <ul className="mt-4 space-y-4">
               <li>
                 <Link to="/about" className="text-base text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
-                  About Us
+                  À propos de nous
                 </Link>
               </li>
               <li>
@@ -24,12 +24,12 @@ export default function CommonFooter() {
           </div>
           <div>
             <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">
-              Support
+              Assistance
             </h3>
             <ul className="mt-4 space-y-4">
               <li>
                 <Link to="/help" className="text-base text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
-                  Help Center
+                  Centre d'aide
                 </Link>
               </li>
               <li>
@@ -41,24 +41,24 @@ export default function CommonFooter() {
           </div>
           <div>
             <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">
-              Legal
+              Mentions légales
             </h3>
             <ul className="mt-4 space-y-4">
               <li>
                 <Link to="/privacy" className="text-base text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
-                  Privacy Policy
+                  Politique de confidentialité
                 </Link>
               </li>
               <li>
                 <Link to="/terms" className="text-base text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
-                  Terms of Service
+                  Conditions d'utilisation
                 </Link>
               </li>
             </ul>
           </div>
           <div>
             <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">
-              Social
+              Réseaux sociaux
             </h3>
             <ul className="mt-4 space-y-4">
               <li>
@@ -76,7 +76,7 @@ export default function CommonFooter() {
         </div>
         <div className="mt-8 border-t border-gray-200 dark:border-gray-800 pt-8">
           <p className="text-base text-gray-400 text-center">
-            &copy; {new Date().getFullYear()} D-CARS. All rights reserved.
+            &copy; {new Date().getFullYear()} D-CARS. Tous droits réservés.
           </p>
         </div>
       </div>

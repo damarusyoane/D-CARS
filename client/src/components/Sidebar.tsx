@@ -12,24 +12,24 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage }) => {
   const { user, signOut } = useAuth();
 
   const navigation = [
-    { name: 'Dashboard', path: '/dashboard', icon: 'chart-bar' },
-    { name: 'My Listings', path: '/dashboard/my-listings', icon: 'car' },
-    { name: 'Create Listing', path: '/dashboard/create-listing', icon: 'plus' },
-    { name: 'Saved Cars', path: '/dashboard/saved', icon: 'heart' },
+    { name: 'Tableau de Bord', path: '/dashboard', icon: 'chart-bar' },
+    { name: 'Mes Annonces', path: '/dashboard/my-listings', icon: 'car' },
+    { name: 'Créer une Annonce', path: '/dashboard/create-listing', icon: 'plus' },
+    { name: 'Véhicules Sauvés', path: '/dashboard/saved', icon: 'heart' },
     { name: 'Messages', path: '/dashboard/messages', icon: 'chat' },
-    { name: 'Transaction History', path: '/dashboard/transaction-history', icon: 'receipt' },
-    { name: 'Profile', path: '/dashboard/profile', icon: 'user' },
-    { name: 'Settings', path: '/dashboard/settings', icon: 'cog' }
+    { name: 'Historique des Transactions', path: '/dashboard/transaction-history', icon: 'receipt' },
+    { name: 'Profil', path: '/dashboard/profile', icon: 'user' },
+    { name: 'Paramètres', path: '/dashboard/settings', icon: 'cog' }
   ];
 
   const handleSignOut = async () => {
     try {
       await signOut();
-      toast.success('Successfully signed out');
+      toast.success('Déconnexion réussie');
       navigate('/auth/login');
     } catch (error) {
       console.error('Sign out error:', error);
-      toast.error('Failed to sign out');
+      toast.error('Échec de la déconnexion');
     }
   };
 
@@ -122,13 +122,13 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage }) => {
             to="/dashboard/profile" 
             className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1 rounded transition-colors"
           >
-            Profile
+            Profil
           </Link>
           <Link 
             to="/dashboard/settings" 
             className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm px-3 py-1 rounded transition-colors"
           >
-            Settings
+            Paramètres
           </Link>
         </div>
       </div>
@@ -169,7 +169,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage }) => {
             <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V4a1 1 0 00-1-1H3zm7 4a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" />
             <path d="M9 10a1 1 0 012 0v4a1 1 0 11-2 0v-4z" />
           </svg>
-          <span>Sign Out</span>
+          <span>Déconnexion</span>
         </button>
       </div>
     </div>

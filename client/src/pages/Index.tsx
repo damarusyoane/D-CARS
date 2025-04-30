@@ -22,14 +22,14 @@ function Index() {
       {/* Hero Section */}
       <HeroSection />
       
-      {/* Featured Cars Section */}
+      {/* Voitures en vedette Section */}
       <FeaturedCars />
       
       {/* Why Choose Us Section */}
       <section className="py-16 bg-white dark:bg-gray-800">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Why Choose D-CARS</h2>
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Pourquoi choisir D-CARS</h2>
             <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
               Our platform combines blockchain technology with a user-friendly marketplace to provide the best car buying and selling experience.
             </p>
@@ -80,7 +80,7 @@ function Index() {
               to="/cars" 
               className="p-6 bg-white dark:bg-gray-700 rounded-lg hover:shadow-md transition-shadow text-center"
             >
-              <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Browse Cars</h3>
+              <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Parcourir les voitures</h3>
               <p className="text-gray-600 dark:text-gray-300">Explore our wide selection of vehicles</p>
             </Link>
             <Link 
@@ -94,8 +94,8 @@ function Index() {
               to="/subscription" 
               className="p-6 bg-white dark:bg-gray-700 rounded-lg hover:shadow-md transition-shadow text-center"
             >
-              <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Subscription Plans</h3>
-              <p className="text-gray-600 dark:text-gray-300">Choose or manage your plan</p>
+              <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Formules d'abonnement</h3>
+              <p className="text-gray-600 dark:text-gray-300">Choisissez ou gérez votre formule</p>
             </Link>
             {user ? (
               <>
@@ -103,7 +103,7 @@ function Index() {
                   to="/my-listings" 
                   className="p-6 bg-white dark:bg-gray-700 rounded-lg hover:shadow-md transition-shadow text-center"
                 >
-                  <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">My Listings</h3>
+                  <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Mes annonces</h3>
                   <p className="text-gray-600 dark:text-gray-300">Manage your vehicle listings</p>
                 </Link>
                 <Link 
