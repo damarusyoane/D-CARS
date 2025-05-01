@@ -2,183 +2,283 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import LoadingSpinner from '../common/LoadingSpinner';
+import { ChatBubbleLeftIcon, PlusCircleIcon } from '@heroicons/react/24/outline';
 
-// Types
-interface Message {
+// Define types
+interface Thread {
   id: string;
-  thread_id?: string;
-  subject?: string;
-  sender_id: string;
-  receiver_id: string;
-  vehicle_id: string;
-  content: string;
-  deleted_at?: string | null;
+  title: string;
   created_at: string;
-  sender?: { id: string; full_name?: string; avatar_url?: string };
-  receiver?: { id: string; full_name?: string; avatar_url?: string };
+  user_id: string;
+  // Add other fields as needed
 }
 
-interface Thread {
-  threadId: string;
-  subject?: string;
-  messages: Message[];
-  lastMessage: Message;
+interface ThreadMessage {
+  id: string;
+  thread_id: string;
+  content: string;
+  created_at: string;
+  user_id: string;
+  // Add other fields as needed
 }
 
 export default function ThreadsDemo() {
   const { user } = useAuth();
-  const [newSubject, setNewSubject] = useState('');
-  const [newContent, setNewContent] = useState('');
-  const [selectedReceiverId, setSelectedReceiverId] = useState('');
-  const [selectedVehicleId, setSelectedVehicleId] = useState('');
   const queryClient = useQueryClient();
+  const [selectedThread, setSelectedThread] = useState<string | null>(null);
+  const [newThreadTitle, setNewThreadTitle] = useState('');
+  const [newMessage, setNewMessage] = useState('');
+  const [isCreatingThread, setIsCreatingThread] = useState(false);
 
-  // 1. Fetch threads (grouped by thread_id, only not deleted)
-  const { data: threads, isLoading } = useQuery(['threads', user?.id], async () => {
-    const { data: messages, error } = await supabase
-      .from('messages')
-      .select(`*, sender:sender_id (id, full_name, avatar_url), receiver:receiver_id (id, full_name, avatar_url), vehicle:vehicle_id (id, title)`)
-      .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-      .eq('deleted_at', null)
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    // Group messages by thread_id
-    const threadsMap = new Map<string, Message[]>();
-    messages.forEach((msg: Message) => {
-      const threadId = msg.thread_id || msg.id;
-      if (!threadsMap.has(threadId)) threadsMap.set(threadId, []);
-      threadsMap.get(threadId)!.push(msg);
-    });
-    return Array.from(threadsMap.values()).map((msgs) => ({
-      threadId: msgs[0].thread_id || msgs[0].id,
-      subject: msgs[0].subject,
-      messages: msgs,
-      lastMessage: msgs[0],
-    }));
+  // Fetch threads with proper v5 syntax
+  const { 
+    data: threads, 
+    isLoading: isLoadingThreads 
+  } = useQuery({
+    queryKey: ['threads'],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from('threads')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user?.id
   });
 
-  // 2. Soft delete a message
-  const deleteMessage = useMutation(
-    async (messageId: string) => {
+  // Fetch messages for selected thread with proper v5 syntax
+  const { 
+    data: messages, 
+    isLoading: isLoadingMessages 
+  } = useQuery({
+    queryKey: ['threads', selectedThread],
+    queryFn: async () => {
+      if (!selectedThread) return [];
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('thread_id', selectedThread)
+        .order('created_at', { ascending: true });
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!selectedThread
+  });
+
+  // Create thread mutation with proper v5 syntax
+  const createThread = useMutation({
+    mutationFn: async (title: string) => {
+      if (!user?.id || !title.trim()) {
+        throw new Error('Missing required information');
+      }
+      const { data, error } = await supabase
+        .from('threads')
+        .insert([{ title: title.trim(), user_id: user.id }])
+        .select();
+      
+      if (error) throw error;
+      return data?.[0];
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['threads'] });
+      setNewThreadTitle('');
+      setIsCreatingThread(false);
+    }
+  });
+
+  // Send message mutation with proper v5 syntax
+  const sendMessage = useMutation({
+    mutationFn: async (content: string) => {
+      if (!selectedThread || !user?.id || !content.trim()) {
+        throw new Error('Missing required information');
+      }
       const { error } = await supabase
         .from('messages')
-        .update({ deleted_at: new Date().toISOString() })
-        .eq('id', messageId);
-      if (error) throw error;
-    },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(['threads', user?.id]);
-      }
-    }
-  );
-
-  // 3. Create a new thread and message
-  const createThreadAndMessage = useMutation(
-    async ({ subject, content, receiverId, vehicleId }: { subject: string, content: string, receiverId: string, vehicleId: string }) => {
-      // 1. Create thread
-      const { data: thread, error: threadError } = await supabase
-        .from('threads')
-        .insert([{ subject }])
-        .select()
-        .single();
-      if (threadError) throw threadError;
-      // 2. Create message in that thread
-      const { error: msgError } = await supabase
-        .from('messages')
-        .insert([{
-          thread_id: thread.id,
-          subject,
-          content,
-          sender_id: user.id,
-          receiver_id: receiverId,
-          vehicle_id: vehicleId
+        .insert([{ 
+          thread_id: selectedThread, 
+          user_id: user.id, 
+          content: content.trim() 
         }]);
-      if (msgError) throw msgError;
+      
+      if (error) throw error;
+      return true;
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(['threads', user?.id]);
-        setNewSubject('');
-        setNewContent('');
-      }
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages', selectedThread] });
+      setNewMessage('');
     }
-  );
+  });
+
+  // Handle submitting a new thread
+  const handleCreateThread = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newThreadTitle.trim()) {
+      createThread.mutate(newThreadTitle);
+    }
+  };
+
+  // Handle submitting a new message
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newMessage.trim() && selectedThread) {
+      sendMessage.mutate(newMessage);
+    }
+  };
+
+  if (!user) {
+    return (
+      <div className="p-4 text-center text-gray-500">
+        Please log in to use threaded messaging.
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-3xl mx-auto p-4">
-      <h2 className="text-2xl font-bold mb-4">Threads Demo</h2>
-      {/* New Thread Form */}
-      <form
-        onSubmit={e => {
-          e.preventDefault();
-          createThreadAndMessage.mutate({
-            subject: newSubject,
-            content: newContent,
-            receiverId: selectedReceiverId,
-            vehicleId: selectedVehicleId
-          });
-        }}
-        className="mb-8"
-      >
-        <input
-          value={newSubject}
-          onChange={e => setNewSubject(e.target.value)}
-          placeholder="Subject"
-          className="border rounded px-2 py-1 mr-2"
-        />
-        <input
-          value={selectedReceiverId}
-          onChange={e => setSelectedReceiverId(e.target.value)}
-          placeholder="Receiver ID"
-          className="border rounded px-2 py-1 mr-2"
-        />
-        <input
-          value={selectedVehicleId}
-          onChange={e => setSelectedVehicleId(e.target.value)}
-          placeholder="Vehicle ID"
-          className="border rounded px-2 py-1 mr-2"
-        />
-        <textarea
-          value={newContent}
-          onChange={e => setNewContent(e.target.value)}
-          placeholder="Message Content"
-          className="border rounded px-2 py-1 mr-2"
-        />
-        <button type="submit" className="bg-blue-600 text-white px-4 py-1 rounded">Send</button>
-      </form>
-
+    <div className="flex flex-col md:flex-row h-64 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
       {/* Threads List */}
-      {isLoading ? (
-        <div>Loading...</div>
-      ) : (
-        <div>
-          {threads && threads.length > 0 ? (
-            threads.map(thread => (
-              <div key={thread.threadId} className="mb-6 border-b pb-4">
-                <div className="font-semibold text-lg mb-1">{thread.subject || 'No Subject'}</div>
-                <div className="text-sm text-gray-600 mb-2">Last message: {thread.lastMessage.content}</div>
-                <div>
-                  {thread.messages.map(msg => (
-                    <div key={msg.id} className="flex items-center mb-1">
-                      <span className="mr-2">{msg.sender?.full_name || msg.sender_id}:</span>
-                      <span>{msg.content}</span>
-                      <button
-                        onClick={() => deleteMessage.mutate(msg.id)}
-                        className="ml-2 text-xs text-red-500 hover:underline"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  ))}
+      <div className="w-full md:w-1/3 border-r border-gray-200 dark:border-gray-700">
+        <div className="flex justify-between items-center p-3 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="font-medium">Discussion Threads</h3>
+          <button
+            onClick={() => setIsCreatingThread(!isCreatingThread)}
+            className="p-1 text-primary-600 hover:text-primary-700 dark:text-primary-500"
+          >
+            <PlusCircleIcon className="h-5 w-5" />
+          </button>
+        </div>
+
+        {isCreatingThread && (
+          <form onSubmit={handleCreateThread} className="p-2 border-b border-gray-200 dark:border-gray-700">
+            <input
+              type="text"
+              value={newThreadTitle}
+              onChange={(e) => setNewThreadTitle(e.target.value)}
+              placeholder="Thread title..."
+              className="w-full p-2 text-sm border rounded"
+            />
+            <div className="flex justify-end mt-2 space-x-2">
+              <button
+                type="button"
+                onClick={() => setIsCreatingThread(false)}
+                className="px-3 py-1 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={!newThreadTitle.trim() || createThread.isPending}
+                className="px-3 py-1 text-xs bg-primary-600 text-white rounded disabled:opacity-50"
+              >
+                {createThread.isPending ? 'Creating...' : 'Create'}
+              </button>
+            </div>
+          </form>
+        )}
+
+        <div className="overflow-y-auto h-full max-h-[calc(100%-44px)]">
+          {isLoadingThreads ? (
+            <div className="p-4 text-center">
+              <LoadingSpinner size="sm" />
+            </div>
+          ) : threads && threads.length > 0 ? (
+            threads.map((thread: Thread) => (
+              <button
+                key={thread.id}
+                onClick={() => setSelectedThread(thread.id)}
+                className={`w-full p-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800 ${
+                  selectedThread === thread.id ? 'bg-gray-50 dark:bg-gray-800' : ''
+                }`}
+              >
+                <div className="flex items-center">
+                  <ChatBubbleLeftIcon className="h-4 w-4 mr-2 text-gray-500" />
+                  <span className="text-sm font-medium truncate">{thread.title}</span>
                 </div>
-              </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  {new Date(thread.created_at).toLocaleDateString()}
+                </div>
+              </button>
             ))
           ) : (
-            <div>No threads found.</div>
+            <div className="p-4 text-center text-gray-500 text-sm">
+              No threads found. Create one to start discussing.
+            </div>
           )}
         </div>
-      )}
+      </div>
+
+      {/* Messages */}
+      <div className="flex-1 flex flex-col">
+        {selectedThread ? (
+          <>
+            <div className="p-3 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="font-medium">
+                {threads?.find((t: Thread) => t.id === selectedThread)?.title || 'Thread'}
+              </h3>
+            </div>
+            <div className="flex-1 overflow-y-auto p-3 space-y-3">
+              {isLoadingMessages ? (
+                <div className="flex justify-center p-4">
+                  <LoadingSpinner size="sm" />
+                </div>
+              ) : messages && messages.length > 0 ? (
+                messages.map((message: ThreadMessage) => (
+                  <div
+                    key={message.id}
+                    className={`p-2 rounded-lg max-w-[75%] ${
+                      message.user_id === user.id
+                        ? 'ml-auto bg-primary-600 text-white'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
+                    }`}
+                  >
+                    <p className="text-sm">{message.content}</p>
+                    <span className="text-xs opacity-70 mt-1 block">
+                      {new Date(message.created_at).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center text-gray-500 text-sm py-8">
+                  No messages yet. Start the conversation!
+                </div>
+              )}
+            </div>
+            <form onSubmit={handleSendMessage} className="p-2 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex space-x-2">
+                <input
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Type a message..."
+                  className="flex-1 p-2 text-sm border rounded"
+                />
+                <button
+                  type="submit"
+                  disabled={!newMessage.trim() || sendMessage.isPending}
+                  className="px-3 bg-primary-600 text-white rounded disabled:opacity-50"
+                >
+                  {sendMessage.isPending ? (
+                    <LoadingSpinner size="xs" />
+                  ) : (
+                    'Send'
+                  )}
+                </button>
+              </div>
+            </form>
+          </>
+        ) : (
+          <div className="flex items-center justify-center h-full text-gray-500">
+            Select a thread to view messages
+          </div>
+        )}
+      </div>
     </div>
   );
 }

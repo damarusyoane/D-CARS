@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase';
 import { PhotoIcon } from '@heroicons/react/24/outline';
 import { Database } from '../types/database';
 import { useAuth } from '../contexts/AuthContext';
+import toast from 'react-hot-toast';
 
 type Vehicle = Database['public']['Tables']['vehicles']['Row'];
 
@@ -39,26 +40,6 @@ const CreateListing: React.FC = () => {
     return null;
   }
 
-  const [formData, setFormData] = useState<FormData>({
-    make: '',
-    model: '',
-    year: new Date().getFullYear(),
-    price: 0,
-    mileage: 0,
-    condition: 'used',
-    description: '',
-    location: '',
-    images: [],
-    specifications: {
-      transmission: '',
-      fuel_type: '',
-      engine_size: '',
-      color: '',
-      doors: 4,
-      seats: 5,
-    },
-    features: [],
-  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -83,28 +64,41 @@ const CreateListing: React.FC = () => {
       },
       features: [],
     },
-    validationSchema: Yup.object(),
+    validationSchema: Yup.object({
+      make: Yup.string().required('Marque requise'),
+      model: Yup.string().required('Modèle requis'),
+      year: Yup.number()
+        .required('Année requise')
+        .min(1900, 'Année invalide')
+        .max(new Date().getFullYear(), 'Année invalide'),
+      price: Yup.number()
+        .required('Prix requis')
+        .min(0, 'Prix invalide'),
+      mileage: Yup.number()
+        .required('Kilométrage requis')
+        .min(0, 'Kilométrage invalide'),
+      condition: Yup.string().required('État requis'),
+      description: Yup.string().required('Description requise'),
+      location: Yup.string().required('Localisation requise'),
+      specifications: Yup.object({
+        transmission: Yup.string().required('Transmission requise'),
+        fuel_type: Yup.string().required('Type de carburant requis'),
+        engine_size: Yup.string().required('Taille du moteur requise'),
+        color: Yup.string().required('Couleur requise'),
+        doors: Yup.number()
+          .required('Nombre de portes requis')
+          .min(2, 'Nombre de portes invalide')
+          .max(5, 'Nombre de portes invalide'),
+        seats: Yup.number()
+          .required('Nombre de places requis')
+          .min(2, 'Nombre de places invalide')
+          .max(9, 'Nombre de places invalide'),
+      }),
+      features: Yup.array(),
+      images: Yup.array().min(1, 'Au moins une image est requise'),
+    }),
     onSubmit: handleSubmit,
   });
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    if (name.includes('.')) {
-      const [section, field] = name.split('.');
-      setFormData((prev) => ({
-        ...prev,
-        [section]: {
-          ...(prev[section as keyof FormData] as Record<string, any>),
-          [field]: value,
-        },
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: type === 'number' ? (value === '' ? '' : Number(value)) : value,
-      }));
-    }
-  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -135,29 +129,21 @@ const CreateListing: React.FC = () => {
     setIsSubmitting(true);
     setError(null);
 
-    console.log('Form submission started');
-    console.log('Form data:', values);
-
     try {
       // 1. Get current user
-      console.log('Getting current user...');
       const { data: authData, error: authError } = await supabase.auth.getUser();
 
       if (authError) {
-        console.error('Authentication error:', authError);
         throw new Error(`Authentication failed: ${authError.message}`);
       }
 
-      if (!authData.user) {
-        console.error('No user found');
+      if (!authData?.user) {
         throw new Error('Not authenticated - please log in again');
       }
 
       const user = authData.user;
-      console.log('Current user:', user.id);
 
       // 2. Upload images to Supabase Storage
-      console.log('Uploading images...');
       const getMimeType = (ext: string) => {
         switch (ext.toLowerCase()) {
           case 'jpg':
@@ -169,8 +155,6 @@ const CreateListing: React.FC = () => {
             return 'image/gif';
           case 'webp':
             return 'image/webp';
-          case 'bmp':
-            return 'image/bmp';
           default:
             return 'application/octet-stream';
         }
@@ -186,72 +170,65 @@ const CreateListing: React.FC = () => {
             values.images.map(async (file) => {
               const fileExt = file.name.split('.').pop() || '';
               const fileName = `${user.id}/${Date.now()}-${file.name}`;
-              console.log(`Uploading ${fileName}...`);
 
               const { data: uploadData, error: uploadError } = await supabase.storage
                 .from('vehicle-images')
                 .upload(fileName, file, { contentType: getMimeType(fileExt) });
 
               if (uploadError) {
-                console.error('Upload error:', uploadError);
                 throw new Error(`Image upload failed: ${uploadError.message}`);
               }
 
-              console.log('Upload successful:', uploadData);
-
-              const { data: { publicUrl } } = supabase.storage
+              // Get the public URL for the uploaded image
+              const { data: publicUrl } = supabase.storage
                 .from('vehicle-images')
                 .getPublicUrl(fileName);
 
-              console.log('Public URL:', publicUrl);
-              return publicUrl;
+              return publicUrl.publicUrl;
             })
           );
-        } catch (uploadErr) {
-          console.error('Image upload error:', uploadErr);
-          throw new Error(`Failed to upload images: ${uploadErr instanceof Error ? uploadErr.message : String(uploadErr)}`);
+        } catch (error) {
+          throw new Error('Failed to upload images');
         }
-      } else {
-        console.log('No images to upload');
       }
 
-      // 3. Create vehicle listing
-      console.log('Creating vehicle listing...');
-      const vehicleData = {
-        profile_id: user.id,
-        make: values.make,
-        model: values.model,
-        year: values.year,
-        price: values.price,
-        mileage: values.mileage,
-        condition: values.condition,
-        description: values.description,
-        location: values.location,
-        images: imageUrls,
-        specifications: values.specifications,
-        features: values.features,
-        status: 'pending',
-      };
-
-      console.log('Vehicle data to insert:', vehicleData);
-
-      const { data: insertData, error: dbError } = await supabase
+      // 3. Create the vehicle listing
+      const { error: createError } = await supabase
         .from('vehicles')
-        .insert(vehicleData)
-        .select();
+        .insert([{
+          make: values.make,
+          model: values.model,
+          year: values.year,
+          price: values.price,
+          mileage: values.mileage,
+          condition: values.condition,
+          description: values.description,
+          location: values.location,
+          images: imageUrls,
+          specifications: {
+            transmission: values.specifications.transmission,
+            fuel_type: values.specifications.fuel_type,
+            engine_size: values.specifications.engine_size,
+            color: values.specifications.color,
+            doors: values.specifications.doors,
+            seats: values.specifications.seats,
+          },
+          features: values.features,
+          status: 'pending',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          profile_id: user.id
+        }]);
 
-      if (dbError) {
-        console.error('Database error:', dbError);
-        throw new Error(`Database error: ${dbError.message}`);
+      if (createError) {
+        throw new Error(`Failed to create listing: ${createError.message}`);
       }
 
-      console.log('Vehicle created successfully:', insertData);
-      alert('Annonce créée avec succès !');
-      navigate('/my-listings');
-    } catch (err) {
-      console.error('Error in form submission:', err);
-      setError(err instanceof Error ? err.message : 'Une erreur inconnue est survenue');
-      formik.setSubmitting(false);
+      toast.success('Your listing has been created successfully!');
+      navigate('/dashboard/my-listings');
+    } catch (error) {
+      console.error('Error:', error);
+      setError(error instanceof Error ? error.message : 'An error occurred while creating the listing');
     } finally {
       setIsSubmitting(false);
     }
@@ -276,7 +253,7 @@ const CreateListing: React.FC = () => {
               id="make"
               name="make"
               value={formik.values.make}
-              onChange={handleInputChange}
+              onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               className={`mt-1 block w-full rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 ${
                 formik.touched.make && formik.errors.make ? 'border-red-300' : 'border-gray-300'
@@ -296,7 +273,7 @@ const CreateListing: React.FC = () => {
               id="model"
               name="model"
               value={formik.values.model}
-              onChange={handleInputChange}
+              onChange={formik.handleChange}
               required
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
             />
@@ -311,7 +288,7 @@ const CreateListing: React.FC = () => {
               id="year"
               name="year"
               value={formik.values.year}
-              onChange={handleInputChange}
+              onChange={formik.handleChange}
               required
               min="1900"
               max={new Date().getFullYear() + 1}
@@ -328,7 +305,7 @@ const CreateListing: React.FC = () => {
               id="price"
               name="price"
               value={formik.values.price}
-              onChange={handleInputChange}
+              onChange={formik.handleChange}
               required
               min="0"
               step="0.01"
@@ -345,7 +322,7 @@ const CreateListing: React.FC = () => {
               id="mileage"
               name="mileage"
               value={formik.values.mileage}
-              onChange={handleInputChange}
+              onChange={formik.handleChange}
               required
               min="0"
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
@@ -360,7 +337,7 @@ const CreateListing: React.FC = () => {
               id="condition"
               name="condition"
               value={formik.values.condition}
-              onChange={handleInputChange}
+              onChange={formik.handleChange}
               required
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
             >
@@ -379,7 +356,7 @@ const CreateListing: React.FC = () => {
               id="location"
               name="location"
               value={formik.values.location}
-              onChange={handleInputChange}
+              onChange={formik.handleChange}
               required
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
             />
@@ -388,118 +365,9 @@ const CreateListing: React.FC = () => {
 
         <div>
           <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-            Description
           </label>
-          <textarea
-            id="description"
-            name="description"
-            value={formik.values.description}
-            onChange={handleInputChange}
-            required
-            rows={4}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label htmlFor="specifications.transmission" className="block text-sm font-medium text-gray-700">
-              Transmission
-            </label>
-            <select
-              id="specifications.transmission"
-              name="specifications.transmission"
-              value={formik.values.specifications.transmission}
-              onChange={handleInputChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            >
-              <option value="">Select Transmission</option>
-              <option value="automatic">Automatic</option>
-              <option value="manual">Manual</option>
-              <option value="semi-automatic">Semi-Automatic</option>
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="specifications.fuel_type" className="block text-sm font-medium text-gray-700">
-              Fuel Type
-            </label>
-            <select
-              id="specifications.fuel_type"
-              name="specifications.fuel_type"
-              value={formik.values.specifications.fuel_type}
-              onChange={handleInputChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            >
-              <option value="">Select Fuel Type</option>
-              <option value="gasoline">Gasoline</option>
-              <option value="diesel">Diesel</option>
-              <option value="electric">Electric</option>
-              <option value="hybrid">Hybrid</option>
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="specifications.engine_size" className="block text-sm font-medium text-gray-700">
-              Engine Size
-            </label>
-            <input
-              type="text"
-              id="specifications.engine_size"
-              name="specifications.engine_size"
-              value={formik.values.specifications.engine_size}
-              onChange={handleInputChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="specifications.color" className="block text-sm font-medium text-gray-700">
-              Color
-            </label>
-            <input
-              type="text"
-              id="specifications.color"
-              name="specifications.color"
-              value={formik.values.specifications.color}
-              onChange={handleInputChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="specifications.doors" className="block text-sm font-medium text-gray-700">
-              Number of Doors
-            </label>
-            <input
-              type="number"
-              id="specifications.doors"
-              name="specifications.doors"
-              value={formik.values.specifications.doors}
-              onChange={handleInputChange}
-              min="2"
-              max="5"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="specifications.seats" className="block text-sm font-medium text-gray-700">
-              Number of Seats
-            </label>
-            <input
-              type="number"
-              id="specifications.seats"
-              name="specifications.seats"
-              value={formik.values.specifications.seats}
-              onChange={handleInputChange}
-              min="2"
-              max="9"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            />
-          </div>
-        </div>
-
+        
+      </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Features</label>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">

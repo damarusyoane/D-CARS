@@ -46,9 +46,6 @@ interface VehicleOverview {
   status: string;
 }
 
-
-  
-
 interface ActivityItem {
   id: string;
   type: 'message' | 'listing' | 'view' | 'transaction' | 'inquiry' | 'saved';
@@ -93,12 +90,13 @@ const Dashboard: React.FC = () => {
   const [dashboardError, setDashboardError] = useState<string | null>(null);
   const [activityFeed, setActivityFeed] = useState<ActivityItem[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [, setNotificationCount] = useState<number>(0);
+  const [notificationCount, setNotificationCount] = useState<number>(0);
   const lineChartRef = useRef<HTMLCanvasElement | null>(null);
   const pieChartRef = useRef<HTMLCanvasElement | null>(null);
   const lineChart = useRef<Chart | null>(null);
   const pieChart = useRef<Chart | null>(null);
   const navigate = useNavigate();
+  const initialDataLoaded = useRef(false);
 
   // --- HELPERS FOR FALLBACKS ---
   const fallbackAvatar = '/assets/default-avatar.png';
@@ -106,25 +104,30 @@ const Dashboard: React.FC = () => {
 
   // --- FETCH USER ROLE, DASHBOARD DATA, ETC ---
   useEffect(() => {
-    if (!user) return;
+    if (!user || initialDataLoaded.current) return;
+    
     const fetchAll = async () => {
       setIsLoading(true);
       setDashboardError(null);
       try {
+        await fetchUserRole();
         await Promise.all([
-          fetchUserRole(),
           fetchDashboardData(),
           fetchTransactions(),
           fetchActivityFeed(),
           fetchNotifications()
         ]);
+        initialDataLoaded.current = true;
       } catch (err) {
         setDashboardError('Échec du chargement des données du tableau de bord.');
+        console.error('[Dashboard] Error loading dashboard data:', err);
       } finally {
         setIsLoading(false);
       }
     };
+    
     fetchAll();
+    
     // Real-time messages subscription
     const messagesSubscription = supabase
       .channel('messages-channel')
@@ -134,6 +137,7 @@ const Dashboard: React.FC = () => {
         fetchDashboardData();
       })
       .subscribe();
+      
     return () => {
       supabase.removeChannel(messagesSubscription);
     };
@@ -169,10 +173,10 @@ const Dashboard: React.FC = () => {
       console.error('Error fetching user role:', error);
     }
   };
+  
   // Dashboard Data (Listings & Messages)
   const fetchDashboardData = async () => {
     if (!user) return;
-    setIsLoading(true);
 
     try {
       const { data: listings, error: listingsError } = await supabase
@@ -221,10 +225,9 @@ const Dashboard: React.FC = () => {
     } catch (error) {
       setDashboardError('Erreur lors de la récupération des données du tableau de bord.');
       console.error('Error fetching dashboard data:', error);
-    } finally {
-      setIsLoading(false);
     }
   };
+  
   useSessionAwareRefresh(fetchDashboardData);
 
   // Transactions
@@ -239,7 +242,7 @@ const Dashboard: React.FC = () => {
         `)
         .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
         .order('created_at', { ascending: false })
-        .limit(10); // No aggregation in query, sum in JS
+        .limit(10);
 
       if (error) throw error;
       setTransactions(data || []);
@@ -370,6 +373,8 @@ const Dashboard: React.FC = () => {
 
   // Refresh Button Handler
   const handleRefresh = async () => {
+    if (isRefreshing) return;
+    
     setIsRefreshing(true);
     try {
       await Promise.all([
@@ -379,6 +384,9 @@ const Dashboard: React.FC = () => {
         fetchNotifications(),
       ]);
       toast.success('Dashboard refreshed!');
+      
+      // Re-initialize charts after data refresh
+      initializeCharts();
     } catch (error) {
       toast.error('Failed to refresh dashboard');
     } finally {
@@ -386,15 +394,46 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  // Separate function to initialize both charts
+  const initializeCharts = () => {
+    if (userRole === 'seller') {
+      if (lineChartRef.current && transactions.length > 0) {
+        initializeLineChart();
+      }
+      
+      if (pieChartRef.current && recentListings.length > 0) {
+        initializePieChart();
+      }
+    }
+  };
+
+  // Initialize charts when data and DOM elements are available
   useEffect(() => {
-    if (lineChartRef.current && transactions.length > 0 && userRole === 'seller') {
-      initializeLineChart();
+    // Only run this effect when both data is loaded and the component is fully rendered
+    if (!isLoading && userRole === 'seller' && initialDataLoaded.current) {
+      // Destroy existing charts to prevent memory leaks
+      if (lineChart.current) {
+        lineChart.current.destroy();
+        lineChart.current = null;
+      }
+      
+      if (pieChart.current) {
+        pieChart.current.destroy();
+        pieChart.current = null;
+      }
+      
+      // Initialize charts with a small delay to ensure refs are ready
+      const timer = setTimeout(() => {
+        initializeCharts();
+      }, 100);
+      
+      return () => clearTimeout(timer);
     }
+    // eslint-disable-next-line
+  }, [isLoading, userRole, transactions.length, recentListings.length]);
 
-    if (pieChartRef.current && recentListings.length > 0 && userRole === 'seller') {
-      initializePieChart();
-    }
-
+  // Clean up charts when component unmounts
+  useEffect(() => {
     return () => {
       if (lineChart.current) {
         lineChart.current.destroy();
@@ -403,28 +442,32 @@ const Dashboard: React.FC = () => {
         pieChart.current.destroy();
       }
     };
-  }, [transactions, recentListings, userRole]);
+  }, []);
 
   const initializeLineChart = () => {
     if (!lineChartRef.current) return;
-
+    
+    // Ensure we have the canvas context
     const ctx = lineChartRef.current.getContext('2d');
     if (!ctx) return;
-
+    
+    // Destroy existing chart to prevent duplicates
     if (lineChart.current) {
       lineChart.current.destroy();
     }
 
-    const dates = transactions
-      .filter((tx: any) => tx.status === 'completed')
-      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-      .map((tx: any) => new Date(tx.created_at).toLocaleDateString('default', { month: 'short', day: 'numeric' }));
+    // Prepare data
+    const completedTransactions = transactions.filter(tx => tx.status === 'completed')
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    
+    if (completedTransactions.length === 0) return;
+    
+    const dates = completedTransactions.map(tx => 
+      new Date(tx.created_at).toLocaleDateString('default', { month: 'short', day: 'numeric' }));
 
-    const amounts = transactions
-      .filter((tx: any) => tx.status === 'completed')
-      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-      .map((tx: any) => tx.amount);
+    const amounts = completedTransactions.map(tx => tx.amount);
 
+    // Create chart
     lineChart.current = new Chart(ctx, {
       type: 'line',
       data: {
@@ -480,20 +523,27 @@ const Dashboard: React.FC = () => {
 
   const initializePieChart = () => {
     if (!pieChartRef.current) return;
-
+    
+    // Ensure we have the canvas context
     const ctx = pieChartRef.current.getContext('2d');
     if (!ctx) return;
-
+    
+    // Destroy existing chart to prevent duplicates
     if (pieChart.current) {
       pieChart.current.destroy();
     }
 
-    const statuses = recentListings.reduce((acc: any, listing: any) => {
+    // Skip if no data
+    if (recentListings.length === 0) return;
+    
+    // Count listings by status
+    const statuses = recentListings.reduce<Record<string, number>>((acc, listing) => {
       const status = listing.status || 'unknown';
       acc[status] = (acc[status] || 0) + 1;
       return acc;
     }, {});
 
+    // Create chart
     pieChart.current = new Chart(ctx, {
       type: 'doughnut',
       data: {
@@ -692,6 +742,7 @@ const Dashboard: React.FC = () => {
             </div>
 
             {userRole === 'seller' && (
+              
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                 <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6 border border-gray-100 dark:border-gray-700">
                   <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
@@ -709,7 +760,7 @@ const Dashboard: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6 border border-gray-100 dark:border-gray-700">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6 border border-gray-100 dark">
                   <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
                     <ChartBarIcon className="h-5 w-5 mr-2 text-primary-600" />
                     État des Annonces
@@ -725,7 +776,9 @@ const Dashboard: React.FC = () => {
                   </div>
                 </div>
               </div>
+          
             )}
+            
 
             <div className="mb-8">
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md overflow-hidden">

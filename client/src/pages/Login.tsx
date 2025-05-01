@@ -1,15 +1,13 @@
-// client/src/pages/Login.tsx
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'react-toastify';
-import { supabase } from '../lib/supabase';
+import { toast } from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Login() {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const { signIn } = useAuth();
+    const { signIn, signInWithProvider, profile } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -18,34 +16,24 @@ export default function Login() {
         e.preventDefault();
         setIsLoading(true);
         try {
-            // Use AuthContext's signIn to handle login and state
             await signIn(email, password);
-
-            let destination = '/dashboard/search'; // default for buyers
-            try {
-                const { data: profile, error: profileError } = await supabase
-                    .from('profiles')
-                    .select('role')
-                    .eq('email', email)
-                    .single();
-
-                if (profileError) {
-                    toast.warn('Failed to fetch user profile. Redirecting to dashboard.');
-                } else if (profile?.role === 'admin') {
-                    destination = '/admin';
-                } else if (profile?.role === 'seller') {
-                    destination = '/dashboard/my-listings';
-                }
-            } catch (err) {
-                toast.warn('Error fetching profile. Redirecting to dashboard.');
+            
+            // Use profile from AuthContext instead of querying again
+            let destination = '/dashboard/search';
+            if (profile?.role === 'admin') {
+                destination = '/admin';
+            } else if (profile?.role === 'seller') {
+                destination = '/dashboard/my-listings';
             }
+            
             navigate(destination, { replace: true });
         } catch (error) {
             console.error('Login error:', error);
             if (error instanceof Error) {
-                if (error.message.toLowerCase().includes('invalid login credentials')) {
+                const errorMessage = error.message.toLowerCase();
+                if (errorMessage.includes('invalid login credentials')) {
                     toast.error(t('login.invalidCredentials') || 'Invalid email or password.');
-                } else if (error.message.toLowerCase().includes('email not confirmed')) {
+                } else if (errorMessage.includes('email not confirmed')) {
                     toast.error(t('login.emailNotConfirmed') || 'Please confirm your email before logging in.');
                 } else {
                     toast.error(error.message);
@@ -61,28 +49,24 @@ export default function Login() {
     const handleGoogleLogin = async () => {
         setIsLoading(true);
         try {
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo: `${window.location.origin}/dashboard/profile`,
-                },
-            });
-
-            if (error) {
-                console.error('Google login error:', error);
+            // Use AuthContext's signInWithProvider
+            await signInWithProvider('google');
+        } catch (error) {
+            console.error('Google login error:', error);
+            if (error instanceof Error) {
                 if (error.message.includes('OAuth secret')) {
                     toast.error('Google sign-in is not properly configured. Please contact support.');
                 } else {
                     toast.error(t('login.googleError'));
                 }
+            } else {
+                toast.error(t('login.googleError'));
             }
-        } catch (error) {
-            console.error('Google login error:', error);
-            toast.error(t('login.googleError'));
         } finally {
             setIsLoading(false);
         }
     };
+
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">

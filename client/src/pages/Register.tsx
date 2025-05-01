@@ -1,16 +1,14 @@
-// client/src/pages/Register.tsx
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'react-toastify';
+import { toast } from 'react-hot-toast';
 import { UserRole } from '../types';
-import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Register() {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const { signIn } = useAuth();
+    const { signUp, signInWithProvider } = useAuth();
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -30,11 +28,6 @@ export default function Register() {
         e.preventDefault();
         setIsLoading(true);
 
-        if (!formData.email.trim()) {
-            toast.error('Email is required.');
-            setIsLoading(false);
-            return;
-        }
         if (formData.password !== formData.confirmPassword) {
             toast.error(t('register.passwordMismatch'));
             setIsLoading(false);
@@ -42,94 +35,23 @@ export default function Register() {
         }
 
         try {
-            console.log('Starting registration process for:', formData.email);
+            const { error } = await signUp(
+                formData.email,
+                formData.password,
+                formData.fullName,
+                formData.phoneNumber,
+                formData.role
+            );
 
-            // Register the user with Supabase Auth (only email and password)
-            const { data, error: authError } = await supabase.auth.signUp({
-                email: formData.email,
-                password: formData.password
-            });
-
-            if (authError) {
-                console.error('Auth error:', authError);
-                // Show full error details for debugging
-                toast.error(authError.message || JSON.stringify(authError));
-                setIsLoading(false);
-                return;
-            }
-
-            const user = data.user;
-            if (!user) {
-                console.error('No user data returned from signup');
-                toast.error('Failed to create user account');
-                setIsLoading(false);
-                return;
-            }
-
-            // Insert extra profile info into 'profiles' table using user.id
-            const { error: profileError } = await supabase.from('profiles').insert({
-                id: user.id,
-                email: formData.email,
-                full_name: formData.fullName,
-                phone_number: formData.phoneNumber,
-                role: formData.role
-            });
-            if (profileError) {
-                console.error('Profile insert error:', profileError);
-                toast.error('Failed to save profile information.');
-                setIsLoading(false);
-                return;
-            }
-
-            // Sign in the user immediately after registration
-            try {
-                await signIn(formData.email, formData.password);
-                console.log('Successfully signed in after registration');
-            } catch (error) {
-                console.error('Sign in error:', error);
-                toast.error('Failed to sign in after registration');
-                setIsLoading(false);
-                return;
-            }
-
-            // Fetch user profile to determine role (by id, not email)
-            let userProfile = null;
-            try {
-                const { data: userData, error: userError } = await supabase.auth.getUser();
-                if (userError || !userData?.user) throw userError || new Error('User not found after registration');
-                const userId = userData.user.id;
-                const { data: profile, error: profileError } = await supabase
-                    .from('profiles')
-                    .select('role')
-                    .eq('id', userId)
-                    .single();
-                if (profileError) {
-                    console.error('Profile fetch error:', profileError);
-                } else {
-                    userProfile = profile;
-                }
-            } catch (err) {
-                console.error('Error fetching profile after registration:', err);
-            }
+            if (error) throw error;
 
             toast.success(t('register.success'));
-            // Redirect based on role
-            if (userProfile?.role === 'admin') {
-                navigate('/admin', { replace: true });
-            } else if (userProfile?.role === 'seller') {
-                navigate('/dashboard/my-listings', { replace: true });
-            } else {
-                navigate('/dashboard/search', { replace: true });
-            }
+            navigate('/profile');
+
         } catch (error) {
             console.error('Registration error:', error);
-            if (error instanceof Error && error.message.includes('already registered')) {
-                toast.error(t('register.emailInUse') || 'Email is already in use.');
-            } else if (error instanceof Error && error.message.toLowerCase().includes('password')) {
-                toast.error(t('register.weakPassword') || 'Password is too weak.');
-            } else {
-                toast.error(t('register.error'));
-            }
+            const message = error instanceof Error ? error.message : t('register.error');
+            toast.error(message);
         } finally {
             setIsLoading(false);
         }
@@ -138,17 +60,7 @@ export default function Register() {
     const handleGoogleSignIn = async () => {
         setIsLoading(true);
         try {
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo: `${window.location.origin}/dashboard/profile`,
-                },
-            });
-
-            if (error) {
-                console.error('Google sign in error:', error);
-                toast.error(t('register.googleError'));
-            }
+            await signInWithProvider('google');
         } catch (error) {
             console.error('Google sign in error:', error);
             toast.error(t('register.googleError'));
@@ -221,7 +133,7 @@ export default function Register() {
                                             autoComplete="email"
                                             required
                                             className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white sm:text-sm"
-                                            placeholder="tagne@example.com"
+                                            placeholder="example@email.com"
                                             value={formData.email}
                                             onChange={handleChange}
                                         />

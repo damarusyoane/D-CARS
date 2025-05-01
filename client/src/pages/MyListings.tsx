@@ -58,23 +58,27 @@ const MyListings: React.FC = () => {
     try {
       setIsLoading(true);
       setError(null);
-      
+
+      // Get current user
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       if (!currentUser) {
         navigate('/auth/login');
         return;
       }
 
+      // Build query
       let query = supabase
         .from('vehicles')
         .select('*')
         .eq('profile_id', currentUser.id)
         .order('created_at', { ascending: false });
-      
+
+      // Add filter if selected
       if (filter !== 'all') {
         query = query.eq('status', filter);
       }
 
+      // Execute query
       const { data, error } = await query;
 
       if (error) throw error;
@@ -87,10 +91,13 @@ const MyListings: React.FC = () => {
     }
   };
 
-  useSessionAwareRefresh(fetchListings);
-
+  // Fetch listings on mount and when filter changes
   useEffect(() => {
+    const abortController = new AbortController();
     fetchListings();
+    return () => {
+      abortController.abort();
+    };
   }, [filter]);
 
   const handleDeleteListing = async (id: string) => {
