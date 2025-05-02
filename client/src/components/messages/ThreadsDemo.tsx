@@ -265,7 +265,7 @@ export default function ThreadsDemo() {
                   className="px-3 bg-primary-600 text-white rounded disabled:opacity-50"
                 >
                   {sendMessage.isPending ? (
-                    <LoadingSpinner size="xs" />
+                    <LoadingSpinner size="sm" />
                   ) : (
                     'Send'
                   )}

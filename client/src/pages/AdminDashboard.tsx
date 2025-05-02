@@ -152,6 +152,8 @@ export default function AdminDashboard() {
         buyerData,
         sellerData,
         newUsersThisWeek,
+        vehiclesData,
+        usersData
       ] = await Promise.all([
         supabase.from('profiles').select('count', { head: true, count: 'exact' }),
         supabase.from('vehicles').select('count', { head: true, count: 'exact' }),
@@ -165,6 +167,14 @@ export default function AdminDashboard() {
           .from('profiles')
           .select('count', { head: true, count: 'exact' })
           .gte('created_at', new Date().toISOString().split('T')[0] + ' 00:00:00'),
+        supabase
+          .from('vehicles')
+          .select('*, seller:profiles(full_name, email)')
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('profiles')
+          .select('*')
       ]);
 
       // Update stats
@@ -184,26 +194,9 @@ export default function AdminDashboard() {
         averageListingViews: 0
       });
 
-      // Fetch pending vehicles
-      const { data: vehicles, error: vehiclesError } = await supabase
-        .from('vehicles')
-        .select('*, seller:profiles(full_name, email)')
-        .eq('status', 'pending')
-        .order('created_at', { ascending: false });
-
-      if (!vehiclesError) {
-        setPendingVehicles(vehicles || []);
-      }
-
-      // Fetch users
-      const { data: usersData, error: usersError } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (!usersError) {
-        setUsers(usersData || []);
-      }
+      // Set data
+      setPendingVehicles(vehiclesData.data || []);
+      setUsers(usersData.data || []);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Failed to fetch dashboard data');
