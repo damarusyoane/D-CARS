@@ -1,14 +1,16 @@
+// client/src/pages/Register.tsx
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'react-hot-toast';
+import { toast } from 'react-toastify';
 import { UserRole } from '../types';
+import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Register() {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const { signUp, signInWithProvider } = useAuth();
+    const { signIn } = useAuth();
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -35,23 +37,87 @@ export default function Register() {
         }
 
         try {
-            const { error } = await signUp(
-                formData.email,
-                formData.password,
-                formData.fullName,
-                formData.phoneNumber,
-                formData.role
-            );
+            console.log('Starting registration process for:', formData.email);
 
-            if (error) throw error;
+            // Register the user with Supabase Auth
+            const { data, error: authError } = await supabase.auth.signUp({
+                email: formData.email,
+                password: formData.password,
+                options: {
+                    data: {
+                        full_name: formData.fullName,
+                        phone_number: formData.phoneNumber,
+                        role: formData.role
+                    }
+                }
+            });
+
+            if (authError) {
+                console.error('Auth error:', authError);
+                if (authError.message.includes('already registered')) {
+                    toast.error(t('register.emailInUse') || 'Email is already in use.');
+                } else if (authError.message.toLowerCase().includes('password')) {
+                    toast.error(t('register.weakPassword') || 'Password is too weak.');
+                } else {
+                    toast.error(authError.message);
+                }
+                setIsLoading(false);
+                return;
+            }
+
+            if (!data?.user) {
+                console.error('No user data returned from signup');
+                toast.error('Failed to create user account');
+                setIsLoading(false);
+                return;
+            }
+
+            // Sign in the user immediately after registration
+            try {
+                await signIn(formData.email, formData.password);
+                console.log('Successfully signed in after registration');
+            } catch (error) {
+                console.error('Sign in error:', error);
+                toast.error('Failed to sign in after registration');
+                setIsLoading(false);
+                return;
+            }
+
+            // Fetch user profile to determine role
+            let userProfile = null;
+            try {
+                const { data: profile, error: profileError } = await supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('email', formData.email)
+                    .single();
+                if (profileError) {
+                    console.error('Profile fetch error:', profileError);
+                } else {
+                    userProfile = profile;
+                }
+            } catch (err) {
+                console.error('Error fetching profile after registration:', err);
+            }
 
             toast.success(t('register.success'));
-            navigate('/profile');
-
+            // Redirect based on role
+            if (userProfile?.role === 'admin') {
+                navigate('/admin', { replace: true });
+            } else if (userProfile?.role === 'seller') {
+                navigate('/dashboard/my-listings', { replace: true });
+            } else {
+                navigate('/dashboard/search', { replace: true });
+            }
         } catch (error) {
             console.error('Registration error:', error);
-            const message = error instanceof Error ? error.message : t('register.error');
-            toast.error(message);
+            if (error instanceof Error && error.message.includes('already registered')) {
+                toast.error(t('register.emailInUse') || 'Email is already in use.');
+            } else if (error instanceof Error && error.message.toLowerCase().includes('password')) {
+                toast.error(t('register.weakPassword') || 'Password is too weak.');
+            } else {
+                toast.error(t('register.error'));
+            }
         } finally {
             setIsLoading(false);
         }
@@ -60,7 +126,17 @@ export default function Register() {
     const handleGoogleSignIn = async () => {
         setIsLoading(true);
         try {
-            await signInWithProvider('google');
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: `${window.location.origin}/dashboard/profile`,
+                },
+            });
+
+            if (error) {
+                console.error('Google sign in error:', error);
+                toast.error(t('register.googleError'));
+            }
         } catch (error) {
             console.error('Google sign in error:', error);
             toast.error(t('register.googleError'));
@@ -133,7 +209,7 @@ export default function Register() {
                                             autoComplete="email"
                                             required
                                             className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white sm:text-sm"
-                                            placeholder="example@email.com"
+                                            placeholder="tagne@example.com"
                                             value={formData.email}
                                             onChange={handleChange}
                                         />

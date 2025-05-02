@@ -18,7 +18,7 @@ const SellerProfile = () => {
     isLoading: isLoadingProfile,
     refetch: refetchProfile
   } = useQuery<Profile | null>({
-    queryKey: ['profile', sellerId],
+    queryKey: ['profiles', sellerId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
@@ -42,7 +42,7 @@ const SellerProfile = () => {
       const { data, error } = await supabase
         .from('vehicles')
         .select('*')
-        .eq('seller_id', sellerId);
+        .eq('profile_id', sellerId);
       if (error) throw error;
       return data || [];
     },

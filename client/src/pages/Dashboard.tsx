@@ -264,7 +264,7 @@ const Dashboard: React.FC = () => {
           vehicles(id, make, model, year),
           profiles!sender_id(id, full_name, avatar_url)
         `)
-        .or(`recipient_id.eq.${user.id},sender_id.eq.${user.id}`)
+        .or(`receiver_id.eq.${user.id},sender_id.eq.${user.id}`)
         .order('created_at', { ascending: false })
         .limit(5);
 
@@ -361,7 +361,7 @@ const Dashboard: React.FC = () => {
       const { count, error } = await supabase
         .from('notifications')
         .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
+        .eq('profile_id', user.id)
         .eq('read', false);
 
       if (error) throw error;

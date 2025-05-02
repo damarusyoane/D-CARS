@@ -43,7 +43,7 @@ function Navbar() {
             <Link to="/" className="flex-shrink-0 flex items-center">
               <img
                 className="h-8 w-auto"
-                src="../public/assets/logo.svg"
+                src="/assets/logo.png"
                 alt="D-CARS"
               />
             </Link>

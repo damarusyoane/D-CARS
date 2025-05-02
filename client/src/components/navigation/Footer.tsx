@@ -12,7 +12,7 @@ function Footer() {
           <div className="space-y-4">
             <img
               className="h-8 w-auto"
-              src="../public/assets/logo.svg"
+              src="/assets/logo.png"
               alt="D-CARS"
             />
             <p className="text-sm text-gray-500 dark:text-gray-400">
