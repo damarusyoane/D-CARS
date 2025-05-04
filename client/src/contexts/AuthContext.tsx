@@ -91,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const checkTwoFactorStatus = async (userId: string) => {
         try {
-            const { data, error } = await supabase
+            const { error } = await supabase
                 .from('profiles')
                 .select('id')
                 .eq('id', userId)

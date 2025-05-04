@@ -386,7 +386,7 @@ export default function AdminDashboard() {
                   <StatCard icon={TruckIcon} title="Véhicules Totaux" value={stats.totalVehicles} color="border-green-600" />
                   <StatCard icon={TagIcon} title="Annonces Actives" value={stats.activeListings} color="border-purple-600" />
                   <StatCard icon={ShoppingCartIcon} title="Ventes Totales" value={stats.totalSales} color="border-amber-600" />
-                  <StatCard icon={CurrencyDollarIcon} title="Revenu Total" value={`$${stats.totalRevenue.toLocaleString()}`} color="border-emerald-600" />
+                  <StatCard icon={CurrencyDollarIcon} title="Revenu Total" value={`XAF${stats.totalRevenue.toLocaleString()}`} color="border-emerald-600" />
                   <StatCard icon={BellIcon} title="Approbations en Attente" value={stats.pendingApprovals} color="border-red-600" />
                 </div>
   
