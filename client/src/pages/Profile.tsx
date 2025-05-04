@@ -305,7 +305,7 @@ export default function Profile() {
                     {userData.totalListings}
                   </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {t('profile.listings')}
+                    {t('Annonces')}
                   </p>
                 </div>
                 <div className="text-center">
@@ -313,7 +313,7 @@ export default function Profile() {
                     {userData.completedSales}
                   </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {t('profile.sales')}
+                    {t('Ventes')}
                   </p>
                 </div>
                 <div className="text-center">
@@ -321,7 +321,7 @@ export default function Profile() {
                     {userData.rating}
                   </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {t('profile.rating')}
+                    {t('Note')}
                   </p>
                 </div>
               </div>
@@ -334,13 +334,13 @@ export default function Profile() {
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {t('profile.information')}
+                  {t('Information')}
                 </h3>
                 <button
                   onClick={() => setIsEditing(!isEditing)}
                   className="text-primary-600 hover:text-primary-700"
                 >
-                  {isEditing ? t('common.cancel') : t('common.edit')}
+                  {isEditing ? t('annuler') : t('modifier')}
                 </button>
               </div>
 
@@ -351,7 +351,7 @@ export default function Profile() {
                       htmlFor="name"
                       className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
-                      {t('profile.name')}
+                      {t('Nom')}
                     </label>
                     <input
                       type="text"
@@ -366,7 +366,7 @@ export default function Profile() {
                       htmlFor="email"
                       className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
-                      {t('profile.email')}
+                      {t('Email')}
                     </label>
                     <input
                       type="email"
@@ -381,7 +381,7 @@ export default function Profile() {
                       htmlFor="phone"
                       className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
-                      {t('profile.phone')}
+                      {t('Telephone')}
                     </label>
                     <input
                       type="tel"
@@ -403,7 +403,7 @@ export default function Profile() {
                           <span className="ml-2">Enregistrement...</span>
                         </div>
                       ) : (
-                        t('common.save')
+                        t('Enregistrer')
                       )}
                     </button>
                   </div>

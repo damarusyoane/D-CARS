@@ -142,10 +142,10 @@ export default function FeaturedCars() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center">
           <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white sm:text-4xl">
-            {t('home.featured.title', 'Featured Vehicles')}
+            {t('home.featured.title', 'Nos Top Annonces')}
           </h2>
           <p className="mt-3 max-w-2xl mx-auto text-xl text-gray-500 dark:text-gray-400 sm:mt-4">
-            {t('home.featured.description', 'Check out our selection of premium vehicles')}
+            {t('home.featured.description', 'Regarder nos meilleurs annonces ci-dessous')}
           </p>
         </div>
 
@@ -178,7 +178,7 @@ export default function FeaturedCars() {
                 </p>
                 <div className="mt-4 flex items-center justify-between">
                   <span className="text-sm text-gray-500 dark:text-gray-400">
-                    {car.mileage?.toLocaleString() || '0'} miles
+                    {car.mileage?.toLocaleString() || '0'} Km
                   </span>
                   <span className="text-sm text-gray-500 dark:text-gray-400">
                     {car.condition || 'Used'}
@@ -194,7 +194,7 @@ export default function FeaturedCars() {
             to="/search"
             className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700"
           >
-            {t('home.featured.viewAll', 'View All Vehicles')}
+            {t('home.featured.viewAll', 'Voir tous les annonces')}
           </Link>
         </div>
       </div>

@@ -9,7 +9,7 @@ import FeaturedCars from '../components/home/FeaturedCars';
 import { 
   ShieldCheckIcon,
   TruckIcon,
-  CurrencyDollarIcon,
+  CreditCardIcon,
   UserGroupIcon,
   ArrowRightIcon
 } from '@heroicons/react/24/outline';
@@ -25,13 +25,13 @@ function Index() {
       {/* Voitures en vedette Section */}
       <FeaturedCars />
       
-      {/* Why Choose Us Section */}
+      {/* Pourquoi nous choisir */}
       <section className="py-16 bg-white dark:bg-gray-800">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Pourquoi choisir D-CARS</h2>
             <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-              Our platform combines blockchain technology with a user-friendly marketplace to provide the best car buying and selling experience.
+              Notre plateforme combine la technologie blockchain à un marché convivial pour offrir la meilleure expérience d'achat et de vente de véhicules.
             </p>
           </div>
           
@@ -40,32 +40,32 @@ function Index() {
               <div className="mx-auto w-12 h-12 flex items-center justify-center rounded-full bg-primary-500 text-white mb-4">
                 <ShieldCheckIcon className="h-6 w-6" />
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Secure Transactions</h3>
-              <p className="text-gray-600 dark:text-gray-300">All transactions are secured by blockchain technology, ensuring transparency and security.</p>
+              <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Transactions Sécurisées</h3>
+              <p className="text-gray-600 dark:text-gray-300">Toutes les transactions sont sécurisées par la technologie blockchain, garantissant transparence et sécurité.</p>
             </div>
             
             <div className="p-6 bg-gray-50 dark:bg-gray-700 rounded-lg text-center">
               <div className="mx-auto w-12 h-12 flex items-center justify-center rounded-full bg-primary-500 text-white mb-4">
-                <CurrencyDollarIcon className="h-6 w-6" />
+                <CreditCardIcon className="h-6 w-6" />
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Competitive Pricing</h3>
-              <p className="text-gray-600 dark:text-gray-300">Our marketplace connects buyers and sellers directly, eliminating middlemen and reducing costs.</p>
+              <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Tarification Compétitive</h3>
+              <p className="text-gray-600 dark:text-gray-300">Notre marché connecte directement acheteurs et vendeurs, éliminant les intermédiaires et réduisant les coûts.</p>
             </div>
             
             <div className="p-6 bg-gray-50 dark:bg-gray-700 rounded-lg text-center">
               <div className="mx-auto w-12 h-12 flex items-center justify-center rounded-full bg-primary-500 text-white mb-4">
                 <TruckIcon className="h-6 w-6" />
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Verified Vehicles</h3>
-              <p className="text-gray-600 dark:text-gray-300">Each vehicle listing undergoes a verification process to ensure accurate information.</p>
+              <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Véhicules Vérifiés</h3>
+              <p className="text-gray-600 dark:text-gray-300">Chaque annonce de véhicule fait l'objet d'un processus de vérification pour garantir des informations précises.</p>
             </div>
             
             <div className="p-6 bg-gray-50 dark:bg-gray-700 rounded-lg text-center">
               <div className="mx-auto w-12 h-12 flex items-center justify-center rounded-full bg-primary-500 text-white mb-4">
                 <UserGroupIcon className="h-6 w-6" />
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Community Driven</h3>
-              <p className="text-gray-600 dark:text-gray-300">Our platform is built around a community of car enthusiasts who share reviews and insights.</p>
+              <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Communauté Dynamique</h3>
+              <p className="text-gray-600 dark:text-gray-300">Notre plateforme est construite autour d'une communauté de passionnés d'automobiles qui partagent des avis et des perspectives.</p>
             </div>
           </div>
         </div>
@@ -74,21 +74,21 @@ function Index() {
       {/* Quick Access Section */}
       <section className="py-16 bg-gray-50 dark:bg-gray-800">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-8 text-gray-900 dark:text-white">Quick Access</h2>
+          <h2 className="text-3xl font-bold text-center mb-8 text-gray-900 dark:text-white">Accès Rapide</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <Link 
               to="/cars" 
               className="p-6 bg-white dark:bg-gray-700 rounded-lg hover:shadow-md transition-shadow text-center"
             >
               <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Parcourir les voitures</h3>
-              <p className="text-gray-600 dark:text-gray-300">Explore our wide selection of vehicles</p>
+              <p className="text-gray-600 dark:text-gray-300">Explorez notre large sélection de véhicules</p>
             </Link>
             <Link 
               to="/cart" 
               className="p-6 bg-white dark:bg-gray-700 rounded-lg hover:shadow-md transition-shadow text-center"
             >
-              <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Cart</h3>
-              <p className="text-gray-600 dark:text-gray-300">View and manage your cart</p>
+              <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Panier</h3>
+              <p className="text-gray-600 dark:text-gray-300">Consultez et gérez votre panier</p>
             </Link>
             <Link 
               to="/subscription" 
@@ -104,14 +104,14 @@ function Index() {
                   className="p-6 bg-white dark:bg-gray-700 rounded-lg hover:shadow-md transition-shadow text-center"
                 >
                   <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Mes annonces</h3>
-                  <p className="text-gray-600 dark:text-gray-300">Manage your vehicle listings</p>
+                  <p className="text-gray-600 dark:text-gray-300">Gérez vos annonces de véhicules</p>
                 </Link>
                 <Link 
                   to="/messages" 
                   className="p-6 bg-white dark:bg-gray-700 rounded-lg hover:shadow-md transition-shadow text-center"
                 >
                   <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Messages</h3>
-                  <p className="text-gray-600 dark:text-gray-300">View and manage your conversations</p>
+                  <p className="text-gray-600 dark:text-gray-300">Consultez et gérez vos conversations</p>
                 </Link>
               </>
             ) : (
@@ -120,15 +120,15 @@ function Index() {
                   to="/auth/login" 
                   className="p-6 bg-white dark:bg-gray-700 rounded-lg hover:shadow-md transition-shadow text-center"
                 >
-                  <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Login</h3>
-                  <p className="text-gray-600 dark:text-gray-300">Sign in to your account</p>
+                  <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Connexion</h3>
+                  <p className="text-gray-600 dark:text-gray-300">Connectez-vous à votre compte</p>
                 </Link>
                 <Link 
                   to="/auth/register" 
                   className="p-6 bg-white dark:bg-gray-700 rounded-lg hover:shadow-md transition-shadow text-center"
                 >
-                  <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Register</h3>
-                  <p className="text-gray-600 dark:text-gray-300">Create a new account</p>
+                  <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Inscription</h3>
+                  <p className="text-gray-600 dark:text-gray-300">Créez un nouveau compte</p>
                 </Link>
               </>
             )}
@@ -139,9 +139,9 @@ function Index() {
       {/* Call to Action */}
       <section className="py-16 bg-primary-600 dark:bg-primary-700">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">Ready to Get Started?</h2>
+          <h2 className="text-3xl font-bold text-white mb-4">Prêt à Commencer ?</h2>
           <p className="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
-            Join thousands of users already enjoying our platform for buying and selling vehicles.
+            Rejoignez des milliers d'utilisateurs qui profitent déjà de notre plateforme d'achat et de vente de véhicules.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             {user ? (
@@ -149,21 +149,21 @@ function Index() {
                 to="/dashboard/create-listing" 
                 className="px-8 py-3 bg-white text-primary-600 font-medium rounded-md hover:bg-gray-100 transition-colors"
               >
-                Sell Your Car
+                Vendez Votre Voiture
               </Link>
             ) : (
               <Link 
                 to="/auth/register" 
                 className="px-8 py-3 bg-white text-primary-600 font-medium rounded-md hover:bg-gray-100 transition-colors"
               >
-                Create an Account
+                Créer un Compte
               </Link>
             )}
             <Link 
               to="/about" 
               className="px-8 py-3 bg-primary-700 text-white font-medium rounded-md hover:bg-primary-800 transition-colors"
             >
-              Learn More
+              En Savoir Plus
             </Link>
           </div>
         </div>
@@ -176,15 +176,15 @@ function Index() {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="md:w-1/2 mb-8 md:mb-0">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Join Our Community</h2>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Rejoignez Notre Communauté</h2>
               <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">
-                Connect with car enthusiasts, share your experiences, and stay updated with the latest automotive trends.
+                Connectez-vous avec des passionnés d'automobiles, partagez vos expériences et restez informé des dernières tendances automobiles.
               </p>
               <Link 
                 to="/community" 
                 className="inline-flex items-center px-6 py-3 bg-primary-600 dark:bg-primary-500 text-white font-medium rounded-md hover:bg-primary-700 dark:hover:bg-primary-600 transition-colors"
               >
-                Explore Community
+                Explorer la Communauté
                 <ArrowRightIcon className="ml-2 h-5 w-5" />
               </Link>
             </div>

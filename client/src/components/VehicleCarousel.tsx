@@ -47,17 +47,17 @@ const VehicleCarousel: React.FC<VehicleCarouselProps> = ({ vehicles }) => {
                 {vehicle.make} {vehicle.model}
               </h3>
               <p className="text-base-content/70">
-                {vehicle.year} • {vehicle.mileage.toLocaleString()} miles
+                {vehicle.year} • {vehicle.mileage.toLocaleString()} km
               </p>
               <div className="mt-4 flex items-center justify-between">
                 <span className="text-xl font-bold text-primary">
-                  ${vehicle.price.toLocaleString()}
+                  {Math.round(vehicle.price * 600).toLocaleString()} XAF
                 </span>
                 <Link
                   to={`/vehicles/${vehicle.id}`}
                   className="btn btn-primary btn-sm"
                 >
-                  View Details
+                  Voir Détails
                 </Link>
               </div>
             </div>

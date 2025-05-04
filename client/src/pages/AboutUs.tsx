@@ -1,4 +1,3 @@
-
 import { Link } from 'react-router-dom';
 import {
   UserGroupIcon,
@@ -9,47 +8,41 @@ import {
   ChatBubbleLeftRightIcon
 } from '@heroicons/react/24/outline';
 
+const heroBgImages = [
+  'https://images.unsplash.com/photo-1517524008697-6a3e0dc53c63?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1920&q=80',
+  'https://images.unsplash.com/photo-1503376780353-7db4a3f8a056?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1920&q=80',
+  'https://images.unsplash.com/photo-1581091226825-f6c5e0068cb0?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1920&q=80'
+];
+
 export default function AboutUs() {
   const teamMembers = [
     {
-      name: 'John Smith',
-      role: 'Founder & CEO',
-      image: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&w=256&q=80',
-      bio: 'With over 15 years in the automotive industry, John founded D-CARS with a vision to transform how people buy and sell vehicles online.'
+      name: 'Damarus Ngankou',
+      role: 'Fondateur & PDG',
+      image: '/assets/DAMARUS.jpg',
+      bio: 'Avec plus de 15 ans dans l\'industrie automobile, Damarus a fondé D-CARS avec la vision de transformer la façon dont les gens achètent et vendent des véhicules en ligne au Cameroun.'
     },
-    {
-      name: 'Sarah Johnson',
-      role: 'CTO',
-      image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=256&q=80',
-      bio: 'Sarah leads our tech team, bringing expertise in blockchain technology and secure digital transactions to the automotive marketplace.'
-    },
-    {
-      name: 'Michael Rodriguez',
-      role: 'Head of Operations',
-      image: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?ixlib=rb-4.0.3&auto=format&fit=crop&w=256&q=80',
-      bio: 'Michael ensures that our platform runs smoothly, overseeing everything from customer service to vendor relationships.'
-    }
   ];
 
   const values = [
     {
-      title: 'Trust & Transparency',
-      description: 'We believe in complete transparency in vehicle listings and transactions.',
+      title: 'Confiance & Transparence',
+      description: 'Nous croyons en une transparence totale dans les annonces et les transactions de véhicules.',
       icon: ShieldCheckIcon
     },
     {
-      title: 'Customer First',
-      description: 'Our decisions are guided by what provides the best experience for our users.',
+      title: 'Client d\'Abord',
+      description: 'Nos décisions sont guidées par ce qui offre la meilleure expérience à nos utilisateurs.',
       icon: UserGroupIcon
     },
     {
-      title: 'Quality Assurance',
-      description: 'Every vehicle listing undergoes a verification process to ensure accuracy.',
+      title: 'Assurance Qualité',
+      description: 'Chaque annonce de véhicule fait l\'objet d\'un processus de vérification pour garantir sa précision.',
       icon: StarIcon
     },
     {
       title: 'Innovation',
-      description: 'We continuously improve our platform with the latest technology.',
+      description: 'Nous améliorons continuellement notre plateforme avec les technologies les plus récentes.',
       icon: GlobeAltIcon
     }
   ];
@@ -57,12 +50,18 @@ export default function AboutUs() {
   return (
     <div className="bg-gray-900 text-white min-h-screen">
       {/* Hero Section */}
-      <section className="py-20 px-4">
+      <section  className="py-20 px-4 relative bg-cover bg-center"
+  style={{ 
+    backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url(${heroBgImages[Math.floor(Math.random() * heroBgImages.length)]})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center'
+  }}
+>
         <div className="max-w-6xl mx-auto text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-6">À Propos de D-CARS</h1>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-10">
             Nous révolutionnons la façon dont les gens achètent et vendent des véhicules en ligne grâce à une plateforme
-            sécurisée, transparente et conviviale.
+            sécurisée, transparente et conviviale, spécialement conçue pour le marché camerounais.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link
@@ -75,7 +74,7 @@ export default function AboutUs() {
               to="/cars"
               className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-md transition-colors"
             >
-              Browse Vehicles
+              Parcourir les Véhicules
             </Link>
           </div>
         </div>
@@ -88,24 +87,24 @@ export default function AboutUs() {
             <div className="md:w-1/2">
               <h2 className="text-3xl font-bold mb-6">Notre Histoire</h2>
               <p className="text-gray-300 mb-4">
-                Founded in 2022, D-CARS emerged from a simple idea: make buying and selling cars
-                more transparent, secure, and enjoyable. We recognized the challenges faced by
-                both buyers and sellers in the traditional and online automotive marketplaces.
+                Fondée en 2022, D-CARS est née d'une idée simple : rendre l'achat et la vente de voitures plus transparents, 
+                sécurisés et agréables au Cameroun. Nous avons reconnu les défis auxquels sont confrontés les acheteurs 
+                et les vendeurs sur les marchés automobiles traditionnels et en ligne.
               </p>
               <p className="text-gray-300 mb-4">
-                Our platform combines cutting-edge technology with automotive expertise to create
-                a trusted environment where users can confidently trade vehicles. We've grown
-                rapidly, connecting thousands of buyers and sellers across the country.
+                Notre plateforme combine une technologie de pointe avec une expertise automobile pour créer un environnement 
+                de confiance où les utilisateurs peuvent échanger des véhicules en toute confiance. Nous avons connu une 
+                croissance rapide, connectant des milliers d'acheteurs et de vendeurs à travers le Cameroun.
               </p>
               <p className="text-gray-300">
-                Today, we continue to innovate and expand our services, always guided by our
-                mission to transform the automotive marketplace for the better.
+                Aujourd'hui, nous continuons d'innover et d'étendre nos services, toujours guidés par notre mission de 
+                transformer le marché automobile pour le rendre plus accessible et transparent.
               </p>
             </div>
             <div className="md:w-1/2">
               <img
                 src="https://images.unsplash.com/photo-1560179707-f14e90ef3603?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
-                alt="D-CARS office"
+                alt="Bureau D-CARS"
                 className="rounded-lg shadow-lg w-full h-auto"
               />
             </div>
@@ -195,7 +194,7 @@ export default function AboutUs() {
               to="/cars"
               className="px-6 py-3 bg-blue-700 text-white rounded-md hover:bg-blue-800 transition-colors"
             >
-              Browse Vehicles
+              Parcourir les Véhicules
             </Link>
           </div>
         </div>

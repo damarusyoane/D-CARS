@@ -90,7 +90,7 @@ const Dashboard: React.FC = () => {
   const [dashboardError, setDashboardError] = useState<string | null>(null);
   const [activityFeed, setActivityFeed] = useState<ActivityItem[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [notificationCount, setNotificationCount] = useState<number>(0);
+  const [, setNotificationCount] = useState<number>(0);
   const lineChartRef = useRef<HTMLCanvasElement | null>(null);
   const pieChartRef = useRef<HTMLCanvasElement | null>(null);
   const lineChart = useRef<Chart | null>(null);
@@ -835,7 +835,7 @@ const Dashboard: React.FC = () => {
                     </div>
                   )) : (
                     <div className="p-6 text-center">
-                      <p className="text-gray-500 dark:text-gray-400">No recent activity</p>
+                      <p className="text-gray-500 dark:text-gray-400">Pas d'activités récentes</p>
                     </div>
                   )}
                 </div>
@@ -924,7 +924,7 @@ const Dashboard: React.FC = () => {
                           to="/dashboard/my-listings"
                           className="text-sm font-medium text-blue-600 hover:text-blue-500"
                         >
-                          View All Listings
+                          Voir vos annonces
                         </Link>
                       </div>
                     )}
@@ -952,7 +952,7 @@ const Dashboard: React.FC = () => {
 
                 <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md overflow-hidden">
                   <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
-                    <h3 className="text-lg font-medium text-gray-900">Recent Messages</h3>
+                    <h3 className="text-lg font-medium text-gray-900">Messages récents</h3>
                   </div>
 
                   <div className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -985,7 +985,7 @@ const Dashboard: React.FC = () => {
                       ))
                     ) : (
                       <div className="p-6 text-center">
-                        <p className="text-gray-500">You don't have any messages yet.</p>
+                        <p className="text-gray-500">Vous n'avez pas de messages.</p>
                       </div>
                     )}
                   </div>
@@ -996,7 +996,7 @@ const Dashboard: React.FC = () => {
                         to="/dashboard/messages"
                         className="text-sm font-medium text-blue-600 hover:text-blue-500"
                       >
-                        View All Messages
+                         Voir tous les messages
                       </Link>
                     </div>
                   )}

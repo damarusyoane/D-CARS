@@ -51,9 +51,9 @@ export default function SavedCars() {
     queryKey: ['savedVehicles', user?.id, filters, sortBy, sortOrder],
     queryFn: async () => {
       const { data: saved, error: savedError } = await supabase
-        .from('saved_vehicles')
+        .from('favorites')
         .select('vehicle_id')
-        .eq('user_id', user?.id);
+        .eq('profile_id', user?.id);
 
       if (savedError) throw savedError;
 
@@ -92,9 +92,9 @@ export default function SavedCars() {
   const removeFromSaved = useMutation({
     mutationFn: async (vehicleId: string) => {
       const { error } = await supabase
-        .from('saved_vehicles')
+        .from('favorites')
         .delete()
-        .eq('user_id', user?.id)
+        .eq('profile_id', user?.id)
         .eq('vehicle_id', vehicleId);
 
       if (error) throw error;
@@ -121,7 +121,7 @@ export default function SavedCars() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {t('savedCars.title')}
+            {t('Titre')}
           </h1>
           <div className="flex space-x-4">
             <button
@@ -133,11 +133,11 @@ export default function SavedCars() {
                   sortOrder === 'asc' ? 'rotate-180' : ''
                 }`}
               />
-              {t('common.sort')}
+              {t('sort')}
             </button>
             <button className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
               <FunnelIcon className="h-5 w-5 mr-2" />
-              {t('common.filter')}
+              {t('filtrer')}
             </button>
           </div>
         </div>
@@ -146,10 +146,10 @@ export default function SavedCars() {
           <div className="text-center py-12">
             <HeartIcon className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
-              {t('savedCars.empty')}
+              {t('Vide')}
             </h3>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {t('savedCars.emptyDescription')}
+              {t('Description Vide')}
             </p>
           </div>
         ) : (

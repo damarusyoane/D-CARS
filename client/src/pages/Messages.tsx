@@ -102,8 +102,7 @@ export default function Messages() {
           const otherUser = message.sender_id === user.id ? message.receiver : message.sender;
           if (!vehicleId || !otherUser) return;
           
-          // Get vehicle details separately if needed
-          const vehicleInfo = message.vehicle || { id: vehicleId };
+          
           
           if (!conversationsMap.has(vehicleId)) {
             conversationsMap.set(vehicleId, {
@@ -178,7 +177,7 @@ export default function Messages() {
         return data || [];
       } catch (err) {
         console.error('Error fetching messages:', err);
-        setError('Failed to load messages. Please try again later.');
+        setError('<p>Impossible de charger les messages. Veuillez réessayer.</p>');
         return [];
       }
     },
@@ -358,17 +357,17 @@ export default function Messages() {
             ) : isConversationsError ? (
               <div className="p-4 text-center text-red-500 dark:text-red-400">
                 <ExclamationCircleIcon className="w-6 h-6 mx-auto mb-2" />
-                <p>Failed to load conversations</p>
+                <p>Echec de chargement des conversations</p>
                 <button 
                   onClick={() => queryClient.invalidateQueries({ queryKey: ['conversations', user?.id] })}
                   className="mt-2 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-500 dark:hover:text-primary-400 underline"
                 >
-                  Retry
+                  Réessayer
                 </button>
               </div>
             ) : (
               <div className="p-4 text-center text-gray-500 dark:text-gray-400">
-                No conversations found
+                Aucune conversation trouvée
               </div>
             )}
           </div>
@@ -406,7 +405,7 @@ export default function Messages() {
                   <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                     {conversations.find(c => c.vehicle.id === selectedConversation)?.otherUser.full_name || 
                      conversations.find(c => c.vehicle.id === selectedConversation)?.otherUser.username || 
-                     'Unknown User'}
+                     'Utilisateur Inconnu'}
                   </p>
                 </div>
               </>
@@ -422,12 +421,12 @@ export default function Messages() {
             ) : isMessagesError ? (
               <div className="text-center text-red-500 dark:text-red-400 py-8 md:py-10 flex flex-col items-center">
                 <ExclamationCircleIcon className="w-8 h-8 mb-2" />
-                <p>Failed to load messages. Please try again.</p>
+                <p>Impossible de charger les messages. Veuillez réessayer.</p>
                 <button 
                   onClick={() => queryClient.invalidateQueries({ queryKey: ['messages', selectedConversation] })}
                   className="mt-2 text-primary-600 hover:text-primary-700 dark:text-primary-500 dark:hover:text-primary-400 underline"
                 >
-                  Retry
+                  Réessayer
                 </button>
               </div>
             ) : messages && messages.length > 0 ? (
@@ -456,7 +455,7 @@ export default function Messages() {
               })
             ) : (
               <div className="text-center text-gray-500 dark:text-gray-400 py-8 md:py-10">
-                No messages yet. Start the conversation!
+                Aucun message pour le moment. Commencez la conversation !
               </div>
             )}
             <div ref={messagesEndRef} />

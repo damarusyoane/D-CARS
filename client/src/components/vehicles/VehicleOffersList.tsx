@@ -100,10 +100,10 @@ const VehicleOffersList: React.FC<VehicleOffersListProps> = ({
           .insert({
             profile_id: updatedOffer.buyer_id,
             type: 'offer_response',
-            title: `Offer ${action === 'accepted' ? 'Accepted' : 'Declined'}`,
+            title: `Offre ${action === 'accepted' ? 'Acceptée' : 'Refusée'}`,
             message: action === 'accepted'
-              ? `Your offer of $${updatedOffer.amount.toLocaleString()} for the ${updatedOffer.vehicle?.year} ${updatedOffer.vehicle?.make} ${updatedOffer.vehicle?.model} has been accepted!`
-              : `Your offer of $${updatedOffer.amount.toLocaleString()} for the ${updatedOffer.vehicle?.year} ${updatedOffer.vehicle?.make} ${updatedOffer.vehicle?.model} was declined.`,
+              ? `Votre offre de ${Math.round(updatedOffer.amount * 600).toLocaleString()} XAF pour le ${updatedOffer.vehicle?.year} ${updatedOffer.vehicle?.make} ${updatedOffer.vehicle?.model} a été acceptée !`
+              : `Votre offre de ${Math.round(updatedOffer.amount * 600).toLocaleString()} XAF pour le ${updatedOffer.vehicle?.year} ${updatedOffer.vehicle?.make} ${updatedOffer.vehicle?.model} a été refusée.`,
             is_read: false,
             data: {
               vehicle_id: updatedOffer.vehicle_id,
@@ -133,33 +133,33 @@ const VehicleOffersList: React.FC<VehicleOffersListProps> = ({
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
             <ClockIcon className="mr-1 h-3 w-3" />
-            Pending
+            En Attente
           </span>
         );
       case 'accepted':
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
             <CheckCircleIcon className="mr-1 h-3 w-3" />
-            Accepted
+            Accepté
           </span>
         );
       case 'declined':
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
             <XCircleIcon className="mr-1 h-3 w-3" />
-            Declined
+            Refusé
           </span>
         );
       case 'expired':
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-            Expired
+            Expiré
           </span>
         );
       case 'completed':
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-            Completed
+            Terminé
           </span>
         );
       default:
@@ -183,11 +183,11 @@ const VehicleOffersList: React.FC<VehicleOffersListProps> = ({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
         </div>
-        <h3 className="mt-2 text-sm font-medium text-gray-900">No offers found</h3>
+        <h3 className="mt-2 text-sm font-medium text-gray-900">Aucune offre trouvée</h3>
         <p className="mt-1 text-sm text-gray-500">
           {isSeller
-            ? "You haven't received any offers on your vehicles yet."
-            : "You haven't made any offers on vehicles yet."}
+            ? "Vous n'avez pas encore reçu d'offres sur vos véhicules."
+            : "Vous n'avez pas encore fait d'offres sur des véhicules."}
         </p>
       </div>
     );

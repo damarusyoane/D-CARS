@@ -144,7 +144,7 @@ const Settings: React.FC = () => {
   const renderAccountSettings = () => (
     <div className="space-y-6">
       <div>
-        <label className="block text-sm font-medium text-gray-300">Full Name</label>
+        <label className="block text-sm font-medium text-gray-300"> Nom</label>
         <input
           type="text"
           name="account.name"
@@ -168,7 +168,7 @@ const Settings: React.FC = () => {
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-300">Phone</label>
+        <label className="block text-sm font-medium text-gray-300">Telephone</label>
         <input
           type="tel"
           name="account.phone"
@@ -194,7 +194,7 @@ const Settings: React.FC = () => {
               checked={value}
               onChange={() => handleCheckboxChange('notifications', key as keyof FormData['notifications'])}
               className="h-4 w-4 rounded border-gray-300 text-dark-accent focus:ring-dark-accent"
-              title={`Toggle ${key.replace(/([A-Z])/g, ' $1').trim()}`}
+              title={`Toggle ${key.replace(/([A-Z])/g, ' XAF').trim()}`}
             />
             <label htmlFor={inputId} className="ml-2 text-sm text-gray-300 capitalize">
               {key.replace(/([A-Z])/g, ' $1').trim()}
@@ -242,7 +242,7 @@ const Settings: React.FC = () => {
             />
           </div>
           <div className="ml-3 text-sm">
-            <label className="font-medium text-gray-700">Show Email</label>
+            <label className="font-medium text-gray-700">Voir Email</label>
             <p className="text-gray-500">Autoriser les autres à voir votre adresse e-mail</p>
           </div>
         </div>
@@ -258,7 +258,7 @@ const Settings: React.FC = () => {
             />
           </div>
           <div className="ml-3 text-sm">
-            <label className="font-medium text-gray-700">Show Phone Number</label>
+            <label className="font-medium text-gray-700">Voir Numero de Telephone</label>
             <p className="text-gray-500">Autoriser les autres à voir votre numéro de téléphone</p>
           </div>
         </div>
@@ -274,7 +274,7 @@ const Settings: React.FC = () => {
             />
           </div>
           <div className="ml-3 text-sm">
-            <label className="font-medium text-gray-700">Allow Messages</label>
+            <label className="font-medium text-gray-700">Voir Messages</label>
             <p className="text-gray-500">Autoriser les autres à vous envoyer des messages</p>
           </div>
         </div>
@@ -285,7 +285,7 @@ const Settings: React.FC = () => {
   const renderLanguageSettings = () => (
     <div className="space-y-6">
       <div>
-        <label className="block text-sm font-medium text-gray-300">Preferred Language</label>
+        <label className="block text-sm font-medium text-gray-300">Langage Preferer</label>
         <select
           name="language.preferred"
           value={formData.language.preferred}
@@ -294,9 +294,7 @@ const Settings: React.FC = () => {
           title="Preferred Language"
         >
           <option value="en">Anglais</option>
-          <option value="es">Spanish</option>
           <option value="fr">Français</option>
-          <option value="de">German</option>
         </select>
       </div>
     </div>

@@ -163,7 +163,7 @@ export default function Search() {
       >
         <div className="h-full flex flex-col p-4">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Filters</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Filtres</h2>
             <button
               onClick={() => setIsFilterOpen(false)}
               className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -176,7 +176,7 @@ export default function Search() {
 
           {/* Price Range */}
           <div className="mb-6">
-            <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Price Range</h3>
+            <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Marge de prix</h3>
             <div className="flex items-center space-x-2">
               <input
                 type="number"
@@ -387,7 +387,7 @@ export default function Search() {
                     />
                   ) : (
                     <div className="flex items-center justify-center h-full bg-gray-300 dark:bg-gray-700">
-                      <span className="text-gray-500 dark:text-gray-400">No image available</span>
+                      <span className="text-gray-500 dark:text-gray-400">Aucune image disponible</span>
                     </div>
                   )}
                 </div>
@@ -403,7 +403,7 @@ export default function Search() {
                       ${vehicle.price?.toLocaleString() || '0'}
                     </p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {vehicle.mileage?.toLocaleString() || '0'} miles
+                      {vehicle.mileage?.toLocaleString() || '0'} km
                     </p>
                   </div>
                   <div className="mt-3 flex justify-between items-center">
@@ -414,7 +414,7 @@ export default function Search() {
                       to={`/cars/${vehicle.id}`}
                       className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700"
                     >
-                      View Details
+                      Voir les Details
                       <ArrowTopRightOnSquareIcon className="ml-1 h-4 w-4" />
                     </Link>
                   </div>

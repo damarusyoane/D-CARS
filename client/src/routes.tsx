@@ -35,8 +35,6 @@ const SavedCars = lazy(() => import('./pages/SavedCars'));
 const MyListings = lazy(() => import('./pages/MyListings'));
 const CreateListing = lazy(() => import('./pages/CreateListing'));
 const EditListing = lazy(() => import('./pages/EditListing'));
-const Transactions = lazy(() => import('./pages/Transactions'));
-const TransactionHistory = lazy(() => import('./pages/TransactionHistory'));
 const Settings = lazy(() => import('./pages/Settings'));
 
 // Admin Pages
@@ -91,8 +89,6 @@ function AppRoutes() {
             <Route path="/dashboard/my-listings" element={<MyListings />} />
             <Route path="/dashboard/create-listing" element={<CreateListing />} />
             <Route path="/dashboard/edit-listing/:id" element={<EditListing />} />
-            <Route path="/dashboard/transactions" element={<Transactions />} />
-            <Route path="/dashboard/transaction-history" element={<TransactionHistory />} />
           </Route>
 
           {/* 404 Route */}

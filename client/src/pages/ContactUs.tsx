@@ -11,12 +11,15 @@ import {
 } from '@heroicons/react/24/outline';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 
+
 export default function ContactUs() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Replace the import line with a direct URL
+const ContactHeroBackground = 'https://images.unsplash.com/photo-1517524008697-6a3e0dc53c63?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1920&q=80';
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,12 +63,19 @@ export default function ContactUs() {
   
   return (
     <div className="bg-gray-900 text-white min-h-screen">
-      {/* Hero Section */}
-      <section className="py-16 px-4">
-        <div className="max-w-6xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">Contactez-Nous</h1>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            Vous avez des questions ou des commentaires ? Nous sommes là pour vous aider. Contactez notre équipe et nous vous répondrons dans les plus brefs délais.
+       {/* Hero Section with Background Image */}
+       <section 
+        className="relative py-24 px-4 bg-cover bg-center bg-no-repeat"
+        style={{ 
+          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url(${ContactHeroBackground})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}
+      >
+        <div className="max-w-6xl mx-auto text-center relative z-10">
+          <h1 className="text-4xl md:text-5xl font-bold mb-6 text-white">Contactez-Nous</h1>
+          <p className="text-xl text-gray-200 max-w-3xl mx-auto">
+            Vous avez des questions ou des commentaires ? Notre équipe est à votre écoute. Contactez-nous et nous vous répondrons dans les plus brefs délais.
           </p>
         </div>
       </section>
@@ -87,7 +97,7 @@ export default function ContactUs() {
                     <div>
                       <h3 className="text-lg font-medium mb-1">Notre Adresse</h3>
                       <p className="text-gray-400">123 Auto Plaza Drive</p>
-                      <p className="text-gray-400">San Francisco, CA 94158</p>
+                      <p className="text-gray-400">Douala, Cameroun</p>
                     </div>
                   </div>
                   
@@ -108,8 +118,9 @@ export default function ContactUs() {
                     </div>
                     <div>
                       <h3 className="text-lg font-medium mb-1">Appelez-nous</h3>
-                      <p className="text-gray-400">+1 (555) 123-4567</p>
-                      <p className="text-gray-400">+1 (555) 765-4321</p>
+                      <p className="text-gray-400">+237 674 411 479</p>
+                      <p className="text-gray-400">+237 674 411 479</p>
+
                     </div>
                   </div>
                   
@@ -119,9 +130,9 @@ export default function ContactUs() {
                     </div>
                     <div>
                       <h3 className="text-lg font-medium mb-1">Heures d'Ouverture</h3>
-                      <p className="text-gray-400">Monday-Friday: 9AM - 6PM</p>
-                      <p className="text-gray-400">Saturday: 10AM - 4PM</p>
-                      <p className="text-gray-400">Sunday: Closed</p>
+                      <p className="text-gray-400">Lundi-Vendredi: 9AM - 6PM</p>
+                      <p className="text-gray-400">Samedi: 10AM - 4PM</p>
+                      <p className="text-gray-400">Dimanche:  Fermé</p>
                     </div>
                   </div>
                 </div>
@@ -134,8 +145,8 @@ export default function ContactUs() {
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="bg-gray-700 p-3 rounded-full hover:bg-gray-600 transition-colors"
-                      aria-label="Visit our Facebook page"
-                      title="Visit our Facebook page"
+                      aria-label="Visitez notre page Facebook"
+                      title="Visitez notre page Facebook"
                     >
                       <span className="sr-only">Facebook</span>
                       <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -147,8 +158,8 @@ export default function ContactUs() {
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="bg-gray-700 p-3 rounded-full hover:bg-gray-600 transition-colors"
-                      aria-label="Visit our Twitter page"
-                      title="Visit our Twitter page"
+                      aria-label="Visitez notre page Twitter"
+                      title="Visitez notre page Twitter"
                     >
                       <span className="sr-only">Twitter</span>
                       <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -160,8 +171,8 @@ export default function ContactUs() {
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="bg-gray-700 p-3 rounded-full hover:bg-gray-600 transition-colors"
-                      aria-label="Visit our Instagram page"
-                      title="Visit our Instagram page"
+                      aria-label="Visitez notre page Instagram"
+                      title="Visitez notre page Instagram"
                     >
                       <span className="sr-only">Instagram</span>
                       <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -173,8 +184,8 @@ export default function ContactUs() {
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="bg-gray-700 p-3 rounded-full hover:bg-gray-600 transition-colors"
-                      aria-label="Visit our LinkedIn page"
-                      title="Visit our LinkedIn page"
+                      aria-label="Visitez notre page LinkedIn"
+                      title="Visitez notre page LinkedIn"
                     >
                       <span className="sr-only">LinkedIn</span>
                       <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -274,27 +285,28 @@ export default function ContactUs() {
           
           <div className="space-y-4">
             <div className="bg-gray-700 rounded-lg p-6">
-              <h3 className="text-lg font-semibold mb-3">What is D-CARS?</h3>
-              <p className="text-gray-300">D-CARS is an online platform that connects car buyers and sellers, providing a secure and transparent marketplace for vehicle transactions.</p>
+              <h3 className="text-lg font-semibold mb-3">Qu'est-ce que D-CARS ?</h3>
+              <p className="text-gray-300">D-CARS est une plateforme en ligne qui connecte les acheteurs et les vendeurs de voitures, offrant un marché sécurisé et transparent pour les transactions de véhicules.</p>
             </div>
             
             <div className="bg-gray-700 rounded-lg p-6">
-              <h3 className="text-lg font-semibold mb-3">How do I list my vehicle for sale?</h3>
-              <p className="text-gray-300">Simply create an account, click on "Create Listing" in your dashboard, and follow the step-by-step process to add details and images of your vehicle.</p>
+              <h3 className="text-lg font-semibold mb-3">Comment puis-je mettre mon véhicule en vente ?</h3>
+              <p className="text-gray-300">Créez simplement un compte, cliquez sur "Créer une annonce" dans votre tableau de bord et suivez le processus étape par étape pour ajouter les détails et les images de votre véhicule.</p>
             </div>
             
             <div className="bg-gray-700 rounded-lg p-6">
-              <h3 className="text-lg font-semibold mb-3">Are there any fees for selling a vehicle?</h3>
-              <p className="text-gray-300">We offer different subscription plans for sellers. Basic listings are free, while premium features are available for a small fee. Check our <Link to="/subscription" className="text-blue-400 hover:underline">Subscription</Link> page for details.</p>
+              <h3 className="text-lg font-semibold mb-3">Y a-t-il des frais pour vendre un véhicule ?</h3>
+              <p className="text-gray-300">Nous proposons différents plans d'abonnement pour les vendeurs. Les annonces de base sont gratuites, tandis que des fonctionnalités premium sont disponibles moyennant des frais minimes. Consultez notre page <Link to="/subscription" className="text-blue-400 hover:underline">Abonnement</Link> pour plus de détails.</p>
             </div>
             
             <div className="bg-gray-700 rounded-lg p-6">
-              <h3 className="text-lg font-semibold mb-3">How can I contact a seller?</h3>
-              <p className="text-gray-300">When viewing a vehicle listing, click on the "Contact Seller" button to send a message directly through our platform. All communications are securely managed through our messaging system.</p>
+              <h3 className="text-lg font-semibold mb-3">Comment puis-je contacter un vendeur ?</h3>
+              <p className="text-gray-300">Lors de la consultation d'une annonce de véhicule, cliquez sur le bouton "Contacter le vendeur" pour envoyer un message directement via notre plateforme. Toutes les communications sont gérées de manière sécurisée via notre système de messagerie.</p>
             </div>
           </div>
         </div>
       </section>
+
       
       {/* Map Section */}
       <section className="py-12 px-4">
@@ -306,7 +318,7 @@ export default function ContactUs() {
                   width="100%" 
                   height="450" 
                   allowFullScreen={false} 
-                  title="D-CARS Location"
+                  title="Localisation D-CARS"
                   className="w-full h-full border-0"
               ></iframe>
             </div>

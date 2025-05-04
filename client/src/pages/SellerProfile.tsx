@@ -124,10 +124,10 @@ const SellerProfile = () => {
             ))}
           </div>
         ) : (
-          <div className="text-gray-500 dark:text-gray-400">No vehicles currently listed by this profile.</div>
+          <div className="text-gray-500 dark:text-gray-400">Cet utilisateur n'a pas de Vehicule.</div>
         )
       ) : (
-        <div className="text-gray-500 dark:text-gray-400">This user is not a seller or dealer.</div>
+        <div className="text-gray-500 dark:text-gray-400">Cet utilisateur n'est pas un vendeur.</div>
       )}
     </div>
   );

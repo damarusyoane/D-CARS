@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/common/LoadingSpinner';
-import { useSessionAwareRefresh } from '../hooks/useSessionAwareRefresh';
+
 
 interface Listing {
   id: string;

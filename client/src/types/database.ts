@@ -27,6 +27,8 @@ export interface Profile {
 }
 
 export interface Vehicle {
+  inquiries: number;
+  views: number;
   id: string;
   profile_id: string;
   make: string;

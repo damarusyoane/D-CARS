@@ -15,8 +15,6 @@ import {
   TruckIcon,
   ClockIcon,
   BellIcon,
-  Cog6ToothIcon,
-  DocumentChartBarIcon,
   HomeIcon
 } from '@heroicons/react/24/outline';
 import LoadingSpinner from '../components/common/LoadingSpinner';
@@ -105,7 +103,7 @@ export default function AdminDashboard() {
     }
 
     if (profile.role !== 'admin') {
-      toast.error("Unauthorized access");
+      toast.error("Accès non autorisé");
       navigate('/', { replace: true });
       return;
     }
@@ -199,7 +197,7 @@ export default function AdminDashboard() {
       setUsers(usersData.data || []);
     } catch (error) {
       console.error('Error fetching data:', error);
-      toast.error('Failed to fetch dashboard data');
+      toast.error('Échec de la récupération des données du tableau de bord');
     } finally {
       setAnalyticsLoading(false);
       setIsLoading(false);
@@ -217,7 +215,7 @@ export default function AdminDashboard() {
       if (error) throw error;
 
       setPendingVehicles(prev => prev.filter(v => v.id !== vehicleId));
-      toast.success('Vehicle approved successfully');
+      toast.success('Véhicule approuvé avec succès');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Approval failed');
     } finally {
@@ -225,7 +223,7 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleVehicleRejection = async (vehicleId: string, reason: string) => {
+  const handleVehicleRejection = async (vehicleId: string) => {
     try {
       setProcessingId(vehicleId);
       const { error } = await supabase
@@ -236,7 +234,7 @@ export default function AdminDashboard() {
       if (error) throw error;
 
       setPendingVehicles(prev => prev.filter(v => v.id !== vehicleId));
-      toast.success('Vehicle rejected');
+      toast.success('Véhicule rejeté');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Rejection failed');
     } finally {
@@ -256,7 +254,7 @@ export default function AdminDashboard() {
       setUsers(prev => prev.map(user => 
         user.id === userId ? { ...user, role: newRole } : user
       ));
-      toast.success('Role updated successfully');
+      toast.success('Rôle mis à jour avec succès');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Update failed');
     }
@@ -268,7 +266,7 @@ export default function AdminDashboard() {
       await signOut();
       window.location.href = '/auth/login';
     } catch (error) {
-      toast.error('Logout failed');
+      toast.error('Échec de la déconnexion');
     } finally {
       setIsLoggingOut(false);
     }
@@ -311,19 +309,19 @@ export default function AdminDashboard() {
         {/* Desktop Sidebar */}
         <div className="hidden lg:block w-64 bg-gray-800 min-h-screen fixed z-30">
           <div className="p-6 border-b border-gray-700">
-            <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-            <p className="text-sm text-gray-400">Management Portal</p>
+            <h1 className="text-2xl font-bold">Tableau de Bord Admin</h1>
+            <p className="text-sm text-gray-400">Portail de Gestion</p>
           </div>
           <nav className="p-4">
             <ul className="space-y-2">
               <li>
                 <button onClick={() => setActiveTab('overview')} className={`w-full flex items-center px-4 py-3 rounded-lg ${activeTab === 'overview' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`}>
-                  <HomeIcon className="w-5 h-5 mr-3" />Overview
+                  <HomeIcon className="w-5 h-5 mr-3" />Aperçu
                 </button>
               </li>
               <li>
                 <button onClick={() => setActiveTab('pending')} className={`w-full flex items-center px-4 py-3 rounded-lg ${activeTab === 'pending' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`}>
-                  <ClockIcon className="w-5 h-5 mr-3" />Pending Approvals
+                  <ClockIcon className="w-5 h-5 mr-3" />Approbations en Attente
                   {stats.pendingApprovals > 0 && (
                     <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1">
                       {stats.pendingApprovals}
@@ -333,18 +331,18 @@ export default function AdminDashboard() {
               </li>
               <li>
                 <button onClick={() => setActiveTab('users')} className={`w-full flex items-center px-4 py-3 rounded-lg ${activeTab === 'users' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`}>
-                  <UsersIcon className="w-5 h-5 mr-3" />User Management
+                  <UsersIcon className="w-5 h-5 mr-3" />Gestion des Utilisateurs
                 </button>
               </li>
               <li>
                 <button onClick={() => setActiveTab('analytics')} className={`w-full flex items-center px-4 py-3 rounded-lg ${activeTab === 'analytics' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`}>
-                  <ChartBarIcon className="w-5 h-5 mr-3" />Analytics
+                  <ChartBarIcon className="w-5 h-5 mr-3" />Analytique
                 </button>
               </li>
             </ul>
           </nav>
         </div>
-
+  
         {/* Main Content */}
         <div className="w-full lg:ml-64 min-h-screen flex flex-col bg-gray-900">
           <header className="bg-gray-800 p-4 shadow-lg sticky top-0 z-20 flex items-center justify-between">
@@ -358,15 +356,15 @@ export default function AdminDashboard() {
                 </svg>
               </button>
               <div>
-                <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-                <p className="text-gray-400 text-sm">Welcome, {profile.email}</p>
+                <h1 className="text-2xl font-bold">Tableau de Bord Admin</h1>
+                <p className="text-gray-400 text-sm">Bienvenue, {profile.email}</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
               <button 
                 onClick={fetchData}
                 className="p-2 text-gray-400 hover:text-white"
-                title="Refresh data"
+                title="Actualiser les données"
               >
                 <ArrowPathIcon className="w-5 h-5" />
               </button>
@@ -375,45 +373,45 @@ export default function AdminDashboard() {
                 onClick={handleLogout}
                 disabled={isLoggingOut}
               >
-                {isLoggingOut ? 'Logging out...' : 'Logout'}
+                {isLoggingOut ? 'Déconnexion...' : 'Déconnexion'}
               </button>
             </div>
           </header>
-
+  
           <main className="p-6">
             {activeTab === 'overview' && (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                  <StatCard icon={UsersIcon} title="Total Users" value={stats.totalUsers} color="border-blue-600" />
-                  <StatCard icon={TruckIcon} title="Total Vehicles" value={stats.totalVehicles} color="border-green-600" />
-                  <StatCard icon={TagIcon} title="Active Listings" value={stats.activeListings} color="border-purple-600" />
-                  <StatCard icon={ShoppingCartIcon} title="Total Sales" value={stats.totalSales} color="border-amber-600" />
-                  <StatCard icon={CurrencyDollarIcon} title="Total Revenue" value={`$${stats.totalRevenue.toLocaleString()}`} color="border-emerald-600" />
-                  <StatCard icon={BellIcon} title="Pending Approvals" value={stats.pendingApprovals} color="border-red-600" />
+                  <StatCard icon={UsersIcon} title="Utilisateurs Totaux" value={stats.totalUsers} color="border-blue-600" />
+                  <StatCard icon={TruckIcon} title="Véhicules Totaux" value={stats.totalVehicles} color="border-green-600" />
+                  <StatCard icon={TagIcon} title="Annonces Actives" value={stats.activeListings} color="border-purple-600" />
+                  <StatCard icon={ShoppingCartIcon} title="Ventes Totales" value={stats.totalSales} color="border-amber-600" />
+                  <StatCard icon={CurrencyDollarIcon} title="Revenu Total" value={`$${stats.totalRevenue.toLocaleString()}`} color="border-emerald-600" />
+                  <StatCard icon={BellIcon} title="Approbations en Attente" value={stats.pendingApprovals} color="border-red-600" />
                 </div>
-
+  
                 {analyticsLoading ? (
                   <div className="flex justify-center my-8"><LoadingSpinner size="md" /></div>
                 ) : analyticsData && (
                   <AnalyticsChart data={analyticsData} />
                 )}
-
+  
                 <div className="bg-gray-800 rounded-lg p-6 mt-6">
                   <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-semibold">Pending Approvals</h2>
+                    <h2 className="text-xl font-semibold">Approbations en Attente</h2>
                     {pendingVehicles.length > 0 && (
                       <button 
                         onClick={() => setActiveTab('pending')}
                         className="text-blue-400 hover:text-blue-300 text-sm"
                       >
-                        View All
+                        Voir Tout
                       </button>
                     )}
                   </div>
                   {pendingVehicles.length === 0 ? (
                     <div className="text-center py-8 text-gray-400">
                       <CheckCircleIcon className="w-12 h-12 mx-auto mb-4 text-green-500" />
-                      <p className="text-lg font-medium">All caught up!</p>
+                      <p className="text-lg font-medium">Tout est à jour !</p>
                     </div>
                   ) : (
                     <div className="space-y-4">
@@ -428,7 +426,7 @@ export default function AdminDashboard() {
                                   className="h-full w-full object-cover"
                                 />
                               ) : (
-                                <div className="flex items-center justify-center h-full text-gray-500">No image</div>
+                                <div className="flex items-center justify-center h-full text-gray-500">Pas d'image</div>
                               )}
                             </div>
                             <div>
@@ -445,7 +443,7 @@ export default function AdminDashboard() {
                               <CheckCircleIcon className="w-6 h-6" />
                             </button>
                             <button
-                              onClick={() => handleVehicleRejection(vehicle.id, "Does not meet requirements")}
+                              onClick={() => handleVehicleRejection(vehicle.id)}
                               disabled={processingId === vehicle.id}
                               className="p-1 text-red-500 hover:bg-red-500/10 rounded-full"
                             >
@@ -459,7 +457,7 @@ export default function AdminDashboard() {
                 </div>
               </>
             )}
-
+  
             {activeTab === 'pending' && (
               <CarApprovalWorkflow 
                 pendingVehicles={pendingVehicles}
@@ -468,13 +466,13 @@ export default function AdminDashboard() {
                 processingId={processingId}
               />
             )}
-
+  
             {activeTab === 'users' && (
               <UserStatistics 
                 users={users}
                 onRoleChange={handleUserRoleUpdate} totalUsers={0} buyerCount={0} sellerCount={0} newUsersThisWeek={0}              />
             )}
-
+  
             {activeTab === 'analytics' && (
               <TrafficAnalytics 
                 dailyVisitors={stats.dailyVisitors}

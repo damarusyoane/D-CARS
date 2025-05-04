@@ -27,6 +27,13 @@ import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
 type Vehicle = Database['public']['Tables']['vehicles']['Row'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
+interface VehicleAnalytics {
+  date: string;
+  views: number;
+  inquiries: number;
+}
+
+
 interface FinanceCalculatorValues {
   price: number;
   downPayment: number;
@@ -167,24 +174,26 @@ export default function VehicleDetails() {
       try {
         // Example: assumes you have a vehicle_analytics_daily table or can group by day
         // If not, this will fallback to total views/inquiries only
-        const { data, error } = await supabase
-          .from('vehicle_analytics_daily')
+        const { data,  } = await supabase
+          .from('vehicle_analytics')
           .select('date, views, inquiries')
           .eq('vehicle_id', vehicle.id)
-          .order('date', { ascending: true });
+          .order('date', { ascending: true }) as { data: VehicleAnalytics[] | null, error: any };
+
         let analytics = {
           views: vehicle.views || 0,
           inquiries: vehicle.inquiries || 0,
-          dates: [],
-          viewsByDay: [],
-          inquiriesByDay: []
+          dates: [] as string[],
+          viewsByDay: [] as number[],
+          inquiriesByDay: [] as number[]
         };
+
         if (data && data.length > 0) {
-          analytics.dates = data.map((d: any) => d.date);
-          analytics.viewsByDay = data.map((d: any) => d.views);
-          analytics.inquiriesByDay = data.map((d: any) => d.inquiries);
-          analytics.views = data.reduce((sum: number, d: any) => sum + (d.views || 0), 0);
-          analytics.inquiries = data.reduce((sum: number, d: any) => sum + (d.inquiries || 0), 0);
+          analytics.dates = data.map((d: VehicleAnalytics) => d.date);
+          analytics.viewsByDay = data.map((d: VehicleAnalytics) => d.views);
+          analytics.inquiriesByDay = data.map((d: VehicleAnalytics) => d.inquiries);
+          analytics.views = data.reduce((sum: number, d: VehicleAnalytics) => sum + (d.views || 0), 0);
+          analytics.inquiries = data.reduce((sum: number, d: VehicleAnalytics) => sum + (d.inquiries || 0), 0);
         }
         setAnalyticsData(analytics);
       } catch (err) {
@@ -236,7 +245,7 @@ export default function VehicleDetails() {
         if (error) throw error;
 
         setIsSaved(false);
-        toast.success('Vehicle removed from favorites');
+        toast.success('Vehicule supprimer des favoris');
       } else {
         // Add to favorites
         const { error } = await supabase
@@ -250,7 +259,7 @@ export default function VehicleDetails() {
         if (error) throw error;
 
         setIsSaved(true);
-        toast.success('Vehicle added to favorites');
+        toast.success('Vehicule ajouter aux favoris');
       }
 
       // Invalidate saved vehicles queries

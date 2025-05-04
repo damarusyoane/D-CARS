@@ -147,10 +147,10 @@ export default function Subscription() {
         }
         
         setCurrentSubscription('free');
-        toast.success(t('subscription.freePlanSuccess'));
+        toast.success(t('free Plan Success'));
       } catch (error) {
         console.error('Error updating subscription:', error);
-        toast.error(t('common.error'));
+        toast.error(t('error'));
       } finally {
         setProcessingPlan(null);
       }
@@ -173,11 +173,11 @@ export default function Subscription() {
           
         if (error) throw error;
         
-        toast.success(t('subscription.addedToCart'));
+        toast.success(t('added To Cart'));
         navigate('/cart');
       } catch (error) {
         console.error('Error adding plan to cart:', error);
-        toast.error(t('common.error'));
+        toast.error(t('error'));
       } finally {
         setProcessingPlan(null);
       }
@@ -188,7 +188,7 @@ export default function Subscription() {
     return (
       <div className="min-h-screen flex justify-center items-center bg-gray-900 text-white">
         <LoadingSpinner />
-        <p className="ml-2">{t('common.loading')}...</p>
+        <p className="ml-2">{t('loading')}...</p>
       </div>
     );
   }
@@ -201,9 +201,9 @@ export default function Subscription() {
           <div className="mb-6 inline-block p-2 bg-blue-500/20 rounded-full">
             <SparklesIcon className="h-8 w-8 text-blue-400" />
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">{t('subscription.title')}</h1>
+          <h1 className="text-4xl md:text-5xl font-bold mb-6">{t('Titre')}</h1>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            {t('subscription.subtitle')}
+            {t('sous titre')}
           </p>
           
           {/* Billing Toggle */}
@@ -212,13 +212,13 @@ export default function Subscription() {
               className={`px-4 py-2 rounded-md ${billingPeriod === 'monthly' ? 'bg-blue-600 text-white' : 'text-gray-400'}`}
               onClick={() => setBillingPeriod('monthly')}
             >
-              {t('subscription.monthly')}
+              {t('mensuel')}
             </button>
             <button
               className={`px-4 py-2 rounded-md ${billingPeriod === 'yearly' ? 'bg-blue-600 text-white' : 'text-gray-400'}`}
               onClick={() => setBillingPeriod('yearly')}
             >
-              {t('subscription.yearly')} <span className="text-sm text-green-400">{t('subscription.savePercent')}</span>
+              {t('annuel')} <span className="text-sm text-green-400">{t('Pourcentage reduit')}</span>
             </button>
           </div>
         </div>
@@ -260,19 +260,19 @@ export default function Subscription() {
                     )}
                   </div>
                   <div className="mt-6">
-                    <span className="text-4xl font-bold">{t('common.currency')} {price.toLocaleString('fr-FR', { style: 'currency', currency: 'XAF' })}</span>
-                    <span className="text-gray-400 ml-2">{billingPeriod === 'monthly' ? t('subscription.perMonth') : t('subscription.perYear')}</span>
+                    <span className="text-4xl font-bold">{t('Monnaie')} {price.toLocaleString('fr-FR', { style: 'currency', currency: 'XAF' })}</span>
+                    <span className="text-gray-400 ml-2">{billingPeriod === 'monthly' ? t('Mensuel') : t('Annuel')}</span>
                   </div>
                 </div>
                 <div className="bg-gray-900 p-8">
                   <ul className="space-y-4">
                     <li className="flex items-start">
                       <CheckIcon className="h-6 w-6 text-green-500 mr-2 flex-shrink-0" />
-                      <span>{plan.listings_allowed} {t('subscription.listings')}</span>
+                      <span>{plan.listings_allowed} {t('Annonces')}</span>
                     </li>
                     <li className="flex items-start">
                       <CheckIcon className="h-6 w-6 text-green-500 mr-2 flex-shrink-0" />
-                      <span>{plan.featured_listings} {t('subscription.featuredListings')}</span>
+                      <span>{plan.featured_listings} {t('Top Annonces')}</span>
                     </li>
                     <li className="flex items-start">
                       {plan.analytics_access ? (
@@ -280,7 +280,7 @@ export default function Subscription() {
                       ) : (
                         <XMarkIcon className="h-6 w-6 text-red-500 mr-2 flex-shrink-0" />
                       )}
-                      <span>{t('subscription.analyticsAccess')}</span>
+                      <span>{t('Access aux statistiques')}</span>
                     </li>
                     <li className="flex items-start">
                       {plan.priority_support ? (
@@ -288,7 +288,7 @@ export default function Subscription() {
                       ) : (
                         <XMarkIcon className="h-6 w-6 text-red-500 mr-2 flex-shrink-0" />
                       )}
-                      <span>{t('subscription.prioritySupport')}</span>
+                      <span>{t('Support Prioritaire')}</span>
                     </li>
                     {featuresArray.map((feature, index) => (
                       <li key={index} className="flex items-start">
@@ -311,13 +311,13 @@ export default function Subscription() {
                     {processingPlan === plan.slug ? (
                       <div className="flex justify-center items-center">
                         <LoadingSpinner size="sm" />
-                        <span className="ml-2">{t('subscription.processing')}</span>
+                        <span className="ml-2">{t('processing')}</span>
                       </div>
                     ) : isCurrentPlan ? (
-                      t('subscription.currentPlan')
+                      t('Plan Current')
                     ) : (
                       <>
-                        <span>{price > 0 ? t('subscription.selectPlan') : t('subscription.startFree')}</span>
+                        <span>{price > 0 ? t('Choisir le Plan') : t('Plan Gratuit')}</span>
                         {price > 0 && <ShoppingCartIcon className="h-5 w-5 ml-2 inline-block" />}
                       </>
                     )}
@@ -332,28 +332,28 @@ export default function Subscription() {
       {/* Features Section */}
       <section className="py-16 px-4 bg-gray-800">
         <div className="max-w-6xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-12">{t('subscription.allPlans')}</h2>
+          <h2 className="text-3xl font-bold mb-12">{t('Tous les Plans')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <div className="p-6 bg-gray-700 rounded-lg">
               <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <ShieldCheckIcon className="h-6 w-6 text-blue-400" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">{t('subscription.secureTransactions')}</h3>
-              <p className="text-gray-300">{t('subscription.secureDesc')}</p>
+              <h3 className="text-xl font-semibold mb-2">{t('Securiter des Transactions')}</h3>
+              <p className="text-gray-300">{t('Securiter des Transactions Desc')}</p>
             </div>
             <div className="p-6 bg-gray-700 rounded-lg">
               <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <SparklesIcon className="h-6 w-6 text-blue-400" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">{t('subscription.vehicleHistory')}</h3>
-              <p className="text-gray-300">{t('subscription.vehicleHistoryDesc')}</p>
+              <h3 className="text-xl font-semibold mb-2">{t('Historique des Vehicules')}</h3>
+              <p className="text-gray-300">{t('Historique des Vehicules Desc')}</p>
             </div>
             <div className="p-6 bg-gray-700 rounded-lg">
               <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <RocketLaunchIcon className="h-6 w-6 text-blue-400" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">{t('subscription.support24_7')}</h3>
-              <p className="text-gray-300">{t('subscription.support24_7Desc')}</p>
+              <h3 className="text-xl font-semibold mb-2">{t('Support 24_7')}</h3>
+              <p className="text-gray-300">{t('Support 24_7 Desc')}</p>
             </div>
           </div>
         </div>
@@ -362,19 +362,19 @@ export default function Subscription() {
       {/* FAQ Section */}
       <section className="py-16 px-4">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold mb-12 text-center">{t('subscription.faqTitle')}</h2>
+          <h2 className="text-3xl font-bold mb-12 text-center">{t('FAQ')}</h2>
           <div className="space-y-6">
             <div className="p-6 bg-gray-800 rounded-lg">
-              <h3 className="text-xl font-semibold mb-2">{t('subscription.faqUpgrade')}</h3>
-              <p className="text-gray-300">{t('subscription.faqUpgradeAnswer')}</p>
+              <h3 className="text-xl font-semibold mb-2">{t('FAQ  croissant')}</h3>
+              <p className="text-gray-300">{t('FAQ  reponses croissant')}</p>
             </div>
             <div className="p-6 bg-gray-800 rounded-lg">
-              <h3 className="text-xl font-semibold mb-2">{t('subscription.faqExceed')}</h3>
-              <p className="text-gray-300">{t('subscription.faqExceedAnswer')}</p>
+              <h3 className="text-xl font-semibold mb-2">{t('FAQ Depasser')}</h3>
+              <p className="text-gray-300">{t('FAQ reponses Depasser')}</p>
             </div>
             <div className="p-6 bg-gray-800 rounded-lg">
-              <h3 className="text-xl font-semibold mb-2">{t('subscription.faqCancel')}</h3>
-              <p className="text-gray-300">{t('subscription.faqCancelAnswer')}</p>
+              <h3 className="text-xl font-semibold mb-2">{t('FAQ Annuler')}</h3>
+              <p className="text-gray-300">{t('FAQ reponses Annuler')}</p>
             </div>
           </div>
         </div>
