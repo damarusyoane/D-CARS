@@ -19,6 +19,7 @@ const AboutUs = lazy(() => import('./pages/AboutUs'));
 const ContactUs = lazy(() => import('./pages/ContactUs'));
 const Subscription = lazy(() => import('./pages/Subscription'));
 const Cart = lazy(() => import('./pages/Cart'));
+const CompleteProfile = lazy(() => import('./pages/CompleteProfile'));
 
 // Auth Pages
 const Login = lazy(() => import('./pages/Login'));
@@ -59,6 +60,7 @@ function AppRoutes() {
             <Route path="contact-us" element={<ContactUs />} />
             <Route path="subscription" element={<Subscription />} />
             <Route path="cart" element={<Cart />} />
+            
           </Route>
 
           {/* Auth Routes */}
@@ -66,6 +68,7 @@ function AppRoutes() {
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
             <Route path="callback" element={<AuthCallback />} />
+            <Route path='complete-profile' element={<CompleteProfile />} />
           </Route>
 
           {/* Admin Auth Routes */}

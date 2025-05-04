@@ -76,7 +76,7 @@ export function useMessages(vehicleId: string) {
 }
 
 export function useConversations() {
-  const queryClient = useQueryClient();
+
 
   const { data: conversations, isLoading } = useQuery({
     queryKey: ['conversations'],

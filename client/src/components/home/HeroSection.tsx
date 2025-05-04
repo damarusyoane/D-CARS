@@ -48,10 +48,11 @@ export default function HeroSection() {
   }, [heroData.length]);
 
   const currentHeroData = heroData[currentSlide];
+  const isAuthenticatedStatus = isAuthenticated;
 
   return (
     <div 
-      className="relative h-[80vh] bg-cover bg-center transition-all duration-1000 ease-in-out"
+      className="relative h-[80vh] md:h-[80vh] bg-cover bg-center transition-all duration-1000 ease-in-out"
       style={{ 
         backgroundImage: `url(${currentHeroData.backgroundImage})`,
         backgroundSize: 'cover',
@@ -63,36 +64,36 @@ export default function HeroSection() {
       
       <div className="relative z-10 flex items-center justify-center h-full">
         <div className="text-center text-white max-w-4xl px-4">
-          <h1 className="text-4xl md:text-6xl font-bold mb-4 animate-fadeIn">
-            <span className="block text-3xl md:text-5xl mb-2 text-primary-300">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 animate-fadeIn">
+            <span className="block text-2xl sm:text-3xl md:text-5xl mb-2 text-primary-300">
               {currentHeroData.title}
             </span>
             <span className="block text-primary-100">
               {currentHeroData.subtitle}
             </span>
           </h1>
-          <p className="text-lg md:text-xl mb-8 animate-fadeIn delay-500">
+          <p className="text-sm sm:text-lg md:text-xl mb-6 md:mb-8 animate-fadeIn delay-500">
             {currentHeroData.description}
           </p>
           
-          <div className="flex justify-center space-x-4">
+          <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-4">
             <Link
               to="/cars"
-              className="btn btn-primary px-8 py-3 text-lg rounded-full hover:scale-105 transition-transform"
+              className="btn btn-primary px-6 sm:px-8 py-2 sm:py-3 text-sm sm:text-lg rounded-full hover:scale-105 transition-transform"
             >
               Découvrir Notre Flotte
             </Link>
-            {isAuthenticated ? (
+            {isAuthenticatedStatus ? (
               <Link
                 to="/dashboard/my-listings"
-                className="btn btn-secondary px-8 py-3 text-lg rounded-full hover:scale-105 transition-transform"
+                className="btn btn-secondary px-6 sm:px-8 py-2 sm:py-3 text-sm sm:text-lg rounded-full hover:scale-105 transition-transform"
               >
                 Mes Annonces
               </Link>
             ) : (
               <Link
                 to="/auth/login"
-                className="btn btn-outline btn-primary px-8 py-3 text-lg rounded-full hover:scale-105 transition-transform"
+                className="btn btn-outline btn-primary px-6 sm:px-8 py-2 sm:py-3 text-sm sm:text-lg rounded-full hover:scale-105 transition-transform"
               >
                 Connexion
               </Link>
@@ -100,14 +101,14 @@ export default function HeroSection() {
           </div>
 
           {/* Slide Indicators */}
-          <div className="flex justify-center mt-8 space-x-2">
+          <div className="flex justify-center mt-4 md:mt-8 space-x-2">
             {heroData.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentSlide(index)}
-                className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-all duration-300 ${
                   currentSlide === index 
-                    ? 'bg-primary-500 w-6' 
+                    ? 'bg-primary-500 w-4 md:w-6' 
                     : 'bg-white/50 hover:bg-white/75'
                 }`}
               />

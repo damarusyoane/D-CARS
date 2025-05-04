@@ -75,6 +75,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
             setIsLoading(false);
         });
+        
+        // In useEffect tracking auth changes:
+supabase.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN' && session?.user) {
+      // Force-refresh profile data
+      const { data: freshProfile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+      
+      setProfile(freshProfile);
+    }
+  });
 
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {

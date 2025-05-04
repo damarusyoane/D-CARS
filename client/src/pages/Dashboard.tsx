@@ -151,7 +151,7 @@ const Dashboard: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('role, full_name, is_admin')
+        .select('role, full_name')
         .eq('id', user.id)
         .single();
       if (error) {

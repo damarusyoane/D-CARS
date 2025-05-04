@@ -40,17 +40,19 @@ export default function Register() {
             console.log('Starting registration process for:', formData.email);
 
             // Register the user with Supabase Auth
-            const { data, error: authError } = await supabase.auth.signUp({
-                email: formData.email,
-                password: formData.password,
-                options: {
-                    data: {
-                        full_name: formData.fullName,
-                        phone_number: formData.phoneNumber,
-                        role: formData.role
-                    }
-                }
-            });
+           // In handleSubmit:
+const { data, error: authError } = await supabase.auth.signUp({
+    email: formData.email,
+    password: formData.password,
+    options: {
+      data: { // Ensure keys match trigger expectations
+        full_name: formData.fullName, // Use snake_case
+        phone_number: formData.phoneNumber,
+        role: formData.role
+      }
+    }
+  });
+           
 
             if (authError) {
                 console.error('Auth error:', authError);
@@ -71,6 +73,7 @@ export default function Register() {
                 setIsLoading(false);
                 return;
             }
+            console.log('Auth Response:', data, authError);
 
             // Sign in the user immediately after registration
             try {
@@ -126,11 +129,16 @@ export default function Register() {
     const handleGoogleSignIn = async () => {
         setIsLoading(true);
         try {
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo: `${window.location.origin}/dashboard/profile`,
+            const { error } = // In handleGoogleSignIn:
+            await supabase.auth.signInWithOAuth({
+              provider: 'google',
+              options: {
+                redirectTo: `${window.location.origin}/auth/complete-profile`,
+                queryParams: {
+                  access_type: 'offline',
+                  prompt: 'consent',
                 },
+              },
             });
 
             if (error) {
