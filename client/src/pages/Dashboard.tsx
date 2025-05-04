@@ -165,7 +165,7 @@ const Dashboard: React.FC = () => {
       }
       setUserRole(data.role);
       setUserName(data.full_name || '');
-      if (data.is_admin && window.location.pathname !== '/admin') {
+      if (data.role && window.location.pathname !== '/admin') {
         navigate('/admin', { replace: true });
       }
     } catch (error) {

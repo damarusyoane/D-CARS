@@ -9,9 +9,9 @@ import {
 } from '@heroicons/react/24/outline';
 
 const heroBgImages = [
-  'https://images.unsplash.com/photo-1517524008697-6a3e0dc53c63?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1920&q=80',
-  'https://images.unsplash.com/photo-1503376780353-7db4a3f8a056?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1920&q=80',
-  'https://images.unsplash.com/photo-1581091226825-f6c5e0068cb0?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1920&q=80'
+  'assets/apropos.jpg',
+  'assets/about-inner1-5.jpg',
+  'assets/about-inner-1-1.jpg'
 ];
 
 export default function AboutUs() {
@@ -103,7 +103,7 @@ export default function AboutUs() {
             </div>
             <div className="md:w-1/2">
               <img
-                src="https://images.unsplash.com/photo-1560179707-f14e90ef3603?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
+                src="assets/bureau1.jpg"
                 alt="Bureau D-CARS"
                 className="rounded-lg shadow-lg w-full h-auto"
               />
@@ -134,7 +134,7 @@ export default function AboutUs() {
       <section className="py-16 bg-gray-800 px-4">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl font-bold mb-12 text-center">Notre Équipe</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1">
             {teamMembers.map((member, index) => (
               <div key={index} className="bg-gray-900 rounded-lg overflow-hidden shadow-lg">
                 <img

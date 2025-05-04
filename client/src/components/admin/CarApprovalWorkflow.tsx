@@ -127,8 +127,8 @@ const CarApprovalWorkflow: React.FC<CarApprovalWorkflowProps> = ({
   return (
     <div className="bg-gray-800 rounded-lg overflow-hidden">
       <div className="p-6 border-b border-gray-700">
-        <h2 className="text-xl font-semibold text-white">Vehicle Approval Queue</h2>
-        <p className="text-gray-400 mt-1">Review and approve new vehicle listings before they appear on the site</p>
+        <h2 className="text-xl font-semibold text-white">Vehicule en attente d'approbation</h2>
+        <p className="text-gray-400 mt-1">Veuillez approuver les vehicules avant qu'ils ne soient afficher sur le site</p>
       </div>
 
       {pendingVehicles.length === 0 ? (
@@ -136,18 +136,18 @@ const CarApprovalWorkflow: React.FC<CarApprovalWorkflowProps> = ({
           <div className="mx-auto w-16 h-16 mb-4 flex items-center justify-center rounded-full bg-green-500/20">
             <CheckCircleIcon className="w-8 h-8 text-green-500" />
           </div>
-          <h3 className="text-lg font-medium text-white mb-2">All Caught Up!</h3>
-          <p className="text-gray-400 max-w-md mx-auto">There are no vehicles waiting for approval. New submissions will appear here for your review.</p>
+          <h3 className="text-lg font-medium text-white mb-2">Tout est en ordre!</h3>
+          <p className="text-gray-400 max-w-md mx-auto">Aucune voiture en attente d'approbation. Les vehicules en attente seront afficher ici</p>
         </div>
       ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-700">
             <thead className="bg-gray-700">
               <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Vehicle</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Seller</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Price</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Date Submitted</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Vehicule</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Vendeur</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Prix</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Date de soumission</th>
                 <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -160,7 +160,7 @@ const CarApprovalWorkflow: React.FC<CarApprovalWorkflowProps> = ({
                         {vehicle.images && vehicle.images.length > 0 ? (
                           <img src={vehicle.images[0]} alt={vehicle.title} className="h-full w-full object-cover" />
                         ) : (
-                          <div className="flex items-center justify-center h-full text-gray-500">No image</div>
+                          <div className="flex items-center justify-center h-full text-gray-500">Aucune image</div>
                         )}
                       </div>
                       <div>
@@ -184,16 +184,16 @@ const CarApprovalWorkflow: React.FC<CarApprovalWorkflowProps> = ({
                       <button
                         onClick={() => handleViewDetails(vehicle)}
                         className="text-blue-400 hover:text-blue-300 p-1"
-                        title="View details"
-                        aria-label="View details"
+                        title="Voir details"
+                        aria-label="Voir details"
                       >
                         <EyeIcon className="w-5 h-5" />
                       </button>
                       <button
                         onClick={() => handleOpenMessageModal(vehicle)}
                         className="text-yellow-400 hover:text-yellow-300 p-1"
-                        title="Message seller"
-                        aria-label="Message seller"
+                        title="Ecrire au vendeur"
+                        aria-label="Ecrire au vendeur"
                       >
                         <ChatBubbleLeftIcon className="w-5 h-5" />
                       </button>
@@ -201,7 +201,7 @@ const CarApprovalWorkflow: React.FC<CarApprovalWorkflowProps> = ({
                         onClick={() => onApprove(vehicle.id)}
                         disabled={processingId === vehicle.id}
                         className="text-green-400 hover:text-green-300 p-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Approve"
+                        title="Approuver"
                       >
                         <CheckCircleIcon className="w-5 h-5" />
                       </button>
@@ -209,7 +209,7 @@ const CarApprovalWorkflow: React.FC<CarApprovalWorkflowProps> = ({
                         onClick={() => handleOpenRejectModal(vehicle)}
                         disabled={processingId === vehicle.id}
                         className="text-red-400 hover:text-red-300 p-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Reject"
+                        title="Refuser"
                       >
                         <XCircleIcon className="w-5 h-5" />
                       </button>
@@ -228,7 +228,7 @@ const CarApprovalWorkflow: React.FC<CarApprovalWorkflowProps> = ({
           <div className="bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-700 flex justify-between items-center">
               <h3 className="text-xl font-semibold text-white">{selectedVehicle.title}</h3>
-              <button onClick={handleCloseDetails} className="text-gray-400 hover:text-white" title="Close details" aria-label="Close details">
+              <button onClick={handleCloseDetails} className="text-gray-400 hover:text-white" title="Fermer les details" aria-label="Close details">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -273,7 +273,7 @@ const CarApprovalWorkflow: React.FC<CarApprovalWorkflowProps> = ({
                   </>
                 ) : (
                   <div className="flex items-center justify-center h-full text-gray-500">
-                    No images available
+                    Aucune image disponible
                   </div>
                 )}
               </div>
@@ -284,7 +284,7 @@ const CarApprovalWorkflow: React.FC<CarApprovalWorkflowProps> = ({
                   <h4 className="text-lg font-medium text-white mb-4">Vehicle Information</h4>
                   <dl className="space-y-2">
                     <div className="flex justify-between">
-                      <dt className="text-gray-400">Make</dt>
+                      <dt className="text-gray-400">Marque</dt>
                       <dd className="text-white font-medium">{selectedVehicle.make}</dd>
                     </div>
                     <div className="flex justify-between">
@@ -292,26 +292,26 @@ const CarApprovalWorkflow: React.FC<CarApprovalWorkflowProps> = ({
                       <dd className="text-white font-medium">{selectedVehicle.model}</dd>
                     </div>
                     <div className="flex justify-between">
-                      <dt className="text-gray-400">Year</dt>
+                      <dt className="text-gray-400">Annee</dt>
                       <dd className="text-white font-medium">{selectedVehicle.year}</dd>
                     </div>
                     <div className="flex justify-between">
-                      <dt className="text-gray-400">Price</dt>
-                      <dd className="text-green-400 font-medium">${selectedVehicle.price.toLocaleString()}</dd>
+                      <dt className="text-gray-400">Prix</dt>
+                      <dd className="text-green-400 font-medium">XAF{selectedVehicle.price.toLocaleString()}</dd>
                     </div>
                     <div className="flex justify-between">
-                      <dt className="text-gray-400">Location</dt>
+                      <dt className="text-gray-400">Localisation</dt>
                       <dd className="text-white font-medium">{selectedVehicle.location}</dd>
                     </div>
                     {selectedVehicle.mileage && (
                       <div className="flex justify-between">
-                        <dt className="text-gray-400">Mileage</dt>
+                        <dt className="text-gray-400">Kilometrage</dt>
                         <dd className="text-white font-medium">{selectedVehicle.mileage.toLocaleString()} miles</dd>
                       </div>
                     )}
                     {selectedVehicle.fuel_type && (
                       <div className="flex justify-between">
-                        <dt className="text-gray-400">Fuel Type</dt>
+                        <dt className="text-gray-400">Type de Carburant</dt>
                         <dd className="text-white font-medium">{selectedVehicle.fuel_type}</dd>
                       </div>
                     )}
@@ -323,13 +323,13 @@ const CarApprovalWorkflow: React.FC<CarApprovalWorkflowProps> = ({
                     )}
                     {selectedVehicle.body_type && (
                       <div className="flex justify-between">
-                        <dt className="text-gray-400">Body Type</dt>
+                        <dt className="text-gray-400">Type de Carousserie</dt>
                         <dd className="text-white font-medium">{selectedVehicle.body_type}</dd>
                       </div>
                     )}
                     {selectedVehicle.color && (
                       <div className="flex justify-between">
-                        <dt className="text-gray-400">Color</dt>
+                        <dt className="text-gray-400">Couleur</dt>
                         <dd className="text-white font-medium">{selectedVehicle.color}</dd>
                       </div>
                     )}
@@ -337,10 +337,10 @@ const CarApprovalWorkflow: React.FC<CarApprovalWorkflowProps> = ({
                 </div>
                 
                 <div>
-                  <h4 className="text-lg font-medium text-white mb-4">Seller Information</h4>
+                  <h4 className="text-lg font-medium text-white mb-4">Information du vendeur</h4>
                   <dl className="space-y-2 mb-6">
                     <div className="flex justify-between">
-                      <dt className="text-gray-400">Name</dt>
+                      <dt className="text-gray-400">Nom</dt>
                       <dd className="text-white font-medium">{selectedVehicle.seller?.full_name}</dd>
                     </div>
                     <div className="flex justify-between">
@@ -348,7 +348,7 @@ const CarApprovalWorkflow: React.FC<CarApprovalWorkflowProps> = ({
                       <dd className="text-white font-medium">{selectedVehicle.seller?.email}</dd>
                     </div>
                     <div className="flex justify-between">
-                      <dt className="text-gray-400">Listing Date</dt>
+                      <dt className="text-gray-400">Date de l'annonce</dt>
                       <dd className="text-white font-medium">{new Date(selectedVehicle.created_at).toLocaleDateString()}</dd>
                     </div>
                   </dl>
@@ -366,7 +366,7 @@ const CarApprovalWorkflow: React.FC<CarApprovalWorkflowProps> = ({
                   onClick={handleCloseDetails}
                   className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-md"
                 >
-                  Close
+                  Fermer
                 </button>
                 <button
                   onClick={() => handleOpenRejectModal(selectedVehicle)}
@@ -374,7 +374,7 @@ const CarApprovalWorkflow: React.FC<CarApprovalWorkflowProps> = ({
                   className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center space-x-2 disabled:opacity-50"
                 >
                   {processingId === selectedVehicle.id ? <LoadingSpinner size="sm" /> : <XCircleIcon className="w-5 h-5" />}
-                  <span>Reject</span>
+                  <span>Refuser</span>
                 </button>
                 <button
                   onClick={() => onApprove(selectedVehicle.id)}
@@ -382,7 +382,7 @@ const CarApprovalWorkflow: React.FC<CarApprovalWorkflowProps> = ({
                   className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md flex items-center space-x-2 disabled:opacity-50"
                 >
                   {processingId === selectedVehicle.id ? <LoadingSpinner size="sm" /> : <CheckCircleIcon className="w-5 h-5" />}
-                  <span>Approve</span>
+                  <span>Accepter</span>
                 </button>
               </div>
             </div>
@@ -395,19 +395,19 @@ const CarApprovalWorkflow: React.FC<CarApprovalWorkflowProps> = ({
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
           <div className="bg-gray-800 rounded-lg max-w-md w-full">
             <div className="p-6 border-b border-gray-700">
-              <h3 className="text-xl font-semibold text-white">Reject Vehicle Listing</h3>
+              <h3 className="text-xl font-semibold text-white">Refuser les annonces</h3>
             </div>
             <div className="p-6">
               <div className="mb-4">
                 <p className="text-gray-300 mb-2">
-                  You are about to reject the following vehicle:
+                Vous allez refuser la vente suivante:
                 </p>
                 <p className="font-medium text-white">{selectedVehicle.year} {selectedVehicle.make} {selectedVehicle.model}</p>
               </div>
               
               <div className="mb-6">
                 <label htmlFor="rejectReason" className="block text-sm font-medium text-gray-400 mb-2">
-                  Reason for rejection (will be sent to the seller)
+                  Motif de refus (sera envoyé au vendeur)
                 </label>
                 <textarea
                   id="rejectReason"
@@ -424,7 +424,7 @@ const CarApprovalWorkflow: React.FC<CarApprovalWorkflowProps> = ({
                   onClick={handleCloseRejectModal}
                   className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-md"
                 >
-                  Cancel
+                  Annuler
                 </button>
                 <button
                   onClick={handleSubmitRejection}
@@ -432,7 +432,7 @@ const CarApprovalWorkflow: React.FC<CarApprovalWorkflowProps> = ({
                   className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center space-x-2 disabled:opacity-50"
                 >
                   {processingId === selectedVehicle.id ? <LoadingSpinner size="sm" /> : <XCircleIcon className="w-5 h-5" />}
-                  <span>Confirm Rejection</span>
+                  <span>Confirmation du refus</span>
                 </button>
               </div>
             </div>
@@ -449,7 +449,7 @@ const CarApprovalWorkflow: React.FC<CarApprovalWorkflowProps> = ({
           <div className="p-6">
             <div className="mb-4">
               <p className="text-gray-300 mb-2">
-                Send a message to the seller of:
+               Envoyer un message au vendeur:
               </p>
               <p className="font-medium text-white">{selectedVehicle.year} {selectedVehicle.make} {selectedVehicle.model}</p>
             </div>
@@ -471,7 +471,7 @@ const CarApprovalWorkflow: React.FC<CarApprovalWorkflowProps> = ({
                 onClick={handleCloseMessageModal}
                 className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-md"
               >
-                Cancel
+                Annuler
               </button>
               <button
                 onClick={handleSendMessage}
@@ -479,7 +479,7 @@ const CarApprovalWorkflow: React.FC<CarApprovalWorkflowProps> = ({
                 className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md flex items-center space-x-2 disabled:opacity-50"
               >
                 {sendingMessage ? <LoadingSpinner size="sm" /> : <ChatBubbleLeftIcon className="w-5 h-5" />}
-                <span>Send</span>
+                <span>Envoyer</span>
               </button>
             </div>
           </div>

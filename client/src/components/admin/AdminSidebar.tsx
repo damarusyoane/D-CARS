@@ -10,10 +10,10 @@ import {
 
 const navigation = [
   { name: 'Tableau de Bord', href: '/admin', icon: HomeIcon },
-  { name: 'Utilisateurs', href: '/admin/users', icon: UsersIcon },
-  { name: 'Véhicules', href: '/admin/vehicles', icon: TruckIcon }, // Updated icon
-  { name: 'Analytiques', href: '/admin/analytics', icon: ChartBarIcon },
-  { name: 'Paramètres', href: '/admin/settings', icon: Cog6ToothIcon }, // Updated icon
+  { name: 'Utilisateurs', href: '/admin', icon: UsersIcon },
+  { name: 'Véhicules', href: '/admin', icon: TruckIcon }, // Updated icon
+  { name: 'Analytiques', href: '/admin', icon: ChartBarIcon },
+  { name: 'Paramètres', href: '/dashboard/settings', icon: Cog6ToothIcon }, // Updated icon
 ];
 
 export default function AdminSidebar() {

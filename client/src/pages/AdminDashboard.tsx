@@ -127,7 +127,7 @@ export default function AdminDashboard() {
 
       // Fetch analytics data
       const { data: analytics, error: analyticsError } = await supabase
-        .from('vehicle_analytics_daily')
+        .from('vehicle_analytics')
         .select('date, views, inquiries')
         .order('date', { ascending: true });
 

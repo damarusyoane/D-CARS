@@ -19,7 +19,7 @@ export default function ContactUs() {
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Replace the import line with a direct URL
-const ContactHeroBackground = 'https://images.unsplash.com/photo-1517524008697-6a3e0dc53c63?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1920&q=80';
+const ContactHeroBackground = 'assets/contact.jpg';
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

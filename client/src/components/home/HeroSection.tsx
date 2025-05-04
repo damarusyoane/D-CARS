@@ -16,19 +16,19 @@ export default function HeroSection() {
   // Hero slides data with French text and professional car images
   const heroData: HeroSlide[] = [
     {
-      backgroundImage: 'https://images.unsplash.com/photo-1605559424843-9e4868e43dff',
+      backgroundImage: 'assets/index-back1.jpg',
       title: 'Découvrez',
       subtitle: 'L\'Excellence Automobile',
       description: 'Des véhicules de prestige qui racontent une histoire unique.'
     },
     {
-      backgroundImage: 'https://images.unsplash.com/photo-1617704013795-5ad54b3285ad',
+      backgroundImage: 'assets/index-back2.jpg',
       title: 'Performance',
       subtitle: 'Sans Compromis',
       description: 'Chaque courbe, chaque détail conçu pour l\'émotion pure.'
     },
     {
-      backgroundImage: 'https://images.unsplash.com/photo-1616422285623-c4a4eff50c58',
+      backgroundImage: 'assets/index-back3.jpg',
       title: 'Innovation',
       subtitle: 'Électrique et Élégant',
       description: 'L\'avenir de la mobilité, aujourd\'hui à votre portée.'

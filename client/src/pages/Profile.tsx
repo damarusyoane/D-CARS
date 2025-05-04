@@ -25,7 +25,7 @@ const userData = {
   phone: '+237 123 456 789',
   location: 'Douala, Cameroon',
   avatar: '/images/avatars/user-1.jpg',
-  bio: 'Car enthusiast and collector. I specialize in luxury and sports cars with low mileage and excellent condition.',
+  bio: 'Passionné et collectionneur d\automobiles. Je me spécialise dans les voitures de luxe et de sport avec un kilométrage faible et en excellent état.',
   memberSince: '2024-01-01',
   totalListings: 5,
   completedSales: 12,
@@ -38,7 +38,7 @@ const userData = {
         avatar: '/images/avatars/user-2.jpg',
       },
       rating: 5,
-      comment: 'Great seller! Very professional and responsive.',
+      comment: 'Excellent vendeur ! Très professionnel et réactif.',
       date: '2024-02-15',
     },
     // Add more reviews here

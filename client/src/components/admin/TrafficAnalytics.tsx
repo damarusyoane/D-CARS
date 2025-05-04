@@ -40,7 +40,7 @@ const TrafficAnalytics: React.FC<TrafficAnalyticsProps> = ({
             ) : (
               <ArrowTrendingDownIcon className="w-4 h-4 mr-1" />
             )}
-            {Math.abs(previousPeriodChange)}% from last period
+            {Math.abs(previousPeriodChange)}% de la derniere periode
           </span>
         </div>
       </div>
@@ -50,7 +50,7 @@ const TrafficAnalytics: React.FC<TrafficAnalyticsProps> = ({
         <div className="bg-gray-700 rounded-lg p-4">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-gray-400 text-sm">Daily Visitors</p>
+              <p className="text-gray-400 text-sm">Visiteur quotidien</p>
               <p className="text-2xl font-bold text-white">{dailyVisitors}</p>
             </div>
             <div className="p-2 bg-blue-500/20 rounded-full">
@@ -61,7 +61,7 @@ const TrafficAnalytics: React.FC<TrafficAnalyticsProps> = ({
         <div className="bg-gray-700 rounded-lg p-4">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-gray-400 text-sm">Weekly Visitors</p>
+              <p className="text-gray-400 text-sm">Visiteur hebdomadaire</p>
               <p className="text-2xl font-bold text-white">{weeklyVisitors}</p>
             </div>
             <div className="p-2 bg-green-500/20 rounded-full">
@@ -72,7 +72,7 @@ const TrafficAnalytics: React.FC<TrafficAnalyticsProps> = ({
         <div className="bg-gray-700 rounded-lg p-4">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-gray-400 text-sm">Monthly Visitors</p>
+              <p className="text-gray-400 text-sm">Visiteur mensuel</p>
               <p className="text-2xl font-bold text-white">{monthlyVisitors}</p>
             </div>
             <div className="p-2 bg-purple-500/20 rounded-full">
@@ -83,7 +83,7 @@ const TrafficAnalytics: React.FC<TrafficAnalyticsProps> = ({
         <div className="bg-gray-700 rounded-lg p-4">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-gray-400 text-sm">Conversion Rate</p>
+              <p className="text-gray-400 text-sm">Taux de Conversion</p>
               <p className="text-2xl font-bold text-white">{conversionRate}%</p>
             </div>
             <div className="p-2 bg-amber-500/20 rounded-full">
@@ -95,7 +95,7 @@ const TrafficAnalytics: React.FC<TrafficAnalyticsProps> = ({
 
       {/* Chart */}
       <div className="mt-6">
-        <h3 className="text-lg font-medium text-white mb-4">Weekly Traffic</h3>
+        <h3 className="text-lg font-medium text-white mb-4">Traffic hebdomadaire</h3>
         <div className="h-64 flex items-end space-x-2">
           {mockChartData.map((item, index) => (
             <div key={index} className="flex flex-col items-center flex-1">
@@ -115,7 +115,7 @@ const TrafficAnalytics: React.FC<TrafficAnalyticsProps> = ({
 
       {/* Traffic Sources */}
       <div className="mt-8">
-        <h3 className="text-lg font-medium text-white mb-4">Traffic Sources</h3>
+        <h3 className="text-lg font-medium text-white mb-4">Sources de traffic</h3>
         <div className="space-y-4">
           <div className="flex items-center">
             <div className="w-32 text-sm text-gray-400">Direct</div>
@@ -127,7 +127,7 @@ const TrafficAnalytics: React.FC<TrafficAnalyticsProps> = ({
             <div className="w-16 text-right text-sm font-medium text-white">65%</div>
           </div>
           <div className="flex items-center">
-            <div className="w-32 text-sm text-gray-400">Search</div>
+            <div className="w-32 text-sm text-gray-400">Recherche</div>
             <div className="flex-1">
               <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
                 <div className="h-full bg-green-500 rounded-full" style={{ width: '20%' }}></div>
