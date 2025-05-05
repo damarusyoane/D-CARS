@@ -30,14 +30,13 @@ export default function Register() {
         e.preventDefault();
         setIsLoading(true);
 
-        try {
-            // Validate passwords match
-            if (formData.password !== formData.confirmPassword) {
-                toast.error(t('register.passwordMismatch') || 'Les mots de passe ne correspondent pas');
-                setIsLoading(false);
-                return;
-            }
+        if (formData.password !== formData.confirmPassword) {
+            toast.error('Les mots de passe ne correspondent pas');
+            setIsLoading(false);
+            return;
+        }
 
+        try {
             console.log('Starting registration process for:', formData.email);
 
             // Register the user with Supabase Auth
@@ -49,7 +48,8 @@ export default function Register() {
                         full_name: formData.fullName,
                         phone_number: formData.phoneNumber,
                         role: formData.role
-                    }
+                    },
+                    emailRedirectTo: `${window.location.origin}/auth/callback`
                 }
             });
 
@@ -62,106 +62,57 @@ export default function Register() {
                 } else {
                     toast.error(authError.message);
                 }
+                setIsLoading(false);
                 return;
             }
 
             if (!data?.user) {
                 console.error('No user data returned from signup');
-                toast.error(t('register.genericError') || 'Failed to create user account');
+                toast.error('Failed to create user account');
+                setIsLoading(false);
                 return;
             }
-            
             console.log('Auth Response:', data);
-            
-            // Use setTimeout to allow Supabase to fully process the signup
-            // before attempting to create the profile
-            setTimeout(async () => {
-                try {
-                    // Only insert profile data if needed (if the RLS policies don't auto-create it)
-                    const { data: existingProfile } = await supabase
-                        .from('profiles')
-                        .select('id')
-                        .eq('id', data?.user?.id)
-                        .single();
 
-                    if (!existingProfile) {
-                        const { error: profileError } = await supabase
-                            .from('profiles')
-                            .insert({
-                                id: data?.user?.id,
-                                email: formData.email,
-                                full_name: formData.fullName,
-                                phone_number: formData.phoneNumber,
-                                role: formData.role,
-                                notification_preferences: {
-                                    email: true,
-                                    push: true,
-                                    sms: false,
-                                    new_messages: true,
-                                    price_alerts: true,
-                                    listing_updates: true
-                                },
-                                privacy_settings: {
-                                    profile_visibility: 'public',
-                                    show_email: false,
-                                    show_phone: true,
-                                    allow_messages: true
-                                },
-                                avatar_url: null,
-                                two_factor_enabled: false,
-                                two_factor_secret: null
-                            });
+            // Wait for the trigger function to create the profile
+            // Let's create a delay to ensure the trigger has time to execute
+            await new Promise(resolve => setTimeout(resolve, 1000));
 
-                        if (profileError) {
-                            console.error('Profile creation error:', profileError);
-                            toast.warning(t('register.profileError') || 'Account created but profile setup may be incomplete');
-                        }
-                    }
-
-                    // Sign in the user after registration
-                    try {
-                        await signIn(formData.email, formData.password);
-                        console.log('Successfully signed in after registration');
-                        
-                        toast.success(t('register.success') || 'Registration successful!');
-                        
-                        // Redirect based on role
-                        if (formData.role === 'admin') {
-                            navigate('/admin', { replace: true });
-                        } else if (formData.role === 'seller') {
-                            navigate('/dashboard/my-listings', { replace: true });
-                        } else {
-                            navigate('/dashboard/search', { replace: true });
-                        }
-                    } catch (signInError) {
-                        console.error('Sign in error:', signInError);
-                        toast.info(t('register.signInAfterRegister') || 'Account created. Please sign in manually.');
-                        navigate('/auth/login', { replace: true });
-                    }
-                } catch (profileSetupError) {
-                    console.error('Profile setup error:', profileSetupError);
-                    toast.info(t('register.partialSuccess') || 'Account created. Please log in to complete your profile.');
-                    navigate('/auth/login', { replace: true });
-                } finally {
-                    setIsLoading(false);
+            // Only proceed to sign in if we successfully created the user
+            // Sign in the user immediately after registration
+            try {
+                await signIn(formData.email, formData.password);
+                console.log('Successfully signed in after registration');
+                
+                toast.success(t('register.success'));
+                
+                // Redirect based on role
+                if (formData.role === 'admin') {
+                    navigate('/admin', { replace: true });
+                } else if (formData.role === 'seller') {
+                    navigate('/dashboard/my-listings', { replace: true });
+                } else {
+                    navigate('/dashboard/search', { replace: true });
                 }
-            }, 1000); // Give Supabase a second to process the signup
-
+            } catch (error) {
+                console.error('Sign in error:', error);
+                toast.error('Account created but sign-in failed. Please try logging in.');
+                navigate('/auth/login', { replace: true });
+            }
         } catch (error) {
             console.error('Registration error:', error);
-            
             if (error instanceof Error) {
                 if (error.message.includes('already registered')) {
                     toast.error(t('register.emailInUse') || 'Email is already in use.');
                 } else if (error.message.toLowerCase().includes('password')) {
                     toast.error(t('register.weakPassword') || 'Password is too weak.');
                 } else {
-                    toast.error(t('register.error') || 'Registration failed. Please try again.');
+                    toast.error(error.message || t('register.error'));
                 }
             } else {
-                toast.error(t('register.error') || 'Registration failed. Please try again.');
+                toast.error(t('register.error'));
             }
-            
+        } finally {
             setIsLoading(false);
         }
     };
@@ -182,11 +133,11 @@ export default function Register() {
 
             if (error) {
                 console.error('Google sign in error:', error);
-                toast.error(t('register.googleError') || 'Google sign-in failed');
+                toast.error(t('register.googleError'));
             }
         } catch (error) {
             console.error('Google sign in error:', error);
-            toast.error(t('register.googleError') || 'Google sign-in failed');
+            toast.error(t('register.googleError'));
         } finally {
             setIsLoading(false);
         }
@@ -197,13 +148,11 @@ export default function Register() {
             <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden">
                 <div className="px-6 py-8 sm:px-10">
                     <div className="text-center">
-                        <Link to="/">
-                            <img
-                                className="mx-auto h-16 w-auto"
-                                src="/assets/logo.png"
-                                alt="D-CARS"
-                            />
-                        </Link>
+                        <img
+                            className="mx-auto h-16 w-auto"
+                            src="/assets/logo.png"
+                            alt="D-CARS"
+                        />
                         <h2 className="mt-4 text-3xl font-extrabold text-gray-900 dark:text-white">
                             Créer un Compte
                         </h2>
