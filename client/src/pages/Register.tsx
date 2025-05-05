@@ -8,7 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 
 export default function Register() {
-    const {t}= useTranslation();
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { signIn } = useAuth();
     const [formData, setFormData] = useState({
@@ -30,29 +30,28 @@ export default function Register() {
         e.preventDefault();
         setIsLoading(true);
 
-        if (formData.password !== formData.confirmPassword) {
-            toast.error('Les mots de passe ne correspondent pas');
-            setIsLoading(false);
-            return;
-        }
-
         try {
+            // Validate passwords match
+            if (formData.password !== formData.confirmPassword) {
+                toast.error(t('register.passwordMismatch') || 'Les mots de passe ne correspondent pas');
+                setIsLoading(false);
+                return;
+            }
+
             console.log('Starting registration process for:', formData.email);
 
             // Register the user with Supabase Auth
-           // In handleSubmit:
-const { data, error: authError } = await supabase.auth.signUp({
-    email: formData.email,
-    password: formData.password,
-    options: {
-      data: { // Ensure keys match trigger expectations
-        full_name: formData.fullName, // Use snake_case
-        phone_number: formData.phoneNumber,
-        role: formData.role
-      }
-    }
-  });
-           
+            const { data, error: authError } = await supabase.auth.signUp({
+                email: formData.email,
+                password: formData.password,
+                options: {
+                    data: {
+                        full_name: formData.fullName,
+                        phone_number: formData.phoneNumber,
+                        role: formData.role
+                    }
+                }
+            });
 
             if (authError) {
                 console.error('Auth error:', authError);
@@ -63,65 +62,106 @@ const { data, error: authError } = await supabase.auth.signUp({
                 } else {
                     toast.error(authError.message);
                 }
-                setIsLoading(false);
                 return;
             }
 
             if (!data?.user) {
                 console.error('No user data returned from signup');
-                toast.error('Failed to create user account');
-                setIsLoading(false);
+                toast.error(t('register.genericError') || 'Failed to create user account');
                 return;
             }
-            console.log('Auth Response:', data, authError);
+            
+            console.log('Auth Response:', data);
+            
+            // Use setTimeout to allow Supabase to fully process the signup
+            // before attempting to create the profile
+            setTimeout(async () => {
+                try {
+                    // Only insert profile data if needed (if the RLS policies don't auto-create it)
+                    const { data: existingProfile } = await supabase
+                        .from('profiles')
+                        .select('id')
+                        .eq('id', data?.user?.id)
+                        .single();
 
-            // Sign in the user immediately after registration
-            try {
-                await signIn(formData.email, formData.password);
-                console.log('Successfully signed in after registration');
-            } catch (error) {
-                console.error('Sign in error:', error);
-                toast.error('Failed to sign in after registration');
-                setIsLoading(false);
-                return;
-            }
+                    if (!existingProfile) {
+                        const { error: profileError } = await supabase
+                            .from('profiles')
+                            .insert({
+                                id: data?.user?.id,
+                                email: formData.email,
+                                full_name: formData.fullName,
+                                phone_number: formData.phoneNumber,
+                                role: formData.role,
+                                notification_preferences: {
+                                    email: true,
+                                    push: true,
+                                    sms: false,
+                                    new_messages: true,
+                                    price_alerts: true,
+                                    listing_updates: true
+                                },
+                                privacy_settings: {
+                                    profile_visibility: 'public',
+                                    show_email: false,
+                                    show_phone: true,
+                                    allow_messages: true
+                                },
+                                avatar_url: null,
+                                two_factor_enabled: false,
+                                two_factor_secret: null
+                            });
 
-            // Fetch user profile to determine role
-            let userProfile = null;
-            try {
-                const { data: profile, error: profileError } = await supabase
-                    .from('profiles')
-                    .select('role')
-                    .eq('email', formData.email)
-                    .single();
-                if (profileError) {
-                    console.error('Profile fetch error:', profileError);
-                } else {
-                    userProfile = profile;
+                        if (profileError) {
+                            console.error('Profile creation error:', profileError);
+                            toast.warning(t('register.profileError') || 'Account created but profile setup may be incomplete');
+                        }
+                    }
+
+                    // Sign in the user after registration
+                    try {
+                        await signIn(formData.email, formData.password);
+                        console.log('Successfully signed in after registration');
+                        
+                        toast.success(t('register.success') || 'Registration successful!');
+                        
+                        // Redirect based on role
+                        if (formData.role === 'admin') {
+                            navigate('/admin', { replace: true });
+                        } else if (formData.role === 'seller') {
+                            navigate('/dashboard/my-listings', { replace: true });
+                        } else {
+                            navigate('/dashboard/search', { replace: true });
+                        }
+                    } catch (signInError) {
+                        console.error('Sign in error:', signInError);
+                        toast.info(t('register.signInAfterRegister') || 'Account created. Please sign in manually.');
+                        navigate('/auth/login', { replace: true });
+                    }
+                } catch (profileSetupError) {
+                    console.error('Profile setup error:', profileSetupError);
+                    toast.info(t('register.partialSuccess') || 'Account created. Please log in to complete your profile.');
+                    navigate('/auth/login', { replace: true });
+                } finally {
+                    setIsLoading(false);
                 }
-            } catch (err) {
-                console.error('Error fetching profile after registration:', err);
-            }
+            }, 1000); // Give Supabase a second to process the signup
 
-            toast.success(t('register.success'));
-            // Redirect based on role
-            if (userProfile?.role === 'admin') {
-                navigate('/admin', { replace: true });
-            } else if (userProfile?.role === 'seller') {
-                navigate('/dashboard/my-listings', { replace: true });
-            } else {
-                navigate('/dashboard/search', { replace: true });
-            }
         } catch (error) {
             console.error('Registration error:', error);
-            if (error instanceof Error && error.message.includes('already registered')) {
-                toast.error(t('register.emailInUse') || 'Email is already in use.');
-            } else if (error instanceof Error && error.message.toLowerCase().includes('password')) {
-                toast.error(t('register.weakPassword') || 'Password is too weak.');
+            
+            if (error instanceof Error) {
+                if (error.message.includes('already registered')) {
+                    toast.error(t('register.emailInUse') || 'Email is already in use.');
+                } else if (error.message.toLowerCase().includes('password')) {
+                    toast.error(t('register.weakPassword') || 'Password is too weak.');
+                } else {
+                    toast.error(t('register.error') || 'Registration failed. Please try again.');
+                }
             } else {
-                toast.error(t('register.error'));
+                toast.error(t('register.error') || 'Registration failed. Please try again.');
             }
-        } finally {
+            
             setIsLoading(false);
         }
     };
@@ -129,25 +169,24 @@ const { data, error: authError } = await supabase.auth.signUp({
     const handleGoogleSignIn = async () => {
         setIsLoading(true);
         try {
-            const { error } = // In handleGoogleSignIn:
-            await supabase.auth.signInWithOAuth({
-              provider: 'google',
-              options: {
-                redirectTo: `${window.location.origin}/auth/complete-profile`,
-                queryParams: {
-                  access_type: 'offline',
-                  prompt: 'consent',
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: `${window.location.origin}/auth/callback`,
+                    queryParams: {
+                        access_type: 'offline',
+                        prompt: 'consent',
+                    },
                 },
-              },
             });
 
             if (error) {
                 console.error('Google sign in error:', error);
-                toast.error(t('register.googleError'));
+                toast.error(t('register.googleError') || 'Google sign-in failed');
             }
         } catch (error) {
             console.error('Google sign in error:', error);
-            toast.error(t('register.googleError'));
+            toast.error(t('register.googleError') || 'Google sign-in failed');
         } finally {
             setIsLoading(false);
         }

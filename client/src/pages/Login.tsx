@@ -4,8 +4,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 export default function Login() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { signIn } = useAuth();
     const [email, setEmail] = useState('');
@@ -16,9 +18,11 @@ export default function Login() {
         e.preventDefault();
         setIsLoading(true);
         try {
+            console.log('Attempting login for:', email);
+            
             // Use AuthContext's signIn to handle login and state
             await signIn(email, password);
-    
+            
             // Fetch profile to check role
             const { data: profile, error: profileError } = await supabase
                 .from('profiles')
@@ -28,6 +32,66 @@ export default function Login() {
     
             if (profileError) {
                 console.error('Profile fetch error:', profileError);
+                
+                // If profile doesn't exist, try to create it
+                const { data: userData } = await supabase.auth.getUser();
+                
+                if (userData?.user) {
+                    const { error: createProfileError } = await supabase
+                        .from('profiles')
+                        .upsert({
+                            id: userData.user.id,
+                            email: email,
+                            full_name: userData.user.user_metadata.full_name || '',
+                            phone_number: userData.user.user_metadata.phone_number || '',
+                            role: userData.user.user_metadata.role || 'buyer',
+                            notification_preferences: {
+                                email: true,
+                                push: true,
+                                sms: false,
+                                new_messages: true,
+                                price_alerts: true,
+                                listing_updates: true
+                            },
+                            privacy_settings: {
+                                profile_visibility: 'public',
+                                show_email: false,
+                                show_phone: true,
+                                allow_messages: true
+                            },
+                            avatar_url: null,
+                            two_factor_enabled: false,
+                            two_factor_secret: null
+                        }, { onConflict: 'id' });
+                    
+                    if (createProfileError) {
+                        console.error('Profile creation error:', createProfileError);
+                        toast.error('Impossible de récupérer ou créer le profil utilisateur');
+                        setIsLoading(false);
+                        return;
+                    }
+                    
+                    // Fetch the newly created profile
+                    const { data: newProfile } = await supabase
+                        .from('profiles')
+                        .select('role')
+                        .eq('email', email)
+                        .single();
+                        
+                    if (newProfile) {
+                        // Navigate based on new profile role
+                        if (newProfile.role === 'admin') {
+                            navigate('/admin', { replace: true });
+                        } else if (newProfile.role === 'seller') {
+                            navigate('/dashboard/my-listings', { replace: true });
+                        } else {
+                            navigate('/dashboard/search', { replace: true });
+                        }
+                        setIsLoading(false);
+                        return;
+                    }
+                }
+                
                 toast.error('Impossible de récupérer le profil utilisateur');
                 setIsLoading(false);
                 return;
@@ -41,18 +105,20 @@ export default function Login() {
             } else {
                 navigate('/dashboard/search', { replace: true });
             }
+            
+            toast.success(t('login.success') || 'Connecté avec succès!');
         } catch (error) {
             console.error('Login error:', error);
             if (error instanceof Error) {
                 if (error.message.toLowerCase().includes('invalid login credentials')) {
-                    toast.error('Identifiants invalides. Veuillez réessayer.');
+                    toast.error(t('login.invalidCredentials') || 'Identifiants invalides. Veuillez réessayer.');
                 } else if (error.message.toLowerCase().includes('email not confirmed')) {
-                    toast.error('Veuillez confirmer votre email avant de vous connecter.');
+                    toast.error(t('login.emailNotConfirmed') || 'Veuillez confirmer votre email avant de vous connecter.');
                 } else {
                     toast.error(error.message);
                 }
             } else {
-                toast.error('Une erreur est survenue lors de la connexion');
+                toast.error(t('login.error') || 'Une erreur est survenue lors de la connexion');
             }
         } finally {
             setIsLoading(false);
@@ -65,21 +131,25 @@ export default function Login() {
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: `${window.location.origin}/dashboard/profile`,
+                    redirectTo: `${window.location.origin}/auth/callback`,
+                    queryParams: {
+                        access_type: 'offline',
+                        prompt: 'consent',
+                    },
                 },
             });
     
             if (error) {
                 console.error('Google login error:', error);
                 if (error.message.includes('OAuth secret')) {
-                    toast.error('La connexion Google n\'est pas configurée correctement. Veuillez contacter le support.');
+                    toast.error(t('login.googleConfigError') || 'La connexion Google n\'est pas configurée correctement. Veuillez contacter le support.');
                 } else {
-                    toast.error('Erreur lors de la connexion avec Google');
+                    toast.error(t('login.googleError') || 'Erreur lors de la connexion avec Google');
                 }
             }
         } catch (error) {
             console.error('Google login error:', error);
-            toast.error('Erreur lors de la connexion avec Google');
+            toast.error(t('login.googleError') || 'Erreur lors de la connexion avec Google');
         } finally {
             setIsLoading(false);
         }

@@ -165,8 +165,10 @@ const Dashboard: React.FC = () => {
       }
       setUserRole(data.role);
       setUserName(data.full_name || '');
-      if (data.role && window.location.pathname !== '/admin') {
+      if (data.role==='admin') {
         navigate('/admin', { replace: true });
+      }else if (data.role==='seller'|| data.role === 'buyer') {
+        navigate('/dashboard', { replace: true });
       }
     } catch (error) {
       setDashboardError('Erreur lors de la récupération du rôle utilisateur.');

@@ -47,17 +47,27 @@ export default function SavedCars() {
   const [sortOrder, setSortOrder] = useState('desc');
 
   // Fetch saved vehicles
-  const { data: savedVehicles, isLoading } = useQuery<Vehicle[]>({
+  const { data: savedVehicles, isLoading, error } = useQuery<Vehicle[]>({
     queryKey: ['savedVehicles', user?.id, filters, sortBy, sortOrder],
     queryFn: async () => {
+      console.log('Fetching saved vehicles for user:', user?.id);
       const { data: saved, error: savedError } = await supabase
         .from('favorites')
         .select('vehicle_id')
         .eq('profile_id', user?.id);
 
+      console.log('Saved vehicles data:', saved);
+      console.log('Saved vehicles error:', savedError);
+
       if (savedError) throw savedError;
 
       const vehicleIds = saved.map((s) => s.vehicle_id);
+      console.log('Vehicle IDs:', vehicleIds);
+
+      if (vehicleIds.length === 0) {
+        console.log('No saved vehicle IDs found');
+        return [];
+      }
 
       const { data: vehicles, error: vehiclesError } = await supabase
         .from('vehicles')
@@ -68,6 +78,9 @@ export default function SavedCars() {
         .gte('year', filters.yearRange[0])
         .lte('year', filters.yearRange[1])
         .order(sortBy, { ascending: sortOrder === 'asc' });
+
+      console.log('Vehicles data:', vehicles);
+      console.log('Vehicles error:', vehiclesError);
 
       if (vehiclesError) throw vehiclesError;
 
@@ -87,6 +100,9 @@ export default function SavedCars() {
     },
     enabled: !!user?.id,
   });
+
+  console.log('Query error:', error);
+  console.log('Saved vehicles:', savedVehicles);
 
   // Retirer from saved vehicles
   const removeFromSaved = useMutation({
@@ -181,7 +197,7 @@ export default function SavedCars() {
                     {vehicle.year} • {vehicle.mileage.toLocaleString()} km
                   </p>
                   <p className="mt-2 text-lg font-semibold text-primary-600">
-                    ${vehicle.price.toLocaleString()}
+                    XAF {vehicle.price.toLocaleString()}
                   </p>
                 </div>
               </div>

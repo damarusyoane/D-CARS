@@ -72,13 +72,13 @@ const CarCard: React.FC<CarCardProps> = ({
             </h3>
           </Link>
           <span className="text-lg font-bold text-dark-accent">
-            ${price.toLocaleString()}
+            XAF {price.toLocaleString()}
           </span>
         </div>
 
         <div className="space-y-2">
           <div className="flex items-center text-sm text-gray-400">
-            <span>{mileage.toLocaleString()} miles</span>
+            <span>{mileage.toLocaleString()} km</span>
             <span className="mx-2">•</span>
             <span>{location}</span>
           </div>

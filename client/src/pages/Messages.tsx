@@ -11,7 +11,6 @@ import {
   ExclamationCircleIcon,
   ChatBubbleOvalLeftEllipsisIcon
 } from '@heroicons/react/24/outline';
-import ThreadsDemo from '../components/messages/ThreadsDemo';
 
 // Define types properly 
 type Message = {
@@ -295,11 +294,6 @@ export default function Messages() {
 
   return (
     <div className="flex flex-col h-full max-w-full">
-      {/* --- New Threads Demo Section --- */}
-      <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 p-4">
-        <h2 className="text-xl font-semibold mb-2">(New) Threaded Messaging Demo</h2>
-        <ThreadsDemo />
-      </div>
       <div className="flex-1 flex min-h-0 overflow-hidden">
         {/* --- Legacy Messaging UI Below --- */}
         {/* Conversations List */}

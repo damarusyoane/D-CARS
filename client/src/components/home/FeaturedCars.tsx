@@ -174,7 +174,7 @@ export default function FeaturedCars() {
                   {car.location}
                 </p>
                 <p className="mt-2 text-lg font-semibold text-primary-600 dark:text-primary-400">
-                  ${car.price?.toLocaleString() || '0'}
+                  XAF {car.price?.toLocaleString() || '0'}
                 </p>
                 <div className="mt-4 flex items-center justify-between">
                   <span className="text-sm text-gray-500 dark:text-gray-400">
