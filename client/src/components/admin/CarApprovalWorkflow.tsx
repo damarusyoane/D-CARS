@@ -174,7 +174,7 @@ const CarApprovalWorkflow: React.FC<CarApprovalWorkflowProps> = ({
                     <div className="text-sm text-gray-400">{vehicle.seller?.email}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-green-400">${vehicle.price.toLocaleString()}</div>
+                    <div className="text-sm font-medium text-green-400">XAF{vehicle.price.toLocaleString()}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                     {new Date(vehicle.created_at).toLocaleDateString()}
@@ -306,7 +306,7 @@ const CarApprovalWorkflow: React.FC<CarApprovalWorkflowProps> = ({
                     {selectedVehicle.mileage && (
                       <div className="flex justify-between">
                         <dt className="text-gray-400">Kilometrage</dt>
-                        <dd className="text-white font-medium">{selectedVehicle.mileage.toLocaleString()} miles</dd>
+                        <dd className="text-white font-medium">{selectedVehicle.mileage.toLocaleString()} km</dd>
                       </div>
                     )}
                     {selectedVehicle.fuel_type && (

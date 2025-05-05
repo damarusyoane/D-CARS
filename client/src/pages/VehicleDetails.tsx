@@ -339,7 +339,7 @@ export default function VehicleDetails() {
     if (navigator.share) {
       navigator.share({
         title: `${vehicle?.year} ${vehicle?.make} ${vehicle?.model}`,
-        text: `Regarde ceci ${vehicle?.year} ${vehicle?.make} ${vehicle?.model} pour $${vehicle?.price?.toLocaleString()}`,
+        text: `Regarde ceci ${vehicle?.year} ${vehicle?.make} ${vehicle?.model} pour XAF${vehicle?.price?.toLocaleString()}`,
         url: window.location.href
       }).catch(err => {
         console.error('Error sharing:', err);
@@ -519,7 +519,7 @@ export default function VehicleDetails() {
                 {[vehicle?.year, vehicle?.make, vehicle?.model].filter(Boolean).join(' ')}
               </h1>
               <p className="mt-2 text-lg sm:text-xl font-semibold text-primary-600 dark:text-primary-400">
-                ${vehicle?.price.toLocaleString()}
+                XAF {vehicle?.price.toLocaleString()}
               </p>
             </div>
             <button

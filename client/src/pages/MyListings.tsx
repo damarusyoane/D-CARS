@@ -315,7 +315,7 @@ const MyListings: React.FC = () => {
                       </div>
                     </div>
                     <div className="text-xl font-bold text-green-400">
-                      ${listing.price.toLocaleString()}
+                      XAF{listing.price.toLocaleString()}
                     </div>
                   </div>
 

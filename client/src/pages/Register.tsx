@@ -197,11 +197,13 @@ export default function Register() {
             <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden">
                 <div className="px-6 py-8 sm:px-10">
                     <div className="text-center">
-                        <img
-                            className="mx-auto h-16 w-auto"
-                            src="/assets/logo.png"
-                            alt="D-CARS"
-                        />
+                        <Link to="/">
+                            <img
+                                className="mx-auto h-16 w-auto"
+                                src="/assets/logo.png"
+                                alt="D-CARS"
+                            />
+                        </Link>
                         <h2 className="mt-4 text-3xl font-extrabold text-gray-900 dark:text-white">
                             Créer un Compte
                         </h2>

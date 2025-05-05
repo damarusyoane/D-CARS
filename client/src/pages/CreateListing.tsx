@@ -252,7 +252,7 @@ const CreateListing: React.FC = () => {
 
           <div>
             <label htmlFor="price" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Prix (€)
+              Prix (XAF)
             </label>
             <input
               type="number"

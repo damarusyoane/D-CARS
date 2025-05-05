@@ -400,7 +400,7 @@ export default function Search() {
                   </p>
                   <div className="mt-2 flex items-center justify-between">
                     <p className="text-lg font-semibold text-primary-600 dark:text-primary-400">
-                      ${vehicle.price?.toLocaleString() || '0'}
+                      XAF{vehicle.price?.toLocaleString() || '0'}
                     </p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       {vehicle.mileage?.toLocaleString() || '0'} km
