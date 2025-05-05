@@ -31,7 +31,7 @@ export default function Chat({ receiverId, vehicleId }: ChatProps) {
   const queryClient = useQueryClient();
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [isTyping, setIsTyping] = useState(false);
+  // const [isTyping, setIsTyping] = useState(false);
 
   // Fetch messages
   const { data: messages = [], isLoading } = useQuery<Message[]>({

@@ -8,7 +8,7 @@ interface MainLayoutProps {
 }
 
 export default function MainLayout({ children }: MainLayoutProps) {
-  const { user } = useAuth();
+  // const { user } = useAuth();
   
   return (
     <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900">
