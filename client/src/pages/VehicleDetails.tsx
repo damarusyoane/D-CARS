@@ -339,7 +339,7 @@ export default function VehicleDetails() {
     if (navigator.share) {
       navigator.share({
         title: `${vehicle?.year} ${vehicle?.make} ${vehicle?.model}`,
-        text: `Check out this ${vehicle?.year} ${vehicle?.make} ${vehicle?.model} for $${vehicle?.price?.toLocaleString()}`,
+        text: `Regarde ceci ${vehicle?.year} ${vehicle?.make} ${vehicle?.model} pour $${vehicle?.price?.toLocaleString()}`,
         url: window.location.href
       }).catch(err => {
         console.error('Error sharing:', err);
@@ -596,7 +596,7 @@ export default function VehicleDetails() {
                         className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700 text-xs sm:text-base"
                       >
                         <span className="text-gray-600 dark:text-gray-300 capitalize">
-                          {key.replace(/([A-Z])/g, ' $1').trim()}
+                          {key.replace(/([A-Z])/g, ' XAF').trim()}
                         </span>
                         <span className="font-medium text-gray-900 dark:text-white">
                           {value}
@@ -619,7 +619,7 @@ export default function VehicleDetails() {
                 to={seller?.id ? `/seller/${seller.id}` : '#'}
                 className="mx-auto sm:mx-0 h-20 w-20 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary-600 flex-shrink-0 border-2 border-primary-200 dark:border-primary-700"
                 tabIndex={seller?.id ? 0 : -1}
-                aria-label={seller?.full_name ? `View ${seller.full_name}'s profile` : 'View seller profile'}
+                aria-label={seller?.full_name ? `Voir le profil de ${seller.full_name}` : 'Voir le profil du vendeur'}
               >
                 {seller?.avatar_url ? (
                   <img
@@ -637,19 +637,19 @@ export default function VehicleDetails() {
                 <span className="font-semibold text-gray-900 dark:text-white text-lg mb-1">
                   {seller?.full_name}
                   {seller?.role === 'seller' && (
-                    <span className="ml-2 px-2 py-0.5 bg-primary-100 text-primary-700 rounded text-xs align-middle">Dealer</span>
+                    <span className="ml-2 px-2 py-0.5 bg-primary-100 text-primary-700 rounded text-xs align-middle">Vendeur</span>
                   )}
                 </span>
                 <span className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                  Member since {seller?.created_at ? new Date(seller.created_at).getFullYear() : '—'}
+                  Membre depuis {seller?.created_at ? new Date(seller.created_at).getFullYear() : '—'}
                 </span>
                 <Link
                   to={seller?.id ? `/seller/${seller.id}` : '#'}
                   className="inline-block mt-1 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-600 transition-colors"
                   tabIndex={seller?.id ? 0 : -1}
-                  aria-label={seller?.full_name ? `Go to ${seller.full_name}'s profile` : 'Go to seller profile'}
+                  aria-label={seller?.full_name ? `Allez au profil de ${seller.full_name}` : 'Allez au profil du vendeur'}
                 >
-                  View Seller Profile
+                  Voir le profil du vendeur
                 </Link>
               </div>
             </div>
@@ -682,7 +682,7 @@ export default function VehicleDetails() {
                     className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700"
                   >
                     <span className="text-gray-600 dark:text-gray-300 capitalize">
-                      {key.replace(/([A-Z])/g, ' $1').trim()}
+                      {key.replace(/([A-Z])/g, ' XAF').trim()}
                     </span>
                     <span className="font-medium text-gray-900 dark:text-white">
                       {value}
@@ -753,7 +753,7 @@ export default function VehicleDetails() {
                       onClick={() => setShowContactForm(false)}
                       className="flex-1 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 text-sm"
                     >
-                      Cancel
+                      Annuler
                     </button>
                     <button
   onClick={handleSendMessage}
@@ -761,7 +761,7 @@ export default function VehicleDetails() {
   aria-label="Send message to seller"
   className={`flex-1 py-2 px-4 rounded-md text-white text-sm ${messageText.trim() ? 'bg-primary-600 hover:bg-primary-700' : 'bg-gray-400 cursor-not-allowed'}`}
 >
-  Send Message
+  Envoyer un Message 
 </button>
                   </div>
                 </div>
@@ -774,22 +774,22 @@ export default function VehicleDetails() {
             <div className="space-y-4">
               <div className="flex items-center text-gray-600 dark:text-gray-300">
                 <MapPinIcon className="w-5 h-5 mr-2" />
-                <span>{vehicle?.location || 'Location not specified'}</span>
+                <span>{vehicle?.location || 'Localisation pas specifier'}</span>
               </div>
               <div className="flex items-center text-gray-600 dark:text-gray-300">
                 <ClockIcon className="w-5 h-5 mr-2" />
-                <span>Listed {vehicle?.created_at ? new Date(vehicle.created_at).toLocaleDateString() : 'Unknown date'}</span>
+                <span>Annonce {vehicle?.created_at ? new Date(vehicle.created_at).toLocaleDateString() : 'Date non specifier'}</span>
               </div>
               <div className="flex items-center text-gray-600 dark:text-gray-300">
                 <TagIcon className="w-5 h-5 mr-2" />
-                <span>Status: <span className="text-green-600 font-medium capitalize">{vehicle?.status || 'Unknown'}</span></span>
+                <span>Status: <span className="text-green-600 font-medium capitalize">{vehicle?.status || 'Inconnus'}</span></span>
               </div>
               <button
                 onClick={shareVehicle}
                 className="w-full mt-2 flex items-center justify-center space-x-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-medium py-2 px-4 rounded-lg transition-colors"
               >
                 <ShareIcon className="w-5 h-5" />
-                <span>Share Vehicle</span>
+                <span>Partager l'annonce</span>
               </button>
             </div>
           </div>
@@ -798,13 +798,13 @@ export default function VehicleDetails() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
             <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
               <CurrencyDollarIcon className="w-5 h-5 mr-2 text-primary-600" />
-              Estimate Monthly Payment
+            Calculer le montant mensuel
             </h3>
             
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Vehicle Price: ${calculatorValues.price.toLocaleString()}
+                 Prix du vehicule: XAF{calculatorValues.price.toLocaleString()}
                 </label>
                 <input 
                   type="range" 
@@ -820,7 +820,7 @@ export default function VehicleDetails() {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Down Payment: ${calculatorValues.downPayment.toLocaleString()}
+                  Payement Echoneler: XAF{calculatorValues.downPayment.toLocaleString()}
                 </label>
                 <input 
                   type="range" 
@@ -836,7 +836,7 @@ export default function VehicleDetails() {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Trade-In Value: ${calculatorValues.tradeInValue.toLocaleString()}
+                Valeur au marcher:XAF{calculatorValues.tradeInValue.toLocaleString()}
                 </label>
                 <input 
                   type="range" 
@@ -852,7 +852,7 @@ export default function VehicleDetails() {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Loan Term: {calculatorValues.term} months
+                  Pret: {calculatorValues.term} mois
                 </label>
                 <select
                   value={calculatorValues.term}
@@ -860,18 +860,18 @@ export default function VehicleDetails() {
                   className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm"
                   title="Loan Term"
                 >
-                  <option value={24}>24 months</option>
-                  <option value={36}>36 months</option>
-                  <option value={48}>48 months</option>
-                  <option value={60}>60 months</option>
-                  <option value={72}>72 months</option>
-                  <option value={84}>84 months</option>
+                  <option value={24}>24 mois</option>
+                  <option value={36}>36 mois</option>
+                  <option value={48}>48 mois</option>
+                  <option value={60}>60 mois</option>
+                  <option value={72}>72 mois</option>
+                  <option value={84}>84 mois</option>
                 </select>
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Interest Rate: {calculatorValues.interestRate}%
+                  Interet: {calculatorValues.interestRate}%
                 </label>
                 <input 
                   type="range" 
@@ -885,11 +885,11 @@ export default function VehicleDetails() {
                 />
               </div>
               <div className="bg-primary-50 dark:bg-primary-900/20 rounded-md p-4 text-center">
-                <p className="text-sm text-gray-600 dark:text-gray-400">Estimated Monthly Payment</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Payement par mois estimer</p>
                 <p className="text-3xl font-bold text-primary-600 dark:text-primary-400 mt-1">
-                  ${calculateMonthlyPayment().toLocaleString()}
+                  XAF{calculateMonthlyPayment().toLocaleString()}
                 </p>
-                <p className="text-xs text-gray-500 mt-2">This is just an estimate. Contact the seller for accurate financing options.</p>
+                <p className="text-xs text-gray-500 mt-2">C'est juste une estimation. Contactez le vendeur pour des options de financement exactes.</p>
               </div>
             </div>
           </div>
@@ -900,7 +900,7 @@ export default function VehicleDetails() {
       {Array.isArray(similarVehicles) && similarVehicles.length > 0 && (
         <div className="mt-12">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-            Similar Vehicles
+             Vehicule Similaire
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {similarVehicles.map((similar) => (
@@ -921,7 +921,7 @@ export default function VehicleDetails() {
                     />
                   ) : (
                     <div className="flex items-center justify-center h-48 bg-gray-300 dark:bg-gray-700">
-                      <span className="text-gray-500 dark:text-gray-400">No image</span>
+                      <span className="text-gray-500 dark:text-gray-400">Pas d'image</span>
                     </div>
                   )}
                 </div>
@@ -931,10 +931,10 @@ export default function VehicleDetails() {
                   </h3>
                   <div className="mt-2 flex items-center justify-between">
                     <p className="text-lg font-semibold text-primary-600 dark:text-primary-400">
-                      ${similar?.price?.toLocaleString?.() ?? 'N/A'}
+                      XAF{similar?.price?.toLocaleString?.() ?? 'N/A'}
                     </p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {similar?.mileage?.toLocaleString?.() ?? 'N/A'} mi
+                      {similar?.mileage?.toLocaleString?.() ?? 'N/A'} km
                     </p>
                   </div>
                 </div>
@@ -950,11 +950,11 @@ export default function VehicleDetails() {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
               <ShieldCheckIcon className="w-6 h-6 text-primary-600 mr-2" />
-              Vehicle History Report
+              Rapport d'histoire du vehicule
             </h2>
             <button className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center">
               <DocumentArrowDownIcon className="w-5 h-5 mr-2" />
-              Download Report
+              Telecharger le rapport
             </button>
           </div>
 
@@ -969,34 +969,34 @@ export default function VehicleDetails() {
             </div>
           </div>
         </div><div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Title Information</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Information du titre</h3>
             <div className="bg-green-50 dark:bg-green-900/10 border-l-4 border-green-400 p-4 mb-4">
               <div className="flex">
                 <CheckCircleIcon className="h-6 w-6 text-green-500 dark:text-green-400 mr-3" />
-                <p className="text-green-700 dark:text-green-400">Clean Title</p>
+                <p className="text-green-700 dark:text-green-400">Titre propre</p>
               </div>
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              This vehicle has a clean title, meaning it has not been declared a total loss by an insurance company or been branded with a severe title brand such as salvage, junk, rebuilt, or similar.
+            Ce vehicule a un titre propre, ce qui signifie qu'il n'a pas ete declare a un total loss par une compagnie d'assurance ou marque avec une gravure de titre sevère telle que salvage, junk, rebuilt, ou similaire.
             </p>
           </div><div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Ownership History</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Histoire du proprietaire</h3>
             <div className="space-y-4">
               <div className="border-l-2 border-primary-200 dark:border-primary-900 pl-4 relative">
                 <div className="absolute w-3 h-3 bg-primary-600 rounded-full left-[-7px]"></div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">First Owner</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Jan 2018 - Oct 2020 · 2 years, 9 months</p>
-                <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">Purchased in {vehicle?.location ?? 'N/A'}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">Premier proprietaire</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Jan 2018 - Oct 2020 · 2 ans, 9 mois</p>
+                <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">Acheter en {vehicle?.location ?? 'N/A'}</p>
               </div>
               <div className="border-l-2 border-primary-200 dark:border-primary-900 pl-4 relative">
                 <div className="absolute w-3 h-3 bg-primary-600 rounded-full left-[-7px]"></div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">Second Owner</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Oct 2020 - Present · 4 years, 6 months</p>
-                <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">Registered in {vehicle?.location ?? 'N/A'}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">Deuxieme proprietaire</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Oct 2020 - Present · 4 ans, 6 mois</p>
+                <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">Enregistrer en {vehicle?.location ?? 'N/A'}</p>
               </div>
             </div>
           </div><div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Mileage History</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Historique du kilometrage</h3>
             <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-xs text-gray-500 dark:text-gray-400">Jan 2018</span>
@@ -1007,12 +1007,12 @@ export default function VehicleDetails() {
               </div>
               <div className="mt-4 space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">First Record:</span>
-                  <span className="font-medium text-gray-900 dark:text-white">5 miles (Jan 2018)</span>
+                  <span className="text-gray-600 dark:text-gray-400">Premier enregistrement:</span>
+                  <span className="font-medium text-gray-900 dark:text-white">5 kilometres (Jan 2018)</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Last Record:</span>
-                  <span className="font-medium text-gray-900 dark:text-white">{vehicle?.mileage?.toLocaleString?.() ?? 'N/A'} miles (Today)</span>
+                  <span className="text-gray-600 dark:text-gray-400">Dernier enregistrement:</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{vehicle?.mileage?.toLocaleString?.() ?? 'N/A'} kilometres (Aujourd'hui)</span>
                 </div>
               </div>
             </div>

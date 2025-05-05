@@ -101,10 +101,10 @@ export default function SavedCars() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['savedVehicles', user?.id] });
-      toast.success(t('savedCars.removed'));
+      toast.success(t('vehicle retirer des favoris'));
     },
     onError: () => {
-      toast.error(t('common.error'));
+      toast.error(t('erreur'));
     },
   });
 
@@ -166,7 +166,7 @@ export default function SavedCars() {
                     className="w-full h-48 object-cover"
                   />
                   <button
-                    title="Retirer from saved"
+                    title="Retirer des favoris"
                     onClick={() => removeFromSaved.mutate(vehicle.id)}
                     className="absolute top-2 right-2 p-2 bg-white dark:bg-gray-800 rounded-full shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
