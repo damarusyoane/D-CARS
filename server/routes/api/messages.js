@@ -34,7 +34,7 @@ router.get('/vehicle/:vehicleId', async (req, res) => {
 });
 
 // Get all conversations for a user
-router.get('/conversations', async (req, res) => {
+router.get('/messages', async (req, res) => {
     try {
         const { userId } = req.query;
         const { data, error } = await supabase

@@ -29,18 +29,6 @@ const sampleConversations: Conversation[] = [
       { id: 'm1', content: 'Hello, I am interested in the Tesla Model 3. Is it available?', timestamp: '10:45 AM', sender: 'other' },
       { id: 'm2', content: 'Yes, it is still available. Would you like to schedule a test drive?', timestamp: '10:50 AM', sender: 'user' },
       { id: 'm3', content: 'That would be great! Is it the 2021 LR AWD model?', timestamp: '11:05 AM', sender: 'other' },
-      { id: 'm4', content: 'Yes, it\'s the 2021 Long Range AWD version with only 15k miles.', timestamp: '11:10 AM', sender: 'user' },
-    ]
-  },
-  {
-    id: '2',
-    name: 'Sarah Williams',
-    avatar: 'https://randomuser.me/api/portraits/women/44.jpg',
-    lastMessage: 'I\'d like to know more about the financing options for the BMW.',
-    timestamp: 'Yesterday',
-    unread: false,
-    messages: [
-      { id: 'm1', content: 'Hi there, I saw your BMW listing. Can you tell me more about it?', timestamp: 'Yesterday', sender: 'other' },
       { id: 'm2', content: 'Of course! It\'s a 2020 BMW 330i with premium package.', timestamp: 'Yesterday', sender: 'user' },
       { id: 'm3', content: 'I\'d like to know more about the financing options for the BMW.', timestamp: 'Yesterday', sender: 'other' },
     ]

@@ -73,10 +73,10 @@ export default function SavedCars() {
         .from('vehicles')
         .select('*')
         .in('id', vehicleIds)
-        .gte('price', filters.priceRange[0])
-        .lte('price', filters.priceRange[1])
-        .gte('year', filters.yearRange[0])
-        .lte('year', filters.yearRange[1])
+        // .gte('price', filters.priceRange[0])
+        // .lte('price', filters.priceRange[1])
+        // .gte('year', filters.yearRange[0])
+        // .lte('year', filters.yearRange[1])
         .order(sortBy, { ascending: sortOrder === 'asc' });
 
       console.log('Vehicles data:', vehicles);

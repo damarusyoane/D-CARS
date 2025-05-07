@@ -84,9 +84,9 @@ export default function Messages() {
         .from('messages')
         .select(`
           *,
-          sender:sender_id(id, full_name, avatar_url),
-          receiver:receiver_id(id, full_name, avatar_url),
-          vehicle:vehicle_id(id)
+          sender:profiles!messages_sender_id_fkey(id, full_name, avatar_url),
+          receiver:profiles!messages_receiver_id_fkey(id, full_name, avatar_url),
+          vehicle:vehicles!messages_vehicle_id_fkey(id, make, model, year, images)
         `)
         .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
         .order('created_at', { ascending: false });
@@ -107,7 +107,8 @@ export default function Messages() {
             conversationsMap.set(vehicleId, {
               vehicle: {
                 id: vehicleId,
-                make: `Vehicle ${vehicleId.substring(0, 8)}...`, // Fallback make
+                make: message.vehicle?.make || `Vehicle ${vehicleId.substring(0, 8)}...`,
+                images: message.vehicle?.images,
               },
               otherUser,
               lastMessage: message,
@@ -121,26 +122,6 @@ export default function Messages() {
         
         // Optionally fetch additional vehicle information if needed
         const conversations = Array.from(conversationsMap.values());
-        
-        // If you need to fetch additional vehicle details, you could do it here
-        // For example:
-        const vehicleIds = conversations.map(conv => conv.vehicle.id);
-        if (vehicleIds.length > 0) {
-          const { data: vehicles } = await supabase
-            .from('vehicles') // Adjust to your actual vehicle table name
-            .select('id, make, images')
-            .in('id', vehicleIds);
-            
-          if (vehicles) {
-            vehicles.forEach((vehicle: any) => {
-              const conversation = conversations.find(c => c.vehicle.id === vehicle.id);
-              if (conversation) {
-                conversation.vehicle.make = vehicle.make;
-                conversation.vehicle.images = vehicle.images;
-              }
-            });
-          }
-        }
         
         return conversations;
       } catch (err) {
@@ -188,7 +169,9 @@ export default function Messages() {
   // Send message mutation with better error handling
   const sendMessage = useMutation({
     mutationFn: async (content: string) => {
+      console.log('Attempting to send message...'); // New log
       if (!selectedConversation || !content.trim() || !user?.id) {
+        console.error('Missing required info for sending message'); // New log
         throw new Error('Missing required information to send message');
       }
 
@@ -197,6 +180,7 @@ export default function Messages() {
       );
 
       if (!conversation) {
+        console.error('Conversation not found for sending message'); // New log
         throw new Error('Conversation not found');
       }
 
@@ -205,12 +189,19 @@ export default function Messages() {
         sender_id: user.id,
         receiver_id: conversation.otherUser.id,
         content: content.trim(),
-        read: false
       };
+      console.log('Message object prepared:', message); // New log
 
-      const { error } = await supabase.from('messages').insert([message]);
-      if (error) throw error;
-      return true;
+      const { data, error } = await supabase.from('messages').insert([message]); // Changed to get data
+      console.log('Supabase insert result - data:', data); // New log
+      console.log('Supabase insert result - error:', error); // New log
+
+      if (error) {
+        console.error('Supabase insert error:', error); // New log
+        throw error;
+      }
+      console.log('Message sent successfully to Supabase.'); // New log
+      return data; // Return data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['messages', selectedConversation] });
@@ -218,10 +209,10 @@ export default function Messages() {
       setMessageInput('');
       setError(null);
     },
-    onError: (err) => {
+    onError: (err: any) => {
       console.error('Error sending message:', err);
       setError('Failed to send message. Please try again.');
-    }
+    },
   });
 
   // Scroll to bottom when new messages arrive
