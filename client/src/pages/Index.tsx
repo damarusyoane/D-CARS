@@ -107,7 +107,7 @@ function Index() {
                   <p className="text-gray-600 dark:text-gray-300">Gérez vos annonces de véhicules</p>
                 </Link>
                 <Link 
-                  to="/messages" 
+                  to="dashboard/messages" 
                   className="p-6 bg-white dark:bg-gray-700 rounded-lg hover:shadow-md transition-shadow text-center"
                 >
                   <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Messages</h3>

@@ -172,17 +172,17 @@ export default function Cart() {
       // Enhanced cart items with additional info
       const enhancedItems: CartItem[] = [];
       for (const item of data || []) {
-        let title = t('cart.unknownItem');
+        let title = t('Article Inconnu');
         let description = '';
         let price = 0;
         
         // Fetch additional details based on item type
-        if (item.item_type === 'subscription') {
+        if (item.item_type === 'Subscription') {
           const plan = item.plan_slug ? subscriptionPlans[item.plan_slug] : null;
           
           if (plan) {
             title = plan.name;
-            description = `${plan.description} (${item.billing_period === 'yearly' ? t('subscription.yearly') : t('subscription.monthly')})`;            
+            description = `${plan.description} (${item.billing_period === 'yearly' ? t('Abonnement annuel') : t('Abonnement mensuel')})`;            
             price = item.billing_period === 'yearly' ? plan.yearly_price : plan.monthly_price;
           }
         } else if (item.item_type === 'feature') {
@@ -214,7 +214,7 @@ export default function Cart() {
       setCartItems(enhancedItems);
     } catch (error) {
       console.error('Error fetching cart items:', error);
-      setError(t('cart.errorFetching'));
+      setError(t('Erreur recuperation'));
     } finally {
       setIsLoading(false);
     }
@@ -234,10 +234,10 @@ export default function Cart() {
       
       // Update local state
       setCartItems(cartItems.filter(item => item.id !== itemId));
-      toast.success(t('cart.itemRemoved'));
+      toast.success(t('Article Supprime'));
     } catch (error) {
       console.error('Error removing item:', error);
-      toast.error(t('common.error'));
+      toast.error(t('Erreur'));
     }
   };
   
@@ -253,7 +253,7 @@ export default function Cart() {
     e.preventDefault();
     
     if (!cardNumber || !cardHolder || !expiryDate || !cvv) {
-      toast.error(t('errors.required'));
+      toast.error(t('Champs Requis'));
       return;
     }
     
@@ -331,10 +331,10 @@ export default function Cart() {
       setExpiryDate('');
       setCvv('');
       
-      toast.success(t('cart.paymentSuccess'));
+      toast.success(t('Paiement Reussi'));
     } catch (error) {
       console.error('Checkout error:', error);
-      toast.error(t('cart.errorProcessing'));
+      toast.error(t('Erreur Traitement'));
     } finally {
       setIsProcessing(false);
     }
@@ -344,7 +344,7 @@ export default function Cart() {
     return (
       <div className="min-h-screen flex justify-center items-center bg-gray-900 text-white">
         <LoadingSpinner />
-        <p className="ml-2">{t('common.loading')}...</p>
+        <p className="ml-2">{t('Chargement')}...</p>
       </div>
     );
   }
@@ -353,13 +353,13 @@ export default function Cart() {
     return (
       <div className="min-h-screen flex flex-col justify-center items-center bg-gray-900 text-white p-4">
         <ExclamationCircleIcon className="h-16 w-16 text-yellow-500 mb-4" />
-        <h1 className="text-2xl font-bold mb-4">{t('auth.signIn')}</h1>
-        <p className="text-gray-300 mb-6 text-center">{t('cart.signInRequired')}</p>
+        <h1 className="text-2xl font-bold mb-4">{t('Se Connecter')}</h1>
+        <p className="text-gray-300 mb-6 text-center">{t('Connexion Requise')}</p>
         <Link
           to="/login"
           className="px-6 py-3 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
         >
-          {t('auth.signIn')}
+          {t('Se Connecter')}
         </Link>
       </div>
     );
@@ -369,13 +369,13 @@ export default function Cart() {
     return (
       <div className="min-h-screen flex flex-col justify-center items-center bg-gray-900 text-white p-4">
         <ShoppingCartIcon className="h-16 w-16 text-gray-500 mb-4" />
-        <h1 className="text-2xl font-bold mb-4">{t('cart.empty')}</h1>
-        <p className="text-gray-300 mb-6 text-center">{t('cart.emptyDesc')}</p>
+        <h1 className="text-2xl font-bold mb-4">{t('Panier vide')}</h1>
+        <p className="text-gray-300 mb-6 text-center">{t('Panier description vide')}</p>
         <Link
           to="/subscription"
           className="px-6 py-3 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
         >
-          {t('cart.continueShopping')}
+          {t('Continuer les Achats')}
         </Link>
       </div>
     );
@@ -385,14 +385,14 @@ export default function Cart() {
     return (
       <div className="min-h-screen flex flex-col justify-center items-center bg-gray-900 text-white p-4">
         <ExclamationCircleIcon className="h-16 w-16 text-red-500 mb-4" />
-        <h1 className="text-2xl font-bold mb-4">{t('common.error')}</h1>
+        <h1 className="text-2xl font-bold mb-4">{t('Erreur')}</h1>
         <p className="text-gray-300 mb-6 text-center">{error}</p>
         <button
           onClick={() => fetchCartItems()}
           className="px-6 py-3 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
         >
           <ArrowPathIcon className="h-5 w-5 mr-2" />
-          {t('common.retry')}
+          {t('Reessayer')}
         </button>
       </div>
     );
@@ -401,7 +401,7 @@ export default function Cart() {
   return (
     <div className="min-h-screen bg-gray-900 text-white py-12 px-4">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold mb-10 text-center">{t('cart.title')}</h1>
+        <h1 className="text-3xl font-bold mb-10 text-center">{t('Titre')}</h1>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Cart Items - Left 2/3 */}
@@ -412,15 +412,15 @@ export default function Cart() {
                   <h3 className="text-xl font-semibold">{item.title}</h3>
                   <p className="text-gray-400 mt-1">{item.description}</p>
                   <div className="mt-2 flex items-center">
-                    <span className="text-gray-300 mr-4">{t('common.quantity')}: {item.quantity}</span>
-                    <span className="font-semibold">{t('common.currency')} {item.price.toLocaleString('fr-FR', { minimumFractionDigits: 0 })}</span>
+                    <span className="text-gray-300 mr-4">{t('quantite')}: {item.quantity}</span>
+                    <span className="font-semibold">{t('evise')} {item.price.toLocaleString('fr-FR', { minimumFractionDigits: 0 })}</span>
                   </div>
                 </div>
                 <div className="flex items-center">
                   <button
                     onClick={() => handleRemoveItem(item.id)}
                     className="text-red-400 hover:text-red-300 p-2"
-                    aria-label="Remove item"
+                    aria-label="Supprimer l'article"
                   >
                     <TrashIcon className="h-5 w-5" />
                   </button>
@@ -432,30 +432,30 @@ export default function Cart() {
           {/* Order Summary - Right 1/3 */}
           <div className="lg:col-span-1">
             <div className="bg-gray-800 rounded-lg p-6 sticky top-4">
-              <h2 className="text-xl font-bold mb-4">{t('cart.orderSummary')}</h2>
+              <h2 className="text-xl font-bold mb-4">{t('resume Commande')}</h2>
               
               <div className="space-y-2 pb-4 border-b border-gray-700">
                 <div className="flex justify-between">
-                  <span className="text-gray-300">{t('cart.subtotal')}</span>
-                  <span>{t('common.currency')} {calculateTotal().toLocaleString('fr-FR', { minimumFractionDigits: 0 })}</span>
+                  <span className="text-gray-300">{t('sousTotal')}</span>
+                  <span>{t('devise')} {calculateTotal().toLocaleString('fr-FR', { minimumFractionDigits: 0 })}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-300">{t('cart.taxes')}</span>
-                  <span>{t('common.currency')} {calculateTaxes().toLocaleString('fr-FR', { minimumFractionDigits: 0 })}</span>
+                  <span className="text-gray-300">{t('taxes')}</span>
+                  <span>{t('devise')} {calculateTaxes().toLocaleString('fr-FR', { minimumFractionDigits: 0 })}</span>
                 </div>
               </div>
               
               <div className="flex justify-between pt-4 text-xl font-bold">
-                <span>{t('common.total')}</span>
-                <span>{t('common.currency')} {(calculateTotal() + calculateTaxes()).toLocaleString('fr-FR', { minimumFractionDigits: 0 })}</span>
+                <span>{t('total')}</span>
+                <span>{t('devise')} {(calculateTotal() + calculateTaxes()).toLocaleString('fr-FR', { minimumFractionDigits: 0 })}</span>
               </div>
               
               <form onSubmit={handleCheckout} className="mt-6 space-y-4">
-                <h3 className="font-semibold border-b border-gray-700 pb-2">{t('cart.paymentInfo')}</h3>
+                <h3 className="font-semibold border-b border-gray-700 pb-2">{t('info Paiement')}</h3>
                 
                 <div>
                   <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-300 mb-1">
-                    {t('cart.cardNumber')}
+                    {t('Numero Carte')}
                   </label>
                   <input
                     type="text"
@@ -471,7 +471,7 @@ export default function Cart() {
                 
                 <div>
                   <label htmlFor="cardHolder" className="block text-sm font-medium text-gray-300 mb-1">
-                    {t('cart.cardHolder')}
+                    {t('titulaire Carte')}
                   </label>
                   <input
                     type="text"
@@ -479,7 +479,7 @@ export default function Cart() {
                     value={cardHolder}
                     onChange={(e) => setCardHolder(e.target.value)}
                     className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white"
-                    placeholder="John Doe"
+                    placeholder="Jean Dupont"
                     required
                   />
                 </div>
@@ -487,7 +487,7 @@ export default function Cart() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-300 mb-1">
-                      {t('cart.expiryDate')}
+                      {t('dateExpiration')}
                     </label>
                     <input
                       type="text"
@@ -495,7 +495,7 @@ export default function Cart() {
                       value={expiryDate}
                       onChange={(e) => setExpiryDate(e.target.value)}
                       className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white"
-                      placeholder="MM/YY"
+                      placeholder="MM/AA"
                       maxLength={5}
                       required
                     />
@@ -503,7 +503,7 @@ export default function Cart() {
                   
                   <div>
                     <label htmlFor="cvv" className="block text-sm font-medium text-gray-300 mb-1">
-                      {t('cart.cvv')}
+                      {t('cvv')}
                     </label>
                     <input
                       type="text"
@@ -527,12 +527,12 @@ export default function Cart() {
                     {isProcessing ? (
                       <>
                         <LoadingSpinner size="sm" />
-                        <span className="ml-2">{t('cart.paymentProcessing')}</span>
+                        <span className="ml-2">{t('traitement Paiement')}</span>
                       </>
                     ) : (
                       <>
                         <LockClosedIcon className="h-5 w-5 mr-2" />
-                        {t('cart.completeOrder')}
+                        {t('finaliser Commande')}
                       </>
                     )}
                   </button>
@@ -540,7 +540,7 @@ export default function Cart() {
                 
                 <div className="flex items-center justify-center text-sm text-gray-400 mt-4">
                   <LockClosedIcon className="h-4 w-4 mr-1 text-green-500" />
-                  <span>{t('cart.securePayment')}</span>
+                  <span>{t('paiement Securise')}</span>
                 </div>
               </form>
             </div>
